@@ -1,7 +1,7 @@
 const { Client } = require('pg');
 
 export default async function handler(req, res) {
-  // CORS configuration
+  // Configuración de CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -16,36 +16,52 @@ export default async function handler(req, res) {
   const { sql, parameters } = req.body;
   if (!sql) return res.status(400).json({ error: 'Missing SQL query' });
 
-  // 1. Get credentials from environment
-  let connectionString = process.env.DB_URL;
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASS;
+  // RECUPERACIÓN DE VARIABLES CON LIMPIEZA
+  const rawUrl = (process.env.DB_URL || '').trim();
+  const dbUser = (process.env.DB_USER || '').trim();
+  const dbPass = (process.env.DB_PASS || '').trim();
 
-  if (connectionString && connectionString.startsWith('jdbc:')) {
-    connectionString = connectionString.replace('jdbc:postgresql://', 'postgres://');
+  let finalConnectionString = '';
+
+  // CASO A: Tenemos una URL de JDBC (frecuente en Neon/Java)
+  if (rawUrl.startsWith('jdbc:postgresql://')) {
+    const hostPart = rawUrl.split('//')[1].split('/')[0].split('?')[0];
+    const dbPart = rawUrl.split('//')[1].split('/')[1]?.split('?')[0] || 'neondb';
+    // Construimos la URL estándar inyectando el usuario y password explícitos
+    if (dbUser && dbPass) {
+      finalConnectionString = `postgres://${dbUser}:${dbPass}@${hostPart}/${dbPart}?sslmode=require`;
+    } else {
+      finalConnectionString = rawUrl.replace('jdbc:postgresql://', 'postgres://');
+    }
+  } 
+  // CASO B: Tenemos una URL estándar de Postgres
+  else if (rawUrl.startsWith('postgres://')) {
+    // Si la URL no tiene la contraseña (falta el ':'), intentamos inyectarla
+    if (!rawUrl.includes(':') || !rawUrl.includes('@')) {
+       const hostPart = rawUrl.replace('postgres://', '').split('/')[0];
+       const dbPart = rawUrl.split('/').pop()?.split('?')[0] || 'neondb';
+       finalConnectionString = `postgres://${dbUser}:${dbPass}@${hostPart}/${dbPart}?sslmode=require`;
+    } else {
+      finalConnectionString = rawUrl;
+    }
+  } 
+  // CASO C: No hay URL, construimos una básica
+  else if (dbUser && dbPass) {
+    finalConnectionString = `postgres://${dbUser}:${dbPass}@ep-mute-frog-agiqzzew-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require`;
   }
 
-  // 2. Configure Client
-  // Explicitly passing user and password because they might be missing from the connectionString
-  const clientConfig = {
-    connectionString,
-    user: user,
-    password: password,
+  if (!finalConnectionString) {
+    return res.status(500).json({ error: "Configuración de conexión incompleta en Vercel." });
+  }
+
+  const client = new Client({
+    connectionString: finalConnectionString,
     ssl: { rejectUnauthorized: false }
-  };
-
-  // If connectionString is still empty, let's try to build it or just use the separate parts
-  if (!connectionString && user && password) {
-    clientConfig.host = 'ep-mute-frog-agiqzzew-pooler.c-2.eu-central-1.aws.neon.tech';
-    clientConfig.database = 'neondb';
-  }
-
-  const client = new Client(clientConfig);
+  });
 
   try {
     await client.connect();
     
-    // Transform named parameters (@param -> $1)
     let finalParams = [];
     let finalSql = sql;
     if (parameters && typeof parameters === 'object' && !Array.isArray(parameters)) {
@@ -62,16 +78,11 @@ export default async function handler(req, res) {
     const result = await client.query(finalSql, finalParams);
     res.status(200).json(result.rows);
   } catch (error) {
-    console.error('API_BRIDGE_ERROR:', error);
+    console.error('SERVERLESS_API_ERROR:', error);
     res.status(500).json({ 
       error: error.message,
-      hint: "Asegúrate de que DB_PASS sea un string válido en Vercel.",
-      debug: {
-        has_url: !!process.env.DB_URL,
-        has_user: !!process.env.DB_USER,
-        has_pass: !!process.env.DB_PASS,
-        pass_type: typeof process.env.DB_PASS
-      }
+      hint: "SCRAM error usually means password mismatch or missing connection details.",
+      connection_type: finalConnectionString.split('@')[1] ? 'host-only-hidden' : 'invalid'
     });
   } finally {
     try { await client.end(); } catch (e) {}
