@@ -1,5 +1,5 @@
 import 'package:postgres/postgres.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../config/env_config.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -9,8 +9,8 @@ class DatabaseService {
   Connection? _connection;
 
   Future<void> connect() async {
-    final String user = dotenv.get('DB_USER');
-    final String pass = dotenv.get('DB_PASS');
+    final String user = EnvConfig.dbUser;
+    final String pass = EnvConfig.dbPass;
 
     // Simple extraction of host/port from JDBC URL or just hardcode for Neon if needed.
     // Neon typically uses: ep-mute-frog-agiqzzew-pooler.c-2.eu-central-1.aws.neon.tech

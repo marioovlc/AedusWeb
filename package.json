@@ -2,6 +2,6 @@
   "name": "aedus-web",
   "version": "1.0.0",
   "scripts": {
-    "build": "git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter && $HOME/flutter/bin/flutter build web --release --no-tree-shake-icons"
+    "build": "git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter && $HOME/flutter/bin/flutter build web --release --no-tree-shake-icons --dart-define=DB_URL=$DB_URL --dart-define=DB_USER=$DB_USER --dart-define=DB_PASS=$DB_PASS --dart-define=AI_API_KEY=$AI_API_KEY --dart-define=AI_MODEL=$AI_MODEL --dart-define=AI_API_URL=$AI_API_URL"
   }
 }

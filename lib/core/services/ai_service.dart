@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../config/env_config.dart';
 
 class AIService {
   static final AIService _instance = AIService._internal();
   factory AIService() => _instance;
   AIService._internal();
 
-  final String _apiUrl = dotenv.get('AI_API_URL');
-  final String _apiKey = dotenv.get('AI_API_KEY');
-  final String _model = dotenv.get('AI_MODEL');
+  final String _apiUrl = EnvConfig.aiApiUrl;
+  final String _apiKey = EnvConfig.aiApiKey;
+  final String _model = EnvConfig.aiModel;
 
   Future<String> getSummary(String prompt) async {
     try {

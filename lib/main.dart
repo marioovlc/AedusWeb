@@ -11,7 +11,11 @@ import 'presentation/pages/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Info: No .env file found. Falling back to build-time vars.");
+  }
   runApp(
     MultiProvider(
       providers: [
