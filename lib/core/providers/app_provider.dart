@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/incident_model.dart';
+import '../../data/models/aula_model.dart';
 import '../../data/models/message_model.dart';
 import '../services/database_service.dart';
 import '../services/ai_service.dart';
@@ -17,10 +18,12 @@ class AppProvider with ChangeNotifier {
     'Usuarios Activos': '0',
   };
   List<Usuario> _usuariosAdmin = [];
+  List<Aula> _aulas = [];
 
   Usuario? get currentUser => _currentUser;
   List<Incidencia> get incidencias => _incidencias;
   List<Usuario> get contactos => _contactos;
+  List<Aula> get aulas => _aulas;
   List<Usuario> get usuariosAdmin => _usuariosAdmin;
   List<Mensaje> get mensajes => _mensajes;
   Map<String, String> get kpis => _kpis;
@@ -62,6 +65,7 @@ class AppProvider with ChangeNotifier {
       _fetchIncidencias(),
       _fetchKPIs(),
       _fetchContactos(),
+      _fetchAulas(),
     ]);
     notifyListeners();
   }
@@ -100,6 +104,26 @@ class AppProvider with ChangeNotifier {
     final results = await _db.query("SELECT * FROM neon_auth.user WHERE id != @id", 
       substitutionValues: {'id': _currentUser!.id});
     _contactos = results.map((m) => Usuario.fromMap(m)).toList();
+    
+    // Virtual AI Contact
+    _contactos.insert(0, Usuario(
+      id: 'aedus-ai-system',
+      nombre: 'Aedus AI (Sugerencias)',
+      email: 'ai@aedus.com',
+      rol: 'Sistema',
+      status: 'ACTIVO',
+      aeduCoins: 9999,
+    ));
+    notifyListeners();
+  }
+
+  Future<void> _fetchAulas() async {
+    try {
+      final results = await _db.query("SELECT * FROM gestion_incidencias.aulas ORDER BY nombre ASC");
+      _aulas = results.map((m) => Aula.fromMap(m)).toList();
+    } catch (e) {
+      debugPrint('Error fetching aulas: $e');
+    }
   }
 
   Future<void> fetchMessages(String receiverId) async {

@@ -119,7 +119,14 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: _buildDropdown('Aula', ['Aula 101', 'Aula 102', 'Laboratorio 1'], _selectedAula, (v) => setState(() => _selectedAula = v!))),
+                    Expanded(
+                      child: _buildDropdown(
+                        'Aula', 
+                        context.watch<AppProvider>().aulas.map((e) => e.nombre).toList(), 
+                        _selectedAula, 
+                        (v) => setState(() => _selectedAula = v!)
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(child: _buildDropdown('Categoría', ['Hardware', 'Software', 'Red', 'Otros'], _selectedCategory, (v) => setState(() => _selectedCategory = v!))),
                   ],

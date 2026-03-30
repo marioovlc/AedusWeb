@@ -5,6 +5,10 @@ import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/message_model.dart';
+import 'package:record/record.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ConnectHubPage extends StatefulWidget {
   const ConnectHubPage({super.key});
@@ -16,10 +20,46 @@ class ConnectHubPage extends StatefulWidget {
 class _ConnectHubPageState extends State<ConnectHubPage> {
   Usuario? _activeContact;
   final _messageController = TextEditingController();
+  final _audioRecorder = AudioRecorder();
+  final _audioPlayer = AudioPlayer();
+  final _imagePicker = ImagePicker();
+  bool _isRecording = false;
+
+  @override
+  void dispose() {
+    _audioRecorder.dispose();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
 
   void _selectContact(Usuario contact) {
     setState(() => _activeContact = contact);
     context.read<AppProvider>().fetchMessages(contact.id);
+  }
+
+  Future<void> _startRecording() async {
+    if (await _audioRecorder.hasPermission()) {
+      final path = '${Directory.systemTemp.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _audioRecorder.start(const RecordConfig(), path: path);
+      setState(() => _isRecording = true);
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    final path = await _audioRecorder.stop();
+    setState(() => _isRecording = false);
+    if (path != null) {
+      debugPrint('Grabación guardada en: $path');
+      // Enviar como mensaje especial (placeholder)
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      debugPrint('Imagen seleccionada: ${image.path}');
+      // Subir a Cloudinary / Enviar (placeholder)
+    }
   }
 
   @override
@@ -127,7 +167,13 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
               itemCount: mensajes.length,
               itemBuilder: (context, index) {
                 final msg = mensajes[index];
-                final isMe = msg.senderId == context.read<AppProvider>().currentUser?.id;
+                final isMe = msg.senderId == provider.currentUser?.id;
+                
+                // MODO ESPECIAL: SOPORTE IA
+                if (_activeContact?.id == 'aedus-ai-system' && index == 0) {
+                  return _buildAIResponse("¡Hola! Soy tu asistente Aedus. ¿En qué puedo ayudarte hoy con el sistema?");
+                }
+
                 return _buildMessage(msg.contenido, isMe);
               },
             ),
@@ -136,6 +182,35 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
         // Chat Input
         _buildChatInput(),
       ],
+    );
+  }
+
+  Widget _buildAIResponse(String text) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.5)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                FaIcon(FontAwesomeIcons.magic, size: 14, color: AppTheme.primaryBlue),
+                SizedBox(width: 8),
+                Text('Sugerencia IA', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue, fontSize: 13)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(text, style: const TextStyle(color: AppTheme.textHighPriority, height: 1.5)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -165,21 +240,28 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
       padding: const EdgeInsets.all(24),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(color: AppTheme.cards, shape: BoxShape.circle),
-            child: const Icon(Icons.add, color: AppTheme.textLowPriority),
+          IconButton(
+            icon: const Icon(Icons.add, color: AppTheme.textLowPriority),
+            onPressed: _pickImage,
           ),
           const SizedBox(width: 16),
           Expanded(
             child: TextField(
               controller: _messageController,
-              decoration: const InputDecoration(
-                hintText: 'Escribe un mensaje...',
+              decoration: InputDecoration(
+                hintText: _isRecording ? 'Grabando audio...' : 'Escribe un mensaje...',
                 fillColor: AppTheme.cards,
-                suffixIcon: Padding(
-                  padding: EdgeInsets.all(12.0),
-                  child: FaIcon(FontAwesomeIcons.microphone, size: 16, color: AppTheme.textLowPriority),
+                suffixIcon: GestureDetector(
+                  onLongPress: _startRecording,
+                  onLongPressUp: _stopRecording,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: FaIcon(
+                      FontAwesomeIcons.microphone, 
+                      size: 16, 
+                      color: _isRecording ? AppTheme.danger : AppTheme.textLowPriority
+                    ),
+                  ),
                 ),
               ),
             ),
