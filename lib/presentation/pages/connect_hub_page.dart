@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/providers/app_provider.dart';
-import '../../data/models/user_model.dart';
-import '../../data/models/message_model.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../../core/theme/app_theme.dart';
+import '../../core/providers/app_provider.dart';
+import '../../data/models/user_model.dart';
+import '../../data/models/message_model.dart';
 
 class ConnectHubPage extends StatefulWidget {
   const ConnectHubPage({super.key});
@@ -29,6 +29,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
   void dispose() {
     _audioRecorder.dispose();
     _audioPlayer.dispose();
+    _messageController.dispose();
     super.dispose();
   }
 
@@ -38,19 +39,26 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
   }
 
   Future<void> _startRecording() async {
-    if (await _audioRecorder.hasPermission()) {
-      final path = '${Directory.systemTemp.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      await _audioRecorder.start(const RecordConfig(), path: path);
-      setState(() => _isRecording = true);
+    try {
+      if (await _audioRecorder.hasPermission()) {
+        final path = '${Directory.systemTemp.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        await _audioRecorder.start(const RecordConfig(), path: path);
+        setState(() => _isRecording = true);
+      }
+    } catch (e) {
+      debugPrint('Error starting recording: $e');
     }
   }
 
   Future<void> _stopRecording() async {
-    final path = await _audioRecorder.stop();
-    setState(() => _isRecording = false);
-    if (path != null) {
-      debugPrint('Grabación guardada en: $path');
-      // Enviar como mensaje especial (placeholder)
+    try {
+      final path = await _audioRecorder.stop();
+      setState(() => _isRecording = false);
+      if (path != null) {
+        debugPrint('Grabación guardada en: $path');
+      }
+    } catch (e) {
+      debugPrint('Error stopping recording: $e');
     }
   }
 
@@ -58,7 +66,6 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
     final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       debugPrint('Imagen seleccionada: ${image.path}');
-      // Subir a Cloudinary / Enviar (placeholder)
     }
   }
 
@@ -72,10 +79,10 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
       children: [
         // Panel 1: Contacts (Left)
         Expanded(flex: 2, child: _buildContactsPanel(contactos)),
-        const VerticalDivider(),
+        const VerticalDivider(width: 1, color: AppTheme.borders),
         // Panel 2: Chat (Center)
         Expanded(flex: 4, child: _buildChatPanel(mensajes)),
-        const VerticalDivider(),
+        const VerticalDivider(width: 1, color: AppTheme.borders),
         // Panel 3: Details (Right)
         Expanded(flex: 2, child: _buildDetailsPanel()),
       ],
@@ -120,14 +127,18 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
   }
 
   Widget _buildContactItem(Usuario contact, bool isActive) {
+    bool isAI = contact.id == 'aedus-ai-system';
+    
     return ListTile(
       onTap: () => _selectContact(contact),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       selected: isActive,
-      selectedTileColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
+      selectedTileColor: AppTheme.primaryBlue.withOpacity(0.05),
       leading: CircleAvatar(
-        backgroundColor: AppTheme.cards,
-        child: Text(contact.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 12, color: Colors.white)),
+        backgroundColor: isAI ? AppTheme.primaryBlue.withOpacity(0.1) : AppTheme.cards,
+        child: isAI 
+          ? const FaIcon(FontAwesomeIcons.robot, size: 14, color: AppTheme.primaryBlue)
+          : Text(contact.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 12, color: Colors.white)),
       ),
       title: Text(contact.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
       subtitle: Text(contact.rol, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 12)),
@@ -158,7 +169,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
             ],
           ),
         ),
-        const Divider(),
+        const Divider(height: 1, color: AppTheme.borders),
         // Chat Messages
         Expanded(
           child: Container(
@@ -167,9 +178,8 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
               itemCount: mensajes.length,
               itemBuilder: (context, index) {
                 final msg = mensajes[index];
-                final isMe = msg.senderId == provider.currentUser?.id;
+                final isMe = msg.senderId == context.read<AppProvider>().currentUser?.id;
                 
-                // MODO ESPECIAL: SOPORTE IA
                 if (_activeContact?.id == 'aedus-ai-system' && index == 0) {
                   return _buildAIResponse("¡Hola! Soy tu asistente Aedus. ¿En qué puedo ayudarte hoy con el sistema?");
                 }
@@ -192,16 +202,16 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
         margin: const EdgeInsets.only(bottom: 24),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+          color: AppTheme.primaryBlue.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.5)),
+          border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Row(
               children: [
-                FaIcon(FontAwesomeIcons.magic, size: 14, color: AppTheme.primaryBlue),
+                FaIcon(FontAwesomeIcons.wandMagicSparkles, size: 14, color: AppTheme.primaryBlue),
                 SizedBox(width: 8),
                 Text('Sugerencia IA', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue, fontSize: 13)),
               ],
@@ -264,6 +274,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
                   ),
                 ),
               ),
+              onSubmitted: (_) => _sendMessage(),
             ),
           ),
           const SizedBox(width: 16),
@@ -272,15 +283,17 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
             decoration: const BoxDecoration(color: AppTheme.primaryBlue, shape: BoxShape.circle),
             child: IconButton(
               icon: const Icon(Icons.send, color: Colors.white, size: 20),
-              onPressed: () {
-                // Implementation for sending messages would go here
-                _messageController.clear();
-              },
+              onPressed: _sendMessage,
             ),
           ),
         ],
       ),
     );
+  }
+
+  void _sendMessage() {
+    if (_messageController.text.trim().isEmpty) return;
+    _messageController.clear();
   }
 
   Widget _buildDetailsPanel() {
@@ -295,7 +308,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
           const SizedBox(height: 32),
           CircleAvatar(
             radius: 50,
-            backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
+            backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
             child: Text(_activeContact!.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
           ),
           const SizedBox(height: 24),

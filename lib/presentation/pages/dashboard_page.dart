@@ -27,9 +27,9 @@ class DashboardPage extends StatelessWidget {
               const SizedBox(width: 20),
               Expanded(child: _buildKPICard('Pendientes', kpis['Pendientes'] ?? '0', FontAwesomeIcons.clock, Colors.orange)),
               const SizedBox(width: 20),
-              Expanded(child: _buildKPICard('Resueltas', kpis['Resueltas'] ?? '0', FontAwesomeIcons.checkCircle, AppTheme.success)),
+              Expanded(child: _buildKPICard('Resueltas', kpis['Resueltas'] ?? '0', FontAwesomeIcons.circleCheck, AppTheme.success)),
               const SizedBox(width: 20),
-              Expanded(child: _buildKPICard('Usuarios Activos', kpis['Usuarios Activos'] ?? '0', FontAwesomeIcons.userFriends, Colors.purple)),
+              Expanded(child: _buildKPICard('Usuarios Activos', kpis['Usuarios Activos'] ?? '0', FontAwesomeIcons.userGroup, Colors.purple)),
             ],
           ),
           
@@ -262,7 +262,7 @@ class DashboardPage extends StatelessWidget {
           children: [
             const Row(
               children: [
-                FaIcon(FontAwesomeIcons.magic, color: AppTheme.primaryBlue, size: 18),
+                FaIcon(FontAwesomeIcons.wandMagicSparkles, color: AppTheme.primaryBlue, size: 18),
                 SizedBox(width: 12),
                 Text(
                   'Asistente AI',

@@ -93,7 +93,7 @@ class _MainLayoutState extends State<MainLayout> {
                     _buildSectionTitle('ADMINISTRACIÓN'),
                     _buildNavItem(context, 'Usuarios', FontAwesomeIcons.users, '/users'),
                     _buildNavItem(context, 'Monitorización', FontAwesomeIcons.chartLine, '/monitoring'),
-                    _buildNavItem(context, 'Logs de Sistema', FontAwesomeIcons.history, '/logs'),
+                    _buildNavItem(context, 'Logs de Sistema', FontAwesomeIcons.clockRotateLeft, '/logs'),
                     _buildNavItem(context, 'Tienda', FontAwesomeIcons.shop, '/shop'),
                   ],
                 ],
@@ -109,8 +109,8 @@ class _MainLayoutState extends State<MainLayout> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                _buildNavItem(context, 'Configuración', FontAwesomeIcons.cog, '/settings'),
-                _buildNavItem(context, 'Cerrar Sesión', FontAwesomeIcons.signOutAlt, '/login', 
+                _buildNavItem(context, 'Configuración', FontAwesomeIcons.gear, '/settings'),
+                _buildNavItem(context, 'Cerrar Sesión', FontAwesomeIcons.rightFromBracket, '/login', 
                   hoverColor: Colors.red.withValues(alpha: 0.1),
                   iconColor: AppTheme.textLowPriority,
                   onTap: () {

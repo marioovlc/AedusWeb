@@ -122,7 +122,7 @@ class AppProvider with ChangeNotifier {
       final results = await _db.query("SELECT * FROM gestion_incidencias.aulas ORDER BY nombre ASC");
       _aulas = results.map((m) => Aula.fromMap(m)).toList();
     } catch (e) {
-      debugPrint('Error fetching aulas: $e');
+      debugPrint('Error fetching incidencias: $e');
     }
   }
 

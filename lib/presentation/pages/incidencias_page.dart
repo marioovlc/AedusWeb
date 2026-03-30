@@ -153,7 +153,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                       ),
                       child: ElevatedButton.icon(
                         onPressed: _getAIHelp,
-                        icon: const FaIcon(FontAwesomeIcons.magic, size: 14),
+                        icon: const FaIcon(FontAwesomeIcons.wandMagicSparkles, size: 14),
                         label: const Text('✨ SUGERENCIA IA'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
