@@ -1,7 +1,7 @@
 class Mensaje {
   final int id;
-  final int senderId;
-  final int receiverId;
+  final String senderId;
+  final String receiverId;
   final String contenido;
   final DateTime fecha;
   final bool isRead;
@@ -18,22 +18,22 @@ class Mensaje {
   factory Mensaje.fromMap(Map<String, dynamic> map) {
     return Mensaje(
       id: map['id'] as int,
-      senderId: map['sender_id'] as int,
-      receiverId: map['receiver_id'] as int,
-      contenido: map['contenido'] as String,
+      senderId: map['usuario_id'].toString(),
+      receiverId: map['receptor_id']?.toString() ?? '',
+      contenido: map['texto'] as String? ?? '',
       fecha: map['fecha'] != null ? DateTime.parse(map['fecha'].toString()) : DateTime.now(),
-      isRead: map['is_read'] as bool? ?? false,
+      isRead: map['leido'] as bool? ?? false,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'sender_id': senderId,
-      'receiver_id': receiverId,
-      'contenido': contenido,
+      'usuario_id': senderId,
+      'receptor_id': receiverId,
+      'texto': contenido,
       'fecha': fecha.toIso8601String(),
-      'is_read': isRead,
+      'leido': isRead,
     };
   }
 }

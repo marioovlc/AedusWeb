@@ -29,7 +29,7 @@ class AppProvider with ChangeNotifier {
   Future<bool> login(String email, String password) async {
     try {
       final results = await _db.query(
-        "SELECT * FROM gestion_incidencias.usuarios WHERE email = @email AND password = @password",
+        "SELECT * FROM neon_auth.user WHERE email = @email AND password = @password",
         substitutionValues: {'email': email, 'password': password},
       );
 
@@ -86,15 +86,15 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> _fetchContactos() async {
-    final results = await _db.query("SELECT * FROM gestion_incidencias.usuarios WHERE id != @id", 
+    final results = await _db.query("SELECT * FROM neon_auth.user WHERE id != @id", 
       substitutionValues: {'id': _currentUser!.id});
     _contactos = results.map((m) => Usuario.fromMap(m)).toList();
   }
 
-  Future<void> fetchMessages(int receiverId) async {
+  Future<void> fetchMessages(String receiverId) async {
     if (_currentUser == null) return;
     final results = await _db.query(
-      "SELECT * FROM gestion_incidencias.mensajes WHERE (sender_id = @me AND receiver_id = @other) OR (sender_id = @other AND receiver_id = @me) ORDER BY fecha ASC",
+      "SELECT * FROM gestion_incidencias.mensajes WHERE (usuario_id = @me AND receptor_id = @other) OR (usuario_id = @other AND receptor_id = @me) ORDER BY fecha ASC",
       substitutionValues: {'me': _currentUser!.id, 'other': receiverId},
     );
     _mensajes = results.map((m) => Mensaje.fromMap(m)).toList();

@@ -2,7 +2,7 @@ class Incidencia {
   final int id;
   final String titulo;
   final String descripcion;
-  final int usuarioId;
+  final String usuarioId;
   final int aulaId;
   final int categoriaId;
   final String estado;
@@ -26,7 +26,7 @@ class Incidencia {
       id: map['id'] as int,
       titulo: map['titulo'] as String,
       descripcion: map['descripcion'] as String,
-      usuarioId: map['usuario_id'] as int,
+      usuarioId: map['usuario_id'].toString(),
       aulaId: map['aula_id'] as int,
       categoriaId: map['categoria_id'] as int,
       estado: map['estado'] as String? ?? 'NO LEIDO',

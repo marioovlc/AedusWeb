@@ -16,19 +16,27 @@ export default async function handler(req, res) {
   const { sql, parameters } = req.body;
   if (!sql) return res.status(400).json({ error: 'Missing SQL query' });
 
-  // RECUPERACIÓN DE VARIABLES
+  // RECUPERACIÓN DE VARIABLES CON LIMPIEZA
   const rawUrl = (process.env.DB_URL || '').trim();
   const dbUser = (process.env.DB_USER || '').trim();
   const dbPass = (process.env.DB_PASS || '').trim();
-  const dbSchema = (process.env.DB_SCHEMA || 'public').trim();
 
   let finalConnectionString = '';
 
+  // CASO A: Tenemos una URL de JDBC (frecuente en Neon/Java)
   if (rawUrl.startsWith('jdbc:postgresql://')) {
     const hostPart = rawUrl.split('//')[1].split('/')[0].split('?')[0];
     const dbPart = rawUrl.split('//')[1].split('/')[1]?.split('?')[0] || 'neondb';
-    finalConnectionString = `postgres://${dbUser}:${dbPass}@${hostPart}/${dbPart}?sslmode=require`;
-  } else if (rawUrl.startsWith('postgres://')) {
+    // Construimos la URL estándar inyectando el usuario y password explícitos
+    if (dbUser && dbPass) {
+      finalConnectionString = `postgres://${dbUser}:${dbPass}@${hostPart}/${dbPart}?sslmode=require`;
+    } else {
+      finalConnectionString = rawUrl.replace('jdbc:postgresql://', 'postgres://');
+    }
+  } 
+  // CASO B: Tenemos una URL estándar de Postgres
+  else if (rawUrl.startsWith('postgres://')) {
+    // Si la URL no tiene la contraseña (falta el ':'), intentamos inyectarla
     if (!rawUrl.includes(':') || !rawUrl.includes('@')) {
        const hostPart = rawUrl.replace('postgres://', '').split('/')[0];
        const dbPart = rawUrl.split('/').pop()?.split('?')[0] || 'neondb';
@@ -36,8 +44,14 @@ export default async function handler(req, res) {
     } else {
       finalConnectionString = rawUrl;
     }
-  } else if (dbUser && dbPass) {
+  } 
+  // CASO C: No hay URL, construimos una básica
+  else if (dbUser && dbPass) {
     finalConnectionString = `postgres://${dbUser}:${dbPass}@ep-mute-frog-agiqzzew-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require`;
+  }
+
+  if (!finalConnectionString) {
+    return res.status(500).json({ error: "Configuración de conexión incompleta en Vercel." });
   }
 
   const client = new Client({
@@ -47,11 +61,6 @@ export default async function handler(req, res) {
 
   try {
     await client.connect();
-    
-    // Opcional: configurar el search_path basado en la variable de entorno
-    if (dbSchema) {
-      await client.query(`SET search_path TO ${dbSchema}`);
-    }
     
     let finalParams = [];
     let finalSql = sql;
@@ -70,21 +79,10 @@ export default async function handler(req, res) {
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('SERVERLESS_API_ERROR:', error);
-    
-    // DIAGNÓSTICO DE ESQUEMAS SI LA TABLA NO EXISTE
-    let extraInfo = {};
-    if (error.code === '42P01') {
-      try {
-        const tables = await client.query("SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema NOT IN ('information_schema', 'pg_catalog') LIMIT 20");
-        extraInfo.available_tables = tables.rows;
-      } catch (e) {}
-    }
-
     res.status(500).json({ 
       error: error.message,
-      code: error.code,
-      hint: "La tabla no existe en el esquema especificado.",
-      ...extraInfo
+      hint: "SCRAM error usually means password mismatch or missing connection details.",
+      connection_type: finalConnectionString.split('@')[1] ? 'host-only-hidden' : 'invalid'
     });
   } finally {
     try { await client.end(); } catch (e) {}

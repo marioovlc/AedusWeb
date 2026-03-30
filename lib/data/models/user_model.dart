@@ -1,5 +1,5 @@
 class Usuario {
-  final int id;
+  final String id;
   final String nombre;
   final String email;
   final String rol;
@@ -17,11 +17,11 @@ class Usuario {
 
   factory Usuario.fromMap(Map<String, dynamic> map) {
     return Usuario(
-      id: map['id'] as int,
-      nombre: map['nombre'] as String,
-      email: map['email'] as String,
-      rol: map['rol'] as String,
-      status: map['status'] as String,
+      id: map['id'].toString(),
+      nombre: map['name'] as String? ?? 'Desconocido',
+      email: map['email'] as String? ?? '',
+      rol: map['role'] as String? ?? 'USER',
+      status: (map['banned'] == true) ? 'BANEADO' : 'ACTIVO',
       aeduCoins: map['aeducoins'] as int? ?? 0,
     );
   }
@@ -29,10 +29,10 @@ class Usuario {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'nombre': nombre,
+      'name': nombre,
       'email': email,
-      'rol': rol,
-      'status': status,
+      'role': rol,
+      'banned': status == 'BANEADO',
       'aeducoins': aeduCoins,
     };
   }
