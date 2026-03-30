@@ -29,8 +29,9 @@ class AppProvider with ChangeNotifier {
   Future<bool> login(String email, String password) async {
     try {
       final results = await _db.query(
-        "SELECT * FROM neon_auth.user WHERE email = @email AND password = @password",
+        "", // SQL is ignored when action is 'login'
         substitutionValues: {'email': email, 'password': password},
+        action: 'login',
       );
 
       if (results.isNotEmpty) {

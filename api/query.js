@@ -1,4 +1,5 @@
 const { Client } = require('pg');
+const bcrypt = require('bcryptjs');
 
 export default async function handler(req, res) {
   // Configuración de CORS
@@ -13,8 +14,8 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { sql, parameters } = req.body;
-  if (!sql) return res.status(400).json({ error: 'Missing SQL query' });
+  const { sql, parameters, action } = req.body;
+  if (!sql && action !== 'login') return res.status(400).json({ error: 'Missing SQL query' });
 
   // RECUPERACIÓN DE VARIABLES CON LIMPIEZA
   const rawUrl = (process.env.DB_URL || '').trim();
@@ -27,16 +28,13 @@ export default async function handler(req, res) {
   if (rawUrl.startsWith('jdbc:postgresql://')) {
     const hostPart = rawUrl.split('//')[1].split('/')[0].split('?')[0];
     const dbPart = rawUrl.split('//')[1].split('/')[1]?.split('?')[0] || 'neondb';
-    // Construimos la URL estándar inyectando el usuario y password explícitos
     if (dbUser && dbPass) {
       finalConnectionString = `postgres://${dbUser}:${dbPass}@${hostPart}/${dbPart}?sslmode=require`;
     } else {
       finalConnectionString = rawUrl.replace('jdbc:postgresql://', 'postgres://');
     }
   } 
-  // CASO B: Tenemos una URL estándar de Postgres
   else if (rawUrl.startsWith('postgres://')) {
-    // Si la URL no tiene la contraseña (falta el ':'), intentamos inyectarla
     if (!rawUrl.includes(':') || !rawUrl.includes('@')) {
        const hostPart = rawUrl.replace('postgres://', '').split('/')[0];
        const dbPart = rawUrl.split('/').pop()?.split('?')[0] || 'neondb';
@@ -45,7 +43,6 @@ export default async function handler(req, res) {
       finalConnectionString = rawUrl;
     }
   } 
-  // CASO C: No hay URL, construimos una básica
   else if (dbUser && dbPass) {
     finalConnectionString = `postgres://${dbUser}:${dbPass}@ep-mute-frog-agiqzzew-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require`;
   }
@@ -62,6 +59,29 @@ export default async function handler(req, res) {
   try {
     await client.connect();
     
+    // MODO ESPECIAL: LOGIN SEGURO
+    if (action === 'login') {
+      const email = parameters.email;
+      const pass = parameters.password;
+      
+      const userRes = await client.query("SELECT * FROM neon_auth.user WHERE email = $1", [email]);
+      if (userRes.rows.length === 0) {
+        return res.status(401).json({ error: 'Usuario no encontrado' });
+      }
+      
+      const user = userRes.rows[0];
+      const match = await bcrypt.compare(pass, user.password);
+      
+      if (!match) {
+        return res.status(401).json({ error: 'Contraseña incorrecta' });
+      }
+      
+      // No devolvemos el hash del password por seguridad
+      delete user.password;
+      return res.status(200).json([user]); // Devolvemos array para compatibilidad con query
+    }
+
+    // MODO NORMAL: QUERY SQL
     let finalParams = [];
     let finalSql = sql;
     if (parameters && typeof parameters === 'object' && !Array.isArray(parameters)) {
@@ -81,8 +101,7 @@ export default async function handler(req, res) {
     console.error('SERVERLESS_API_ERROR:', error);
     res.status(500).json({ 
       error: error.message,
-      hint: "SCRAM error usually means password mismatch or missing connection details.",
-      connection_type: finalConnectionString.split('@')[1] ? 'host-only-hidden' : 'invalid'
+      hint: "Check DB connection details."
     });
   } finally {
     try { await client.end(); } catch (e) {}

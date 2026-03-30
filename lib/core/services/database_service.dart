@@ -35,9 +35,9 @@ class DatabaseService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> query(String sql, {Map<String, dynamic>? substitutionValues}) async {
+  Future<List<Map<String, dynamic>>> query(String sql, {Map<String, dynamic>? substitutionValues, String? action}) async {
     if (kIsWeb) {
-      return _queryWeb(sql, substitutionValues);
+      return _queryWeb(sql, substitutionValues, action: action);
     }
 
     if (_connection == null) await connect();
@@ -57,7 +57,7 @@ class DatabaseService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _queryWeb(String sql, Map<String, dynamic>? parameters) async {
+  Future<List<Map<String, dynamic>>> _queryWeb(String sql, Map<String, dynamic>? parameters, {String? action}) async {
     try {
       final response = await http.post(
         Uri.parse('/api/query'),
@@ -65,6 +65,7 @@ class DatabaseService {
         body: jsonEncode({
           'sql': sql,
           'parameters': parameters,
+          'action': action,
         }),
       );
 
