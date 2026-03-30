@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:postgres/postgres.dart';
 import '../config/env_config.dart';
 
@@ -9,11 +12,10 @@ class DatabaseService {
   Connection? _connection;
 
   Future<void> connect() async {
+    if (kIsWeb) return; // No direct connection on web
+
     final String user = EnvConfig.dbUser;
     final String pass = EnvConfig.dbPass;
-
-    // Simple extraction of host/port from JDBC URL or just hardcode for Neon if needed.
-    // Neon typically uses: ep-mute-frog-agiqzzew-pooler.c-2.eu-central-1.aws.neon.tech
     final host = 'ep-mute-frog-agiqzzew-pooler.c-2.eu-central-1.aws.neon.tech';
     const database = 'neondb';
 
@@ -27,27 +29,60 @@ class DatabaseService {
         ),
         settings: const ConnectionSettings(sslMode: SslMode.require),
       );
-      print('Connected to PostgreSQL (Neon)');
+      debugPrint('Connected to PostgreSQL (Neon)');
     } catch (e) {
-      print('Error connecting to DB: $e');
+      debugPrint('Error connecting to DB: $e');
     }
   }
 
   Future<List<Map<String, dynamic>>> query(String sql, {Map<String, dynamic>? substitutionValues}) async {
-    if (_connection == null) await connect();
-    final result = await _connection?.execute(sql, parameters: substitutionValues);
-    
-    // Convert Result to List<Map>
-    List<Map<String, dynamic>> list = [];
-    if (result != null) {
-      for (final row in result) {
-        list.add(row.toColumnMap());
-      }
+    if (kIsWeb) {
+      return _queryWeb(sql, substitutionValues);
     }
-    return list;
+
+    if (_connection == null) await connect();
+    try {
+      final result = await _connection?.execute(sql, parameters: substitutionValues);
+      
+      List<Map<String, dynamic>> list = [];
+      if (result != null) {
+        for (final row in result) {
+          list.add(row.toColumnMap());
+        }
+      }
+      return list;
+    } catch (e) {
+      debugPrint('Query error: $e');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _queryWeb(String sql, Map<String, dynamic>? parameters) async {
+    try {
+      final response = await http.post(
+        Uri.parse('/api/query'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'sql': sql,
+          'parameters': parameters,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        debugPrint('Web Query Error: ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Web connection error: $e');
+      return [];
+    }
   }
 
   Future<void> close() async {
+    if (kIsWeb) return;
     await _connection?.close();
     _connection = null;
   }
