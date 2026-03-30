@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../data/models/incident_model.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class IncidenciasPage extends StatefulWidget {
   const IncidenciasPage({super.key});
@@ -19,6 +21,15 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
   String _selectedCategory = 'Hardware';
   bool _isCreating = false;
   String? _aiSuggestion;
+  File? _selectedImage;
+  final _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() => _selectedImage = File(pickedFile.path));
+    }
+  }
 
   Future<void> _submitIncident() async {
     if (_tituloController.text.isEmpty) return;
@@ -33,6 +44,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
       _descController.text,
       aulaId,
       catId,
+      imagenUrl: _selectedImage?.path, // Simplified for now
     );
     
     _tituloController.clear();
@@ -40,6 +52,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     setState(() {
       _isCreating = false;
       _aiSuggestion = null;
+      _selectedImage = null;
     });
 
     if (mounted) {
@@ -137,9 +150,9 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                 Row(
                   children: [
                     OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: _pickImage,
                       icon: const Icon(Icons.attach_file),
-                      label: const Text('ADJUNTAR IMAGEN'),
+                      label: Text(_selectedImage == null ? 'ADJUNTAR IMAGEN' : 'CAMBIAR IMAGEN'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.all(16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -164,6 +177,13 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                     ),
                   ],
                 ),
+                if (_selectedImage != null) ...[
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(_selectedImage!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                  ),
+                ],
                 if (_aiSuggestion != null) ...[
                   const SizedBox(height: 24),
                   _buildAIHintCard(_aiSuggestion!),
@@ -295,9 +315,11 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
 
   Widget _buildTicketCard(Incidencia incident) {
     Color statusColor;
-    switch (incident.estado) {
+    switch (incident.estadoNombre.toUpperCase()) {
+      case 'ACABADO':
       case 'RESUELTO': statusColor = AppTheme.success; break;
-      case 'PENDIENTE': statusColor = Colors.orange; break;
+      case 'PENDIENTE':
+      case 'EN REVISION': statusColor = Colors.orange; break;
       default: statusColor = AppTheme.primaryBlue;
     }
 
@@ -328,7 +350,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                         incident.titulo,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
-                      _buildStatusBadge(incident.estado, statusColor),
+                      _buildStatusBadge(incident.estadoNombre, statusColor),
                     ],
                   ),
                   const SizedBox(height: 4),

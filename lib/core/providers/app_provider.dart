@@ -28,7 +28,7 @@ class AppProvider with ChangeNotifier {
   List<Mensaje> get mensajes => _mensajes;
   Map<String, String> get kpis => _kpis;
 
-  int get pendingIncidentsCount => _incidencias.where((i) => i.estado == 'PENDIENTE').length;
+  int get pendingIncidentsCount => _incidencias.where((i) => i.estadoNombre == 'PENDIENTE' || i.estadoNombre == 'NO LEIDO').length;
 
   Future<void> fetchAllUsers() async {
     final results = await _db.query("SELECT * FROM neon_auth.user ORDER BY name ASC");
@@ -71,13 +71,15 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> _fetchIncidencias() async {
-    final results = await _db.query("SELECT * FROM gestion_incidencias.incidencias ORDER BY fecha DESC");
+    final results = await _db.query(
+      "SELECT i.*, e.nombre as estado_nombre FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id ORDER BY i.fecha DESC"
+    );
     _incidencias = results.map((m) => Incidencia.fromMap(m)).toList();
   }
 
   Future<void> _fetchKPIs() async {
     final results = await _db.query(
-      "SELECT estado, count(*) FROM gestion_incidencias.incidencias GROUP BY estado"
+      "SELECT e.nombre as estado, count(*) FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id GROUP BY e.nombre"
     );
     
     int total = 0;
@@ -85,7 +87,7 @@ class AppProvider with ChangeNotifier {
     int resueltas = 0;
 
     for (final row in results) {
-      final estado = row['estado'] as String;
+      final estado = row['estado'].toString().toUpperCase();
       final count = int.parse(row['count'].toString());
       total += count;
       if (estado == 'PENDIENTE' || estado == 'NO LEIDO') pendientes += count;
@@ -136,16 +138,17 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> createIncidencia(String titulo, String descripcion, int aulaId, int categoriaId) async {
+  Future<void> createIncidencia(String titulo, String descripcion, int aulaId, int categoriaId, {String? imagenUrl}) async {
     if (_currentUser == null) return;
     await _db.query(
-      "INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado, fecha) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 'PENDIENTE', NOW())",
+      "INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img)",
       substitutionValues: {
         'titulo': titulo,
         'descripcion': descripcion,
         'uId': _currentUser!.id,
         'aId': aulaId,
         'cId': categoriaId,
+        'img': imagenUrl,
       },
     );
     await refreshData();
