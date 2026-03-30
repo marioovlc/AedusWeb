@@ -77,16 +77,25 @@ class _MainLayoutState extends State<MainLayout> {
                 children: [
                   _buildSectionTitle('PRINCIPAL'),
                   _buildNavItem(context, 'Dashboard', FontAwesomeIcons.gaugeHigh, '/dashboard'),
-                  _buildNavItem(context, 'Incidencias', FontAwesomeIcons.exclamationTriangle, '/incidencias', badgeCount: 3),
+                  _buildNavItem(
+                    context, 
+                    'Incidencias', 
+                    FontAwesomeIcons.exclamationTriangle, 
+                    '/incidencias', 
+                    badgeCount: context.watch<AppProvider>().pendingIncidentsCount > 0 
+                        ? context.watch<AppProvider>().pendingIncidentsCount 
+                        : null,
+                  ),
                   _buildNavItem(context, 'Connect Hub', FontAwesomeIcons.comments, '/connect'),
                   
-                  const SizedBox(height: 24),
-                  
-                  _buildSectionTitle('ADMINISTRACIÓN'),
-                  _buildNavItem(context, 'Usuarios', FontAwesomeIcons.users, '/users'),
-                  _buildNavItem(context, 'Monitorización', FontAwesomeIcons.chartLine, '/monitoring'),
-                  _buildNavItem(context, 'Logs de Sistema', FontAwesomeIcons.history, '/logs'),
-                  _buildNavItem(context, 'Tienda', FontAwesomeIcons.shop, '/shop'),
+                  if (context.watch<AppProvider>().currentUser?.rol == 'Administrador') ...[
+                    const SizedBox(height: 24),
+                    _buildSectionTitle('ADMINISTRACIÓN'),
+                    _buildNavItem(context, 'Usuarios', FontAwesomeIcons.users, '/users'),
+                    _buildNavItem(context, 'Monitorización', FontAwesomeIcons.chartLine, '/monitoring'),
+                    _buildNavItem(context, 'Logs de Sistema', FontAwesomeIcons.history, '/logs'),
+                    _buildNavItem(context, 'Tienda', FontAwesomeIcons.shop, '/shop'),
+                  ],
                 ],
               ),
             ),
@@ -101,9 +110,13 @@ class _MainLayoutState extends State<MainLayout> {
             child: Column(
               children: [
                 _buildNavItem(context, 'Configuración', FontAwesomeIcons.cog, '/settings'),
-                _buildNavItem(context, 'Cerrar Sesión', FontAwesomeIcons.signOutAlt, '/logout', 
+                _buildNavItem(context, 'Cerrar Sesión', FontAwesomeIcons.signOutAlt, '/login', 
                   hoverColor: Colors.red.withValues(alpha: 0.1),
                   iconColor: AppTheme.textLowPriority,
+                  onTap: () {
+                    context.read<AppProvider>().logout();
+                    Navigator.pushReplacementNamed(context, '/login');
+                  },
                 ),
               ],
             ),
@@ -136,6 +149,7 @@ class _MainLayoutState extends State<MainLayout> {
     int? badgeCount,
     Color? hoverColor,
     Color? iconColor,
+    VoidCallback? onTap,
   }) {
     bool isActive = widget.currentRoute == route;
 
@@ -146,7 +160,10 @@ class _MainLayoutState extends State<MainLayout> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        onTap: () {},
+        onTap: onTap ?? () {
+          if (isActive) return;
+          Navigator.pushReplacementNamed(context, route);
+        },
         dense: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         hoverColor: hoverColor ?? AppTheme.primaryBlue.withValues(alpha: 0.05),

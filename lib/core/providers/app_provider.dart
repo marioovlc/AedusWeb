@@ -16,12 +16,22 @@ class AppProvider with ChangeNotifier {
     'Resueltas': '0',
     'Usuarios Activos': '0',
   };
+  List<Usuario> _usuariosAdmin = [];
 
   Usuario? get currentUser => _currentUser;
   List<Incidencia> get incidencias => _incidencias;
   List<Usuario> get contactos => _contactos;
+  List<Usuario> get usuariosAdmin => _usuariosAdmin;
   List<Mensaje> get mensajes => _mensajes;
   Map<String, String> get kpis => _kpis;
+
+  int get pendingIncidentsCount => _incidencias.where((i) => i.estado == 'PENDIENTE').length;
+
+  Future<void> fetchAllUsers() async {
+    final results = await _db.query("SELECT * FROM neon_auth.user ORDER BY name ASC");
+    _usuariosAdmin = results.map((m) => Usuario.fromMap(m)).toList();
+    notifyListeners();
+  }
 
   final DatabaseService _db = DatabaseService();
   final AIService _ai = AIService();

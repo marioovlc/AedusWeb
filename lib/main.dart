@@ -7,6 +7,8 @@ import 'presentation/layouts/main_layout.dart';
 import 'presentation/pages/dashboard_page.dart';
 import 'presentation/pages/incidencias_page.dart';
 import 'presentation/pages/connect_hub_page.dart';
+import 'presentation/pages/usuarios_page.dart';
+import 'presentation/pages/monitoring_page.dart';
 import 'presentation/pages/login_page.dart';
 
 void main() async {
@@ -51,6 +53,12 @@ class AedusApp extends StatelessWidget {
             break;
           case '/connect':
             page = const ConnectHubPage();
+            break;
+          case '/users':
+            page = const UsuariosPage();
+            break;
+          case '/monitoring':
+            page = const MonitoringPage();
             break;
           default:
             page = const LoginPage();
