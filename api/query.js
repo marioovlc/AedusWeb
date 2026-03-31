@@ -12,6 +12,7 @@ const ACTION_MAP = {
       detalles TEXT,
       fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    ALTER TABLE gestion_incidencias.logs ADD COLUMN IF NOT EXISTS fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
   `,
   // Se excluye la contraseña para no fugar datos sensibles
   get_users: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins FROM neon_auth.user ORDER BY name ASC`,
@@ -27,7 +28,7 @@ const ACTION_MAP = {
   reject_user: `DELETE FROM neon_auth.user WHERE id = @id RETURNING *`,
   update_user_role: `UPDATE neon_auth.user SET role = @rol WHERE id = @id RETURNING *`,
   update_user_status: `UPDATE neon_auth.user SET banned = @ban, "emailVerified" = @ev WHERE id = @id RETURNING *`,
-  get_logs: `SELECT l.*, u.name as usuario_nombre, u.email as usuario_email FROM gestion_incidencias.logs l LEFT JOIN neon_auth.user u ON l.usuario_id = u.id ORDER BY l.fecha DESC LIMIT 50`,
+  get_logs: `SELECT l.*, u.name as usuario_nombre, u.email as usuario_email FROM gestion_incidencias.logs l LEFT JOIN neon_auth.user u ON l.usuario_id::text = u.id::text ORDER BY l.fecha DESC LIMIT 50`,
   create_log: `INSERT INTO gestion_incidencias.logs (usuario_id, accion, detalles, fecha) VALUES (@uId, @acc, @det, NOW()) RETURNING *`
 };
 

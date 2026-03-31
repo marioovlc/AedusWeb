@@ -101,8 +101,12 @@ class MonitoringPage extends StatelessWidget {
     for (int i = 0; i < workloadStats.length; i++) {
         final double creadas = workloadStats[i]['creadas'];
         final double resueltas = workloadStats[i]['resueltas'];
-        if (creadas > maxY) maxY = creadas;
-        if (resueltas > maxY) maxY = resueltas;
+        if (creadas > maxY) {
+          maxY = creadas;
+        }
+        if (resueltas > maxY) {
+          maxY = resueltas;
+        }
         barGroups.add(_buildBarGroup(i, creadas, resueltas));
     }
 
@@ -207,9 +211,13 @@ class MonitoringPage extends StatelessWidget {
           
           final Duration d = DateTime.now().difference(log.fecha);
           String timeStr = 'ahora';
-          if (d.inDays > 0) timeStr = 'hace ${d.inDays}d';
-          else if (d.inHours > 0) timeStr = 'hace ${d.inHours}h';
-          else if (d.inMinutes > 0) timeStr = 'hace ${d.inMinutes}m';
+          if (d.inDays > 0) {
+            timeStr = 'hace ${d.inDays}d';
+          } else if (d.inHours > 0) {
+            timeStr = 'hace ${d.inHours}h';
+          } else if (d.inMinutes > 0) {
+            timeStr = 'hace ${d.inMinutes}m';
+          }
 
           return ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),

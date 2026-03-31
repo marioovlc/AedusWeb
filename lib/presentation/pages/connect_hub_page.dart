@@ -145,7 +145,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
       onTap: () => _selectContact(contact),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       selected: isActive,
-      selectedTileColor: AppTheme.primaryBlue.withOpacity(0.05),
+      selectedTileColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
       leading: CircleAvatar(
         backgroundColor: isAI ? AppTheme.primaryBlue.withValues(alpha: 0.1) : AppTheme.cards,
         child: isAI 

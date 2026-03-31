@@ -200,6 +200,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: ['Administrador', 'Mantenimiento', 'USER'].map((r) {
+                  // ignore: deprecated_member_use
                   return RadioListTile<String>(
                     title: Text(r),
                     value: r,
@@ -250,7 +251,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
                     title: const Text('Cuenta Aprobada (Activa)'),
                     subtitle: const Text('Permite al usuario acceder al sistema', style: TextStyle(fontSize: 12)),
                     value: isActive,
-                    activeColor: AppTheme.success,
+                    activeThumbColor: AppTheme.success,
                     onChanged: (val) => setState(() => isActive = val),
                   ),
                   const Divider(),
@@ -258,7 +259,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
                     title: const Text('Restringir Acceso (Baneado)'),
                     subtitle: const Text('Deniega permanentemente el acceso', style: TextStyle(fontSize: 12)),
                     value: isBanned,
-                    activeColor: AppTheme.danger,
+                    activeThumbColor: AppTheme.danger,
                     onChanged: (val) => setState(() => isBanned = val),
                   ),
                 ],
