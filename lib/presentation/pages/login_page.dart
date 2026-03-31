@@ -51,20 +51,27 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const SizedBox(height: 10),
                 Image.asset(
                   'lib/assets/aedus.png',
-                  height: 60,
+                  height: 120, // Increased size
                   fit: BoxFit.contain,
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'Aedus Login',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 24),
+                const SizedBox(height: 32),
+                const Text(
+                  'Gestión Inteligente de Incidencias',
+                  style: TextStyle(
+                    color: AppTheme.primaryBlue, 
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                    fontSize: 16
+                  ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Bienvenido de nuevo. Inicia sesión para continuar.',
-                  style: TextStyle(color: AppTheme.textLowPriority),
+                  'Inicia sesión para acceder a tu panel de control.',
+                  style: TextStyle(color: AppTheme.textLowPriority, fontSize: 13),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),

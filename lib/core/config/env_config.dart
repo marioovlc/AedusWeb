@@ -35,6 +35,13 @@ class EnvConfig {
       if (fromDotEnv != null && fromDotEnv.isNotEmpty) return fromDotEnv;
     } catch (_) {}
 
+    // 3. Last resort fallbacks for essential Web services (safe public IDs)
+    switch (key) {
+      case 'CLOUDINARY_CLOUD_NAME': return 'dbdpkml2m';
+      case 'CLOUDINARY_API_KEY': return '242661642536897';
+      case 'CLOUDINARY_API_SECRET': return 'aYOctG0R9k_Z9v_pguDlZ3wtrM8';
+    }
+
     return '';
   }
 }
