@@ -26,7 +26,7 @@ class _MainLayoutState extends State<MainLayout> {
     return Scaffold(
       drawer: isMobile ? _buildSidebar(context) : null,
       appBar: isMobile ? AppBar(
-        title: Image.asset('lib/assets/aedus.png', height: 30),
+        title: Image.asset('lib/assets/aedus.png', height: 45),
         backgroundColor: AppTheme.background,
       ) : null,
       body: Row(
@@ -52,8 +52,8 @@ class _MainLayoutState extends State<MainLayout> {
         children: [
           // Logo Area
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 40.0),
-            child: Image.asset('lib/assets/aedus.png', height: 40),
+            padding: const EdgeInsets.symmetric(vertical: 30.0),
+            child: Image.asset('lib/assets/aedus.png', height: 80),
           ),
 
           // Main Navigation
