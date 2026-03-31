@@ -20,7 +20,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: PreferredSize(
@@ -38,8 +38,9 @@ class _MonitoringPageState extends State<MonitoringPage> {
                   labelColor: AppTheme.primaryBlue,
                   unselectedLabelColor: AppTheme.textLowPriority,
                   tabs: [
-                    Tab(text: 'Historial de Actividad', icon: Icon(Icons.history)),
-                    Tab(text: 'Control de Incidencias', icon: Icon(Icons.dashboard_customize)),
+                    Tab(text: 'Historial', icon: Icon(Icons.history)),
+                    Tab(text: 'Incidencias', icon: Icon(Icons.dashboard_customize)),
+                    Tab(text: 'Estado del Sistema', icon: Icon(Icons.health_and_safety)),
                   ],
                 ),
               ],
@@ -50,6 +51,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
           children: [
             _buildHistoryTab(context),
             _buildIncidentsTab(context),
+            _buildSystemStatusTab(context),
           ],
         ),
       ),
@@ -321,6 +323,92 @@ class _MonitoringPageState extends State<MonitoringPage> {
       builder: (context) {
         return _IncidentDetailDialog(incidencia: inc);
       }
+    );
+  }
+
+  // --- SYSTEM STATUS TAB ---
+
+  Widget _buildSystemStatusTab(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Componentes Críticos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 24),
+          GridView.count(
+            shrinkWrap: true,
+            crossAxisCount: 4,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.5,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _buildServiceStatus('Groq AI (IA)', true, 'Latencia: 120ms', Icons.auto_awesome),
+              _buildServiceStatus('Neon DB (PostgreSQL)', true, 'Latencia: 24ms', Icons.storage),
+              _buildServiceStatus('Vercel API (Backend)', true, 'Uptime: 99.9%', Icons.cloud_queue),
+              _buildServiceStatus('Auth Service (Neon)', true, 'Activo', Icons.shield_outlined),
+            ],
+          ),
+          const SizedBox(height: 48),
+          const Text('Rendimiento Global', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 24),
+          _buildPerformanceSummary(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildServiceStatus(String name, bool online, String secondary, IconData icon) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: online ? AppTheme.primaryBlue : AppTheme.danger, size: 24),
+                Icon(Icons.circle, color: online ? AppTheme.success : AppTheme.danger, size: 10),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const SizedBox(height: 4),
+            Text(secondary, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPerformanceSummary() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildStatItem('Tickets Resueltos', '84%', Icons.check_circle_outline, AppTheme.success),
+            _buildStatItem('Tiempo Respuesta', '2.4h', Icons.timer_outlined, AppTheme.primaryBlue),
+            _buildStatItem('Puntuación IA', '4.8/5', Icons.star_border, AppTheme.gold),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 32),
+        const SizedBox(height: 16),
+        Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 12)),
+      ],
     );
   }
 

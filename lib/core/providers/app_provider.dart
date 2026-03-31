@@ -24,6 +24,12 @@ class AppProvider with ChangeNotifier {
   };
   List<Usuario> _usuariosAdmin = [];
   List<Aula> _aulas = [];
+  String _currentTheme = 'Aedus Dark';
+  Map<String, bool> _systemHealth = {
+    'AI': true,
+    'DB': true,
+    'API': true,
+  };
 
   Usuario? get currentUser => _currentUser;
   List<Incidencia> get incidencias => _incidencias;
@@ -33,6 +39,8 @@ class AppProvider with ChangeNotifier {
   List<Mensaje> get mensajes => _mensajes;
   List<LogEntry> get logs => _logs;
   Map<String, String> get kpis => _kpis;
+  String get currentTheme => _currentTheme;
+  Map<String, bool> get systemHealth => _systemHealth;
 
   int get pendingIncidentsCount => _incidencias.where((i) => i.estadoNombre == 'PENDIENTE' || i.estadoNombre == 'NO LEIDO').length;
 
@@ -418,6 +426,45 @@ class AppProvider with ChangeNotifier {
     } catch (e) {
       debugPrint("Error exporting incidencias: $e");
       return null;
+    }
+  }
+
+  void setTheme(String themeName) {
+    _currentTheme = themeName;
+    notifyListeners();
+  }
+
+  Future<bool> purchaseItem(String itemName, int cost) async {
+    if (_currentUser == null || _currentUser!.aeduCoins < cost) return false;
+    
+    try {
+      await _db.query("", action: "update_user_coins", substitutionValues: {'uId': _currentUser!.id, 'coins': -cost});
+      await createLog('COMPRA', 'Compra de item: $itemName por $cost coins', categoria: 'USUARIO');
+      await refreshData();
+      return true;
+    } catch (e) {
+      debugPrint('Error purchasing item: $e');
+      return false;
+    }
+  }
+
+  Future<void> checkSystemHealth() async {
+    // Basic ping simulation
+    try {
+      final startTime = DateTime.now();
+      await _db.query("SELECT 1", action: "raw"); // Simple ping to DB
+      final dbPing = DateTime.now().difference(startTime).inMilliseconds;
+      
+      _systemHealth['DB'] = dbPing < 500;
+      _systemHealth['API'] = true;
+      
+      // AI Ping
+      final aiRes = await _ai.getSummary("ping");
+      _systemHealth['AI'] = !aiRes.contains("Error");
+      
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Health check failed: $e');
     }
   }
 

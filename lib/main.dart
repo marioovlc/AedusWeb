@@ -11,6 +11,8 @@ import 'presentation/pages/usuarios_page.dart';
 import 'presentation/pages/monitoring_page.dart';
 import 'presentation/pages/login_page.dart';
 import 'presentation/pages/registration_page.dart';
+import 'presentation/pages/store_page.dart';
+import 'presentation/pages/settings_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,63 +36,63 @@ class AedusApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Aedus App',
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      darkTheme: AppTheme.darkTheme,
-      initialRoute: '/login', // Start with Login
-      onGenerateRoute: (settings) {
-        Widget page;
-        switch (settings.name) {
-          case '/login':
-            page = const LoginPage();
-            break;
-          case '/register':
-            page = const RegistrationPage();
-            break;
-          case '/dashboard':
-            page = const DashboardPage();
-            break;
-          case '/incidencias':
-            page = const IncidenciasPage();
-            break;
-          case '/connect':
-            page = const ConnectHubPage();
-            break;
-          case '/users':
-            page = const UsuariosPage();
-            break;
-          case '/monitoring':
-            page = const MonitoringPage();
-            break;
-          case '/logs':
-          case '/shop':
-          case '/settings':
-            page = Scaffold(
-              backgroundColor: AppTheme.background,
-              body: const Center(
-                child: Text('Funcionalidad en desarrollo', style: TextStyle(fontSize: 20, color: AppTheme.textLowPriority)),
+    return Consumer<AppProvider>(
+      builder: (context, provider, child) {
+        return MaterialApp(
+          title: 'Aedus App',
+          debugShowCheckedModeBanner: false,
+          themeMode: ThemeMode.dark,
+          darkTheme: AppTheme.getTheme(provider.currentTheme),
+          initialRoute: '/login', // Start with Login
+          onGenerateRoute: (settings) {
+            Widget page;
+            switch (settings.name) {
+              case '/login':
+                page = const LoginPage();
+                break;
+              case '/register':
+                page = const RegistrationPage();
+                break;
+              case '/dashboard':
+                page = const DashboardPage();
+                break;
+              case '/incidencias':
+                page = const IncidenciasPage();
+                break;
+              case '/connect':
+                page = const ConnectHubPage();
+                break;
+              case '/users':
+                page = const UsuariosPage();
+                break;
+              case '/monitoring':
+                page = const MonitoringPage();
+                break;
+              case '/shop':
+                page = const StorePage();
+                break;
+              case '/settings':
+                page = const SettingsPage();
+                break;
+              default:
+                page = const LoginPage();
+            }
+
+            // Only wrap with MainLayout if it's not the login or register page
+            if (settings.name == '/login' || settings.name == '/register') {
+              return MaterialPageRoute(builder: (context) => page);
+            }
+
+            return PageRouteBuilder(
+              settings: settings,
+              pageBuilder: (context, animation, secondaryAnimation) => MainLayout(
+                currentRoute: settings.name ?? '',
+                child: page,
               ),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
             );
-            break;
-          default:
-            page = const LoginPage();
-        }
-
-        // Only wrap with MainLayout if it's not the login or register page
-        if (settings.name == '/login' || settings.name == '/register') {
-          return MaterialPageRoute(builder: (context) => page);
-        }
-
-        return PageRouteBuilder(
-          settings: settings,
-          pageBuilder: (context, animation, secondaryAnimation) => MainLayout(
-            currentRoute: settings.name ?? '',
-            child: page,
-          ),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
           },
         );
       },

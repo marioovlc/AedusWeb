@@ -17,16 +17,38 @@ class AppTheme {
   static const Color danger = Color(0xFFDC2626);
   static const Color gold = Color(0xFFFCD34D);
 
-  static ThemeData get darkTheme {
+  static ThemeData getTheme(String themeName) {
+    Color bg = background;
+    Color pBlue = primaryBlue;
+    Color sIndigo = secondaryIndigo;
+
+    switch (themeName) {
+      case 'Midnight Blue':
+        bg = const Color(0xFF0F172A);
+        pBlue = const Color(0xFF38BDF8);
+        sIndigo = const Color(0xFF6366F1);
+        break;
+      case 'Cyberpunk':
+        bg = const Color(0xFF1A0B2E);
+        pBlue = const Color(0xFFFF00FF);
+        sIndigo = const Color(0xFF00FFFF);
+        break;
+      case 'Forest Dark':
+        bg = const Color(0xFF0F1713);
+        pBlue = const Color(0xFF10B981);
+        sIndigo = const Color(0xFF059669);
+        break;
+    }
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: background,
-      primaryColor: primaryBlue,
+      scaffoldBackgroundColor: bg,
+      primaryColor: pBlue,
       
-      colorScheme: const ColorScheme.dark(
-        primary: primaryBlue,
-        secondary: secondaryIndigo,
+      colorScheme: ColorScheme.dark(
+        primary: pBlue,
+        secondary: sIndigo,
         surface: surface,
         onSurface: textHighPriority,
         error: danger,
@@ -38,13 +60,6 @@ class AppTheme {
           fontSize: 30,
           fontWeight: FontWeight.bold,
           color: textHighPriority,
-          shadows: [
-            Shadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              offset: const Offset(0, 4),
-              blurRadius: 8,
-            ),
-          ],
         ),
         headlineLarge: GoogleFonts.inter(
           fontSize: 24,
@@ -83,7 +98,7 @@ class AppTheme {
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryBlue,
+          backgroundColor: pBlue,
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -106,7 +121,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryBlue, width: 2),
+          borderSide: BorderSide(color: pBlue, width: 2),
         ),
         labelStyle: const TextStyle(color: textLowPriority),
       ),

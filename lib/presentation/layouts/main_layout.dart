@@ -87,14 +87,13 @@ class _MainLayoutState extends State<MainLayout> {
                         : null,
                   ),
                   _buildNavItem(context, 'Connect Hub', FontAwesomeIcons.comments, '/connect'),
+                  _buildNavItem(context, 'Tienda', FontAwesomeIcons.shop, '/shop'),
                   
                   if (context.watch<AppProvider>().currentUser?.rol == 'Administrador' || context.watch<AppProvider>().currentUser?.rol.toUpperCase() == 'ADMIN') ...[
                     const SizedBox(height: 24),
                     _buildSectionTitle('ADMINISTRACIÓN'),
                     _buildNavItem(context, 'Usuarios', FontAwesomeIcons.users, '/users'),
                     _buildNavItem(context, 'Monitorización', FontAwesomeIcons.chartLine, '/monitoring'),
-                    _buildNavItem(context, 'Logs de Sistema', FontAwesomeIcons.clockRotateLeft, '/logs'),
-                    _buildNavItem(context, 'Tienda', FontAwesomeIcons.shop, '/shop'),
                   ],
                 ],
               ),
