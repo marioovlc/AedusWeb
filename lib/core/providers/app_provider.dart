@@ -254,6 +254,24 @@ class AppProvider with ChangeNotifier {
     );
   }
 
+  Future<void> approveUser(String id) async {
+    await _db.query(
+      "",
+      action: "approve_user",
+      substitutionValues: {'id': id},
+    );
+    await fetchAllUsers();
+  }
+
+  Future<void> rejectUser(String id) async {
+    await _db.query(
+      "",
+      action: "reject_user",
+      substitutionValues: {'id': id},
+    );
+    await fetchAllUsers();
+  }
+
   void logout() {
     _currentUser = null;
     _incidencias = [];

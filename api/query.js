@@ -24,7 +24,9 @@ const ACTION_MAP = {
   get_mensajes: `SELECT * FROM gestion_incidencias.mensajes WHERE (usuario_id = @me AND receptor_id = @other) OR (usuario_id = @other AND receptor_id = @me) ORDER BY fecha ASC`,
   create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img) RETURNING *`,
   send_message: `INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, fecha, leido) VALUES (@me, @other, @txt, @img, @aud, NOW(), false) RETURNING *`,
-  request_user: `INSERT INTO gestion_incidencias.solicitudes_usuario (nombre, email, password_hash, motivo, fecha_solicitud, estado) VALUES (@nom, @em, @pass, @mot, NOW(), 'PENDIENTE') RETURNING *`
+  request_user: `INSERT INTO neon_auth.user (name, email, password, rol, status, aedu_coins) VALUES (@nom, @em, @pass, 'USER', 'INACTIVO', 0) RETURNING *`,
+  approve_user: `UPDATE neon_auth.user SET status = 'ACTIVO' WHERE id = @id RETURNING *`,
+  reject_user: `DELETE FROM neon_auth.user WHERE id = @id RETURNING *`
 };
 
 export default async function handler(req, res) {

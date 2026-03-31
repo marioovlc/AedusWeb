@@ -32,7 +32,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
           _buildHeader(),
           const SizedBox(height: 32),
           Expanded(
-            child: _buildUserTable(users),
+            child: _buildUserTable(context, users),
           ),
         ],
       ),
@@ -66,7 +66,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
     );
   }
 
-  Widget _buildUserTable(List<Usuario> users) {
+  Widget _buildUserTable(BuildContext context, List<Usuario> users) {
     return Card(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -81,14 +81,14 @@ class _UsuariosPageState extends State<UsuariosPage> {
               DataColumn(label: Text('COINS', style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(label: Text('ACCIONES', style: TextStyle(fontWeight: FontWeight.bold))),
             ],
-            rows: users.map((u) => _buildUserRow(u)).toList(),
+            rows: users.map((u) => _buildUserRow(context, u)).toList(),
           ),
         ),
       ),
     );
   }
 
-  DataRow _buildUserRow(Usuario user) {
+  DataRow _buildUserRow(BuildContext context, Usuario user) {
     return DataRow(
       cells: [
         DataCell(
@@ -109,12 +109,27 @@ class _UsuariosPageState extends State<UsuariosPage> {
         DataCell(_buildStatusBadge(user.status)),
         DataCell(Text('🪙 ${user.aeduCoins}')),
         DataCell(
-          Row(
-            children: [
-              IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () {}),
-              IconButton(icon: const Icon(Icons.shield, size: 18), onPressed: () {}),
-            ],
-          ),
+          user.status == 'INACTIVO' 
+          ? Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.check_circle_outline, color: AppTheme.success, size: 22), 
+                  tooltip: 'Aprobar Solicitud',
+                  onPressed: () => context.read<AppProvider>().approveUser(user.id)
+                ),
+                IconButton(
+                  icon: const Icon(Icons.cancel_outlined, color: AppTheme.danger, size: 22), 
+                  tooltip: 'Rechazar',
+                  onPressed: () => context.read<AppProvider>().rejectUser(user.id)
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.shield, size: 18), onPressed: () {}),
+              ],
+            ),
         ),
       ],
     );
@@ -136,8 +151,20 @@ class _UsuariosPageState extends State<UsuariosPage> {
   }
 
   Widget _buildStatusBadge(String status) {
-    final isBanned = status == 'BANEADO';
-    final color = isBanned ? AppTheme.danger : AppTheme.success;
+    Color color;
+    String label;
+    
+    if (status == 'BANEADO') {
+      color = AppTheme.danger;
+      label = 'Baneado';
+    } else if (status == 'INACTIVO') {
+      color = Colors.orange;
+      label = 'Pendiente';
+    } else {
+      color = AppTheme.success;
+      label = 'Activo';
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -147,7 +174,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
-        Text(isBanned ? 'Baneado' : 'Activo', style: TextStyle(color: color, fontSize: 13)),
+        Text(label, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold)),
       ],
     );
   }

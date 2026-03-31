@@ -21,7 +21,7 @@ class Usuario {
       nombre: map['name'] as String? ?? 'Desconocido',
       email: map['email'] as String? ?? '',
       rol: map['role'] as String? ?? 'USER',
-      status: (map['banned'] == true) ? 'BANEADO' : 'ACTIVO',
+      status: map['status']?.toString() ?? ((map['banned'] == true) ? 'BANEADO' : 'ACTIVO'),
       aeduCoins: map['aeducoins'] as int? ?? 0,
     );
   }
@@ -32,7 +32,7 @@ class Usuario {
       'name': nombre,
       'email': email,
       'role': rol,
-      'banned': status == 'BANEADO',
+      'status': status,
       'aeducoins': aeduCoins,
     };
   }
