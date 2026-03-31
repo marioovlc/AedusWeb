@@ -1,21 +1,66 @@
 const { Client } = require('pg');
 const bcrypt = require('bcryptjs');
 
+// ACTION MAP - Sentencias SQL seguras predefinidas
+const ACTION_MAP = {
+  init_db: `
+    CREATE SCHEMA IF NOT EXISTS gestion_incidencias;
+    CREATE TABLE IF NOT EXISTS gestion_incidencias.solicitudes_usuario (
+      id SERIAL PRIMARY KEY,
+      nombre VARCHAR(100) NOT NULL,
+      email VARCHAR(100) NOT NULL,
+      password_hash TEXT NOT NULL,
+      motivo TEXT,
+      fecha_solicitud TIMESTAMP DEFAULT NOW(),
+      estado VARCHAR(20) DEFAULT 'PENDIENTE'
+    );
+  `,
+  // Se excluye la contraseña para no fugar datos sensibles
+  get_users: `SELECT id, name, email, rol, status, aedu_coins FROM neon_auth.user ORDER BY name ASC`,
+  get_incidencias: `SELECT i.*, e.nombre as estado_nombre FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id ORDER BY i.fecha DESC`,
+  get_kpis: `SELECT e.nombre as estado, count(*) as count FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id GROUP BY e.nombre`,
+  get_contactos: `SELECT id, name, email, rol, status, aedu_coins FROM neon_auth.user WHERE id != @id`,
+  get_aulas: `SELECT * FROM gestion_incidencias.aulas ORDER BY nombre ASC`,
+  get_mensajes: `SELECT * FROM gestion_incidencias.mensajes WHERE (usuario_id = @me AND receptor_id = @other) OR (usuario_id = @other AND receptor_id = @me) ORDER BY fecha ASC`,
+  create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img) RETURNING *`,
+  send_message: `INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, fecha, leido) VALUES (@me, @other, @txt, @img, @aud, NOW(), false) RETURNING *`,
+  request_user: `INSERT INTO gestion_incidencias.solicitudes_usuario (nombre, email, password_hash, motivo, fecha_solicitud, estado) VALUES (@nom, @em, @pass, @mot, NOW(), 'PENDIENTE') RETURNING *`
+};
+
 export default async function handler(req, res) {
-  // Configuración de CORS
+  // Configuración de Seguridad y CORS Restringido
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || '*'; // En prod debería ser aedus-web.vercel.app
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-API-KEY'
   );
+  // Security Headers
+  res.setHeader('Content-Security-Policy', "default-src 'self'");
+  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { sql, parameters, action } = req.body;
-  if (!sql && action !== 'login') return res.status(400).json({ error: 'Missing SQL query' });
+  // VALIDACIÓN DE API KEY (PROTECCIÓN CONTRA ACCESO PÚBLICO)
+  const apiKey = req.headers['x-api-key'];
+  const expectedApiKey = process.env.INTERNAL_API_KEY;
+  
+  if (!expectedApiKey) {
+    console.error('SERVER MISCONFIGURATION: INTERNAL_API_KEY is not set');
+    return res.status(500).json({ error: 'Server misconfiguration' });
+  }
+  
+  if (apiKey !== expectedApiKey) {
+    return res.status(403).json({ error: 'Forbidden: Invalid API Key' });
+  }
+
+  const { parameters, action } = req.body;
+  if (!action) return res.status(400).json({ error: 'Missing action' });
 
   // RECUPERACIÓN DE VARIABLES CON LIMPIEZA
   const rawUrl = (process.env.DB_URL || '').trim();
@@ -59,10 +104,10 @@ export default async function handler(req, res) {
   try {
     await client.connect();
     
-    // MODO ESPECIAL: LOGIN SEGURO
+    // MODO LOGIN
     if (action === 'login') {
-      const email = parameters.email;
-      const pass = parameters.password;
+      const email = parameters?.email;
+      const pass = parameters?.password;
       
       const userRes = await client.query("SELECT * FROM neon_auth.user WHERE email = $1", [email]);
       if (userRes.rows.length === 0) {
@@ -78,12 +123,23 @@ export default async function handler(req, res) {
       
       // No devolvemos el hash del password por seguridad
       delete user.password;
-      return res.status(200).json([user]); // Devolvemos array para compatibilidad con query
+      return res.status(200).json([user]); // Devolvemos array para compatibilidad
     }
 
-    // MODO NORMAL: QUERY SQL
+    // ACCIONES PREDEFINIDAS DEL MAPA
+    if (!ACTION_MAP[action]) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+
+    // INTERCEPT: Encriptar automática y de forma segura peticiones de usuario.
+    if (action === 'request_user' && parameters && parameters.pass) {
+      parameters.pass = await bcrypt.hash(parameters.pass, 10);
+    }
+
+    let baseSql = ACTION_MAP[action];
     let finalParams = [];
-    let finalSql = sql;
+    let finalSql = baseSql;
+
     if (parameters && typeof parameters === 'object' && !Array.isArray(parameters)) {
       const keys = Object.keys(parameters);
       keys.forEach((key, index) => {
@@ -91,19 +147,19 @@ export default async function handler(req, res) {
         finalSql = finalSql.replace(regex, `$${index + 1}`);
         finalParams.push(parameters[key]);
       });
-    } else {
-      finalParams = parameters || [];
     }
 
     const result = await client.query(finalSql, finalParams);
-    res.status(200).json(result.rows);
+    res.status(200).json(result.rows || []);
   } catch (error) {
     console.error('SERVERLESS_API_ERROR:', error);
     res.status(500).json({ 
-      error: error.message,
-      hint: "Check DB connection details."
+      error: 'Hubo un error al ejecutar la acción.',
+      // hint: solo en dev
+      ...(process.env.NODE_ENV !== 'production' && { details: error.message })
     });
   } finally {
     try { await client.end(); } catch (e) {}
   }
 }
+

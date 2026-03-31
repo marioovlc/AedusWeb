@@ -88,6 +88,11 @@ class _LoginPageState extends State<LoginPage> {
                         : const Text('INGRESAR'),
                   ),
                 ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/register'),
+                  child: const Text('Solicitar Usuario (Registrarse)', style: TextStyle(color: AppTheme.primaryBlue)),
+                ),
               ],
             ),
           ),

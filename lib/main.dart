@@ -10,6 +10,7 @@ import 'presentation/pages/connect_hub_page.dart';
 import 'presentation/pages/usuarios_page.dart';
 import 'presentation/pages/monitoring_page.dart';
 import 'presentation/pages/login_page.dart';
+import 'presentation/pages/registration_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +46,9 @@ class AedusApp extends StatelessWidget {
           case '/login':
             page = const LoginPage();
             break;
+          case '/register':
+            page = const RegistrationPage();
+            break;
           case '/dashboard':
             page = const DashboardPage();
             break;
@@ -64,8 +68,8 @@ class AedusApp extends StatelessWidget {
             page = const LoginPage();
         }
 
-        // Only wrap with MainLayout if it's not the login page
-        if (settings.name == '/login') {
+        // Only wrap with MainLayout if it's not the login or register page
+        if (settings.name == '/login' || settings.name == '/register') {
           return MaterialPageRoute(builder: (context) => page);
         }
 

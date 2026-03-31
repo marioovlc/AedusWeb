@@ -61,9 +61,11 @@ class DatabaseService {
     try {
       final response = await http.post(
         Uri.parse('/api/query'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': EnvConfig.internalApiKey,
+        },
         body: jsonEncode({
-          'sql': sql,
           'parameters': parameters,
           'action': action,
         }),

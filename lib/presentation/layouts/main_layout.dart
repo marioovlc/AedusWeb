@@ -51,10 +51,22 @@ class _MainLayoutState extends State<MainLayout> {
       child: Column(
         children: [
           // Logo Area
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 30.0),
-            child: Image.asset('lib/assets/aedus.png', height: 80),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+              border: Border(
+                bottom: BorderSide(color: AppTheme.borders.withValues(alpha: 0.5)),
+              ),
+            ),
+            child: Image.asset(
+              'lib/assets/aedus.png',
+              fit: BoxFit.contain,
+              height: 100,
+            ),
           ),
+          const SizedBox(height: 10),
 
           // Main Navigation
           Expanded(

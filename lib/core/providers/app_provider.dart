@@ -30,8 +30,21 @@ class AppProvider with ChangeNotifier {
 
   int get pendingIncidentsCount => _incidencias.where((i) => i.estadoNombre == 'PENDIENTE' || i.estadoNombre == 'NO LEIDO').length;
 
+  AppProvider() {
+    _initDatabaseTable();
+    refreshData();
+  }
+
+  Future<void> _initDatabaseTable() async {
+    try {
+      await _db.query("", action: "init_db");
+    } catch (e) {
+      debugPrint('Error initializing solicitudes_usuario table: $e');
+    }
+  }
+
   Future<void> fetchAllUsers() async {
-    final results = await _db.query("SELECT * FROM neon_auth.user ORDER BY name ASC");
+    final results = await _db.query("", action: "get_users");
     _usuariosAdmin = results.map((m) => Usuario.fromMap(m)).toList();
     notifyListeners();
   }
@@ -71,16 +84,12 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> _fetchIncidencias() async {
-    final results = await _db.query(
-      "SELECT i.*, e.nombre as estado_nombre FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id ORDER BY i.fecha DESC"
-    );
+    final results = await _db.query("", action: "get_incidencias");
     _incidencias = results.map((m) => Incidencia.fromMap(m)).toList();
   }
 
   Future<void> _fetchKPIs() async {
-    final results = await _db.query(
-      "SELECT e.nombre as estado, count(*) FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id GROUP BY e.nombre"
-    );
+    final results = await _db.query("", action: "get_kpis");
     
     int total = 0;
     int pendientes = 0;
@@ -103,7 +112,7 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> _fetchContactos() async {
-    final results = await _db.query("SELECT * FROM neon_auth.user WHERE id != @id", 
+    final results = await _db.query("", action: "get_contactos", 
       substitutionValues: {'id': _currentUser!.id});
     _contactos = results.map((m) => Usuario.fromMap(m)).toList();
     
@@ -121,7 +130,7 @@ class AppProvider with ChangeNotifier {
 
   Future<void> _fetchAulas() async {
     try {
-      final results = await _db.query("SELECT * FROM gestion_incidencias.aulas ORDER BY nombre ASC");
+      final results = await _db.query("", action: "get_aulas");
       _aulas = results.map((m) => Aula.fromMap(m)).toList();
     } catch (e) {
       debugPrint('Error fetching incidencias: $e');
@@ -143,7 +152,8 @@ class AppProvider with ChangeNotifier {
     }
 
     final results = await _db.query(
-      "SELECT * FROM gestion_incidencias.mensajes WHERE (usuario_id = @me AND receptor_id = @other) OR (usuario_id = @other AND receptor_id = @me) ORDER BY fecha ASC",
+      "",
+      action: "get_mensajes",
       substitutionValues: {'me': _currentUser!.id, 'other': receiverId},
     );
     _mensajes = results.map((m) => Mensaje.fromMap(m)).toList();
@@ -153,7 +163,8 @@ class AppProvider with ChangeNotifier {
   Future<void> createIncidencia(String titulo, String descripcion, int aulaId, int categoriaId, {String? imagenUrl}) async {
     if (_currentUser == null) return;
     await _db.query(
-      "INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img)",
+      "",
+      action: "create_incidencia",
       substitutionValues: {
         'titulo': titulo,
         'descripcion': descripcion,
@@ -191,7 +202,8 @@ class AppProvider with ChangeNotifier {
     try {
       // Standard messages: Persist in DB
       await _db.query(
-        "INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, fecha, leido) VALUES (@me, @other, @txt, @img, @aud, NOW(), false)",
+        "",
+        action: "send_message",
         substitutionValues: {
           'me': _currentUser!.id,
           'other': receiverId,
@@ -226,6 +238,20 @@ class AppProvider with ChangeNotifier {
 
   Future<String> getAISuggestion(String title, String description) async {
     return await _ai.getTicketSuggestion(title, description);
+  }
+
+  Future<void> requestUser(String nombre, String email, String password, String motivo) async {
+    // Vercel backend will handle the bcrypt hashing securely.
+    await _db.query(
+      "",
+      action: "request_user",
+      substitutionValues: {
+        'nom': nombre,
+        'em': email,
+        'pass': password,
+        'mot': motivo,
+      },
+    );
   }
 
   void logout() {
