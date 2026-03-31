@@ -46,18 +46,26 @@ class _MainLayoutState extends State<MainLayout> {
   Widget _buildSidebar(BuildContext context) {
     final provider = context.watch<AppProvider>();
     bool isCompact = provider.isCompact;
-    double width = isCompact ? 80 : 260;
-
-    return Container(
-      width: width,
+    
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      width: isCompact ? 84 : 260,
       height: double.infinity,
-      color: AppTheme.surface,
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        border: Border(right: BorderSide(color: AppTheme.borders.withValues(alpha: 0.5))),
+      ),
       child: Column(
         children: [
           // Logo Area
-          Container(
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
             width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: isCompact ? 20.0 : 40.0, horizontal: 10.0),
+            padding: EdgeInsets.symmetric(
+              vertical: isCompact ? 30.0 : 40.0, 
+              horizontal: isCompact ? 12.0 : 20.0
+            ),
             decoration: BoxDecoration(
               color: AppTheme.primaryBlue.withValues(alpha: 0.05),
               border: Border(
@@ -65,11 +73,11 @@ class _MainLayoutState extends State<MainLayout> {
               ),
             ),
             child: isCompact 
-              ? const Center(child: FaIcon(FontAwesomeIcons.solidStar, color: AppTheme.primaryBlue, size: 24))
+              ? const Center(child: FaIcon(FontAwesomeIcons.solidStar, color: AppTheme.primaryBlue, size: 28))
               : Image.asset(
                   'lib/assets/aedus.png',
                   fit: BoxFit.contain,
-                  height: 100,
+                  height: 80,
                 ),
           ),
           const SizedBox(height: 10),
@@ -77,7 +85,7 @@ class _MainLayoutState extends State<MainLayout> {
           // Main Navigation
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: isCompact ? 8.0 : 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: Column(
                 crossAxisAlignment: isCompact ? CrossAxisAlignment.center : CrossAxisAlignment.start,
                 children: [
@@ -112,7 +120,7 @@ class _MainLayoutState extends State<MainLayout> {
 
           // Bottom Actions
           Padding(
-            padding: EdgeInsets.all(isCompact ? 8.0 : 16.0),
+            padding: const EdgeInsets.all(12.0),
             child: Column(
               children: [
                 _buildNavItem(context, 'Configuración', FontAwesomeIcons.gear, '/settings', isCompact: isCompact),
@@ -161,41 +169,37 @@ class _MainLayoutState extends State<MainLayout> {
   }) {
     bool isActive = widget.currentRoute == route;
 
-    Widget navItem = Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        color: isActive ? AppTheme.primaryBlue.withValues(alpha: 0.1) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        onTap: onTap ?? () {
-          if (isActive) return;
-          Navigator.pushReplacementNamed(context, route);
-        },
-        dense: true,
-        contentPadding: isCompact ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        hoverColor: hoverColor ?? AppTheme.primaryBlue.withValues(alpha: 0.05),
-        leading: SizedBox(
-          width: isCompact ? 64 : null,
-          child: Center(
-            child: FaIcon(
-              icon, 
-              size: 18, 
-              color: isActive ? AppTheme.primaryBlue : (iconColor ?? AppTheme.textLowPriority),
+    Widget navContent;
+    if (isCompact) {
+      navContent = Center(
+        child: FaIcon(
+          icon, 
+          size: 20, 
+          color: isActive ? AppTheme.primaryBlue : (iconColor ?? AppTheme.textLowPriority),
+        ),
+      );
+    } else {
+      navContent = Row(
+        children: [
+          FaIcon(
+            icon, 
+            size: 18, 
+            color: isActive ? AppTheme.primaryBlue : (iconColor ?? AppTheme.textLowPriority),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: isActive ? AppTheme.textHighPriority : AppTheme.textLowPriority,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 14,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-        ),
-        title: isCompact ? null : Text(
-          title,
-          style: TextStyle(
-            color: isActive ? AppTheme.textHighPriority : AppTheme.textLowPriority,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            fontSize: 14,
-          ),
-        ),
-        trailing: !isCompact && badgeCount != null 
-          ? Container(
+          if (badgeCount != null)
+            Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: AppTheme.danger,
@@ -205,8 +209,30 @@ class _MainLayoutState extends State<MainLayout> {
                 badgeCount.toString(),
                 style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
               ),
-            )
-          : null,
+            ),
+        ],
+      );
+    }
+
+    Widget navItem = InkWell(
+      onTap: onTap ?? () {
+        if (isActive) return;
+        Navigator.pushReplacementNamed(context, route);
+      },
+      borderRadius: BorderRadius.circular(12),
+      hoverColor: hoverColor ?? AppTheme.primaryBlue.withValues(alpha: 0.05),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(
+          vertical: isCompact ? 16 : 12, 
+          horizontal: isCompact ? 0 : 16
+        ),
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: BoxDecoration(
+          color: isActive ? AppTheme.primaryBlue.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: navContent,
       ),
     );
 
