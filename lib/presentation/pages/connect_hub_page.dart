@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -26,9 +27,25 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
   final _audioPlayer = AudioPlayer();
   final _imagePicker = ImagePicker();
   bool _isRecording = false;
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startRefreshTimer();
+  }
+
+  void _startRefreshTimer() {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_activeContact != null && mounted) {
+        context.read<AppProvider>().fetchMessages(_activeContact!.id);
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _audioRecorder.dispose();
     _audioPlayer.dispose();
     _messageController.dispose();

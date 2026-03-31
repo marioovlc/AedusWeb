@@ -2,103 +2,112 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Aedus Premium Dark Palette
+  // Aedus Original (Dark) - Static Constants for compatibility
   static const Color background = Color(0xFF060D1C);
   static const Color surface = Color(0xFF0D1629);
   static const Color cards = Color(0xFF111F36);
   static const Color borders = Color(0xFF1C2D47);
-  
   static const Color primaryBlue = Color(0xFF4F8EF7);
   static const Color secondaryIndigo = Color(0xFF818CF8);
   static const Color textHighPriority = Color(0xFFF1F5F9);
   static const Color textLowPriority = Color(0xFF64748B);
-  
   static const Color success = Color(0xFF059669);
   static const Color danger = Color(0xFFDC2626);
   static const Color gold = Color(0xFFFCD34D);
-
+  
+  // Theme Helper
   static ThemeData getTheme(String themeName) {
-    Color bg = background;
-    Color pBlue = primaryBlue;
-    Color sIndigo = secondaryIndigo;
+    bool isLight = themeName == 'Blanco';
+    bool isDaltonic = themeName == 'Daltónico';
 
-    switch (themeName) {
-      case 'Midnight Blue':
-        bg = const Color(0xFF0F172A);
-        pBlue = const Color(0xFF38BDF8);
-        sIndigo = const Color(0xFF6366F1);
-        break;
-      case 'Cyberpunk':
-        bg = const Color(0xFF1A0B2E);
-        pBlue = const Color(0xFFFF00FF);
-        sIndigo = const Color(0xFF00FFFF);
-        break;
-      case 'Forest Dark':
-        bg = const Color(0xFF0F1713);
-        pBlue = const Color(0xFF10B981);
-        sIndigo = const Color(0xFF059669);
-        break;
+    Color bg = background;
+    Color surf = surface;
+    Color crd = cards;
+    Color brd = borders;
+    Color prim = primaryBlue;
+    Color txtHigh = const Color(0xFFF1F5F9);
+    Color txtLow = const Color(0xFF64748B);
+    Brightness brightness = Brightness.dark;
+
+    if (isLight) {
+      bg = const Color(0xFFF8FAFC);
+      surf = Colors.white;
+      crd = Colors.white;
+      brd = const Color(0xFFE2E8F0);
+      prim = const Color(0xFF2563EB);
+      txtHigh = const Color(0xFF0F172A);
+      txtLow = const Color(0xFF475569);
+      brightness = Brightness.light;
+    } else if (isDaltonic) {
+      bg = Colors.black;
+      surf = const Color(0xFF1A1A1A);
+      crd = const Color(0xFF262626);
+      brd = const Color(0xFF404040);
+      prim = const Color(0xFF2E86AB); // Cobalt Blue (Accessible)
+      txtHigh = Colors.white;
+      txtLow = const Color(0xFFA3A3A3);
     }
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: brightness,
       scaffoldBackgroundColor: bg,
-      primaryColor: pBlue,
+      primaryColor: prim,
       
-      colorScheme: ColorScheme.dark(
-        primary: pBlue,
-        secondary: sIndigo,
-        surface: surface,
-        onSurface: textHighPriority,
-        error: danger,
-        outline: borders,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: prim,
+        brightness: brightness,
+        primary: prim,
+        surface: surf,
+        onSurface: txtHigh,
+        error: const Color(0xFFDC2626),
+        outline: brd,
       ),
 
       textTheme: GoogleFonts.interTextTheme().copyWith(
         displayLarge: GoogleFonts.inter(
           fontSize: 30,
           fontWeight: FontWeight.bold,
-          color: textHighPriority,
+          color: txtHigh,
         ),
         headlineLarge: GoogleFonts.inter(
           fontSize: 24,
           fontWeight: FontWeight.bold,
-          color: textHighPriority,
+          color: txtHigh,
         ),
         headlineMedium: GoogleFonts.inter(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: textHighPriority,
+          color: txtHigh,
         ),
         bodyLarge: GoogleFonts.inter(
           fontSize: 16,
-          color: textHighPriority,
+          color: txtHigh,
         ),
         bodyMedium: GoogleFonts.inter(
           fontSize: 14,
-          color: textLowPriority,
+          color: txtLow,
         ),
       ),
 
       cardTheme: CardThemeData(
-        color: cards,
-        elevation: 0,
+        color: crd,
+        elevation: isLight ? 1 : 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: borders, width: 1),
+          side: BorderSide(color: brd, width: 1),
         ),
       ),
 
-      dividerTheme: const DividerThemeData(
-        color: borders,
+      dividerTheme: DividerThemeData(
+        color: brd,
         thickness: 1,
         space: 1,
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: pBlue,
+          backgroundColor: prim,
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -110,20 +119,20 @@ class AppTheme {
       
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surface,
+        fillColor: surf,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: borders),
+          borderSide: BorderSide(color: brd),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: borders),
+          borderSide: BorderSide(color: brd),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: pBlue, width: 2),
+          borderSide: BorderSide(color: prim, width: 2),
         ),
-        labelStyle: const TextStyle(color: textLowPriority),
+        labelStyle: TextStyle(color: txtLow),
       ),
     );
   }

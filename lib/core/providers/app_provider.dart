@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../data/models/user_model.dart';
 import '../../data/models/incident_model.dart';
 import '../../data/models/aula_model.dart';
@@ -9,6 +10,7 @@ import '../../data/models/message_model.dart';
 import '../../data/models/log_model.dart';
 import '../services/database_service.dart';
 import '../services/ai_service.dart';
+import '../utils/file_helper.dart';
 
 class AppProvider with ChangeNotifier {
   Usuario? _currentUser;
@@ -24,7 +26,8 @@ class AppProvider with ChangeNotifier {
   };
   List<Usuario> _usuariosAdmin = [];
   List<Aula> _aulas = [];
-  String _currentTheme = 'Aedus Dark';
+  String _currentTheme = 'Original';
+  bool _isCompact = false;
   Map<String, bool> _systemHealth = {
     'AI': true,
     'DB': true,
@@ -40,7 +43,13 @@ class AppProvider with ChangeNotifier {
   List<LogEntry> get logs => _logs;
   Map<String, String> get kpis => _kpis;
   String get currentTheme => _currentTheme;
+  bool get isCompact => _isCompact;
   Map<String, bool> get systemHealth => _systemHealth;
+
+  void setCompact(bool compact) {
+    _isCompact = compact;
+    notifyListeners();
+  }
 
   int get pendingIncidentsCount => _incidencias.where((i) => i.estadoNombre == 'PENDIENTE' || i.estadoNombre == 'NO LEIDO').length;
 
@@ -385,6 +394,12 @@ class AppProvider with ChangeNotifier {
     }
 
     String csv = const ListToCsvConverter().convert(rows);
+
+    if (kIsWeb) {
+      platformDownload(csv, "logs_${DateTime.now().millisecondsSinceEpoch}.csv");
+      return "Descargado";
+    }
+
     try {
       final directory = await getApplicationDocumentsDirectory();
       final path = "${directory.path}/logs_${DateTime.now().millisecondsSinceEpoch}.csv";
@@ -416,6 +431,12 @@ class AppProvider with ChangeNotifier {
     }
 
     String csv = const ListToCsvConverter().convert(rows);
+
+    if (kIsWeb) {
+      platformDownload(csv, "incidencias_${DateTime.now().millisecondsSinceEpoch}.csv");
+      return "Descargado";
+    }
+
     try {
       final directory = await getApplicationDocumentsDirectory();
       final path = "${directory.path}/incidencias_${DateTime.now().millisecondsSinceEpoch}.csv";

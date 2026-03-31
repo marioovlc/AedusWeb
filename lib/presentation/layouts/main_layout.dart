@@ -44,8 +44,12 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildSidebar(BuildContext context) {
+    final provider = context.watch<AppProvider>();
+    bool isCompact = provider.isCompact;
+    double width = isCompact ? 80 : 260;
+
     return Container(
-      width: 260,
+      width: width,
       height: double.infinity,
       color: AppTheme.surface,
       child: Column(
@@ -53,47 +57,50 @@ class _MainLayoutState extends State<MainLayout> {
           // Logo Area
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
+            padding: EdgeInsets.symmetric(vertical: isCompact ? 20.0 : 40.0, horizontal: 10.0),
             decoration: BoxDecoration(
               color: AppTheme.primaryBlue.withValues(alpha: 0.05),
               border: Border(
                 bottom: BorderSide(color: AppTheme.borders.withValues(alpha: 0.5)),
               ),
             ),
-            child: Image.asset(
-              'lib/assets/aedus.png',
-              fit: BoxFit.contain,
-              height: 100,
-            ),
+            child: isCompact 
+              ? const Center(child: FaIcon(FontAwesomeIcons.solidStar, color: AppTheme.primaryBlue, size: 24))
+              : Image.asset(
+                  'lib/assets/aedus.png',
+                  fit: BoxFit.contain,
+                  height: 100,
+                ),
           ),
           const SizedBox(height: 10),
 
           // Main Navigation
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: EdgeInsets.symmetric(horizontal: isCompact ? 8.0 : 16.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: isCompact ? CrossAxisAlignment.center : CrossAxisAlignment.start,
                 children: [
-                  _buildSectionTitle('PRINCIPAL'),
-                  _buildNavItem(context, 'Dashboard', FontAwesomeIcons.gaugeHigh, '/dashboard'),
+                  if (!isCompact) _buildSectionTitle('PRINCIPAL'),
+                  _buildNavItem(context, 'Dashboard', FontAwesomeIcons.gaugeHigh, '/dashboard', isCompact: isCompact),
                   _buildNavItem(
                     context, 
                     'Incidencias', 
                     FontAwesomeIcons.triangleExclamation, 
                     '/incidencias', 
-                    badgeCount: context.watch<AppProvider>().pendingIncidentsCount > 0 
-                        ? context.watch<AppProvider>().pendingIncidentsCount 
+                    isCompact: isCompact,
+                    badgeCount: provider.pendingIncidentsCount > 0 
+                        ? provider.pendingIncidentsCount 
                         : null,
                   ),
-                  _buildNavItem(context, 'Connect Hub', FontAwesomeIcons.comments, '/connect'),
-                  _buildNavItem(context, 'Tienda', FontAwesomeIcons.shop, '/shop'),
+                  _buildNavItem(context, 'Connect Hub', FontAwesomeIcons.comments, '/connect', isCompact: isCompact),
+                  _buildNavItem(context, 'Tienda', FontAwesomeIcons.shop, '/shop', isCompact: isCompact),
                   
-                  if (context.watch<AppProvider>().currentUser?.rol == 'Administrador' || context.watch<AppProvider>().currentUser?.rol.toUpperCase() == 'ADMIN') ...[
+                  if (provider.currentUser?.rol == 'Administrador' || provider.currentUser?.rol.toUpperCase() == 'ADMIN') ...[
                     const SizedBox(height: 24),
-                    _buildSectionTitle('ADMINISTRACIÓN'),
-                    _buildNavItem(context, 'Usuarios', FontAwesomeIcons.users, '/users'),
-                    _buildNavItem(context, 'Monitorización', FontAwesomeIcons.chartLine, '/monitoring'),
+                    if (!isCompact) _buildSectionTitle('ADMINISTRACIÓN'),
+                    _buildNavItem(context, 'Usuarios', FontAwesomeIcons.users, '/users', isCompact: isCompact),
+                    _buildNavItem(context, 'Monitorización', FontAwesomeIcons.chartLine, '/monitoring', isCompact: isCompact),
                   ],
                 ],
               ),
@@ -101,15 +108,16 @@ class _MainLayoutState extends State<MainLayout> {
           ),
 
           // User Card
-          _buildUserCard(context),
+          _buildUserCard(context, isCompact),
 
           // Bottom Actions
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(isCompact ? 8.0 : 16.0),
             child: Column(
               children: [
-                _buildNavItem(context, 'Configuración', FontAwesomeIcons.gear, '/settings'),
+                _buildNavItem(context, 'Configuración', FontAwesomeIcons.gear, '/settings', isCompact: isCompact),
                 _buildNavItem(context, 'Cerrar Sesión', FontAwesomeIcons.rightFromBracket, '/login', 
+                  isCompact: isCompact,
                   hoverColor: Colors.red.withValues(alpha: 0.1),
                   iconColor: AppTheme.textLowPriority,
                   onTap: () {
@@ -145,6 +153,7 @@ class _MainLayoutState extends State<MainLayout> {
     String title, 
     FaIconData icon, 
     String route, {
+    bool isCompact = false,
     int? badgeCount,
     Color? hoverColor,
     Color? iconColor,
@@ -152,7 +161,7 @@ class _MainLayoutState extends State<MainLayout> {
   }) {
     bool isActive = widget.currentRoute == route;
 
-    return Container(
+    Widget navItem = Container(
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
         color: isActive ? AppTheme.primaryBlue.withValues(alpha: 0.1) : Colors.transparent,
@@ -164,14 +173,20 @@ class _MainLayoutState extends State<MainLayout> {
           Navigator.pushReplacementNamed(context, route);
         },
         dense: true,
+        contentPadding: isCompact ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         hoverColor: hoverColor ?? AppTheme.primaryBlue.withValues(alpha: 0.05),
-        leading: FaIcon(
-          icon, 
-          size: 18, 
-          color: isActive ? AppTheme.primaryBlue : (iconColor ?? AppTheme.textLowPriority),
+        leading: SizedBox(
+          width: isCompact ? 64 : null,
+          child: Center(
+            child: FaIcon(
+              icon, 
+              size: 18, 
+              color: isActive ? AppTheme.primaryBlue : (iconColor ?? AppTheme.textLowPriority),
+            ),
+          ),
         ),
-        title: Text(
+        title: isCompact ? null : Text(
           title,
           style: TextStyle(
             color: isActive ? AppTheme.textHighPriority : AppTheme.textLowPriority,
@@ -179,7 +194,7 @@ class _MainLayoutState extends State<MainLayout> {
             fontSize: 14,
           ),
         ),
-        trailing: badgeCount != null 
+        trailing: !isCompact && badgeCount != null 
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
@@ -194,11 +209,37 @@ class _MainLayoutState extends State<MainLayout> {
           : null,
       ),
     );
+
+    if (isCompact) {
+      return Tooltip(
+        message: title,
+        preferBelow: false,
+        child: navItem,
+      );
+    }
+    return navItem;
   }
 
-  Widget _buildUserCard(BuildContext context) {
+  Widget _buildUserCard(BuildContext context, bool isCompact) {
     final user = context.watch<AppProvider>().currentUser;
     if (user == null) return const SizedBox.shrink();
+
+    if (isCompact) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: Tooltip(
+          message: '${user.nombre} (${user.rol})\n🪙 ${user.aeduCoins}',
+          child: CircleAvatar(
+            radius: 20,
+            backgroundColor: AppTheme.primaryBlue,
+            child: Text(
+              user.nombre.substring(0, 1).toUpperCase(),
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Container(
       margin: const EdgeInsets.all(16),

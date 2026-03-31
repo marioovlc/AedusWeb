@@ -39,19 +39,20 @@ class SettingsPage extends StatelessWidget {
               spacing: 16,
               runSpacing: 16,
               children: [
-                _ThemeCard(name: 'Aedus Dark', color: const Color(0xFF060D1C), isActive: currentTheme == 'Aedus Dark'),
-                _ThemeCard(name: 'Midnight Blue', color: const Color(0xFF0F172A), isActive: currentTheme == 'Midnight Blue'),
-                _ThemeCard(name: 'Cyberpunk', color: const Color(0xFF1A0B2E), isActive: currentTheme == 'Cyberpunk'),
-                _ThemeCard(name: 'Forest Dark', color: const Color(0xFF0F1713), isActive: currentTheme == 'Forest Dark'),
+                _ThemeCard(name: 'Blanco', color: const Color(0xFFF8FAFC), isActive: currentTheme == 'Blanco'),
+                _ThemeCard(name: 'Original', color: const Color(0xFF060D1C), isActive: currentTheme == 'Original'),
+                _ThemeCard(name: 'Daltónico', color: Colors.black, isActive: currentTheme == 'Daltónico'),
               ],
             ),
           ]),
 
           const SizedBox(height: 40),
           _buildSection('Preferencias del Sistema', children: [
-            _buildSettingToggle('Notificaciones Desktop', true),
-            _buildSettingToggle('Sonidos de Notificación', true),
-            _buildSettingToggle('Modo Compacto', false),
+            _buildSettingToggle(context, 'Notificaciones Desktop', true, (v) {}),
+            _buildSettingToggle(context, 'Sonidos de Notificación', true, (v) {}),
+            _buildSettingToggle(context, 'Modo Compacto', context.watch<AppProvider>().isCompact, (v) {
+              context.read<AppProvider>().setCompact(v);
+            }),
           ]),
         ],
       ),
@@ -82,7 +83,7 @@ class SettingsPage extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
+              backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
               child: Text(
                 user.nombre.substring(0, 2).toUpperCase(),
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
@@ -120,7 +121,7 @@ class SettingsPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -130,11 +131,11 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingToggle(String title, bool val) {
+  Widget _buildSettingToggle(BuildContext context, String title, bool val, Function(bool) onChanged) {
     return SwitchListTile(
       title: Text(title),
       value: val,
-      onChanged: (v) {},
+      onChanged: onChanged,
       contentPadding: EdgeInsets.zero,
       activeColor: AppTheme.primaryBlue,
     );
@@ -163,7 +164,7 @@ class _ThemeCard extends StatelessWidget {
             color: isActive ? AppTheme.primaryBlue : AppTheme.borders,
             width: isActive ? 3 : 1,
           ),
-          boxShadow: isActive ? [BoxShadow(color: AppTheme.primaryBlue.withOpacity(0.2), blurRadius: 10)] : null,
+          boxShadow: isActive ? [BoxShadow(color: AppTheme.primaryBlue.withValues(alpha: 0.2), blurRadius: 10)] : null,
         ),
         child: Stack(
           children: [
@@ -177,7 +178,7 @@ class _ThemeCard extends StatelessWidget {
               child: Text(
                 name,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: name == 'Blanco' ? Colors.black : Colors.white,
                   fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
