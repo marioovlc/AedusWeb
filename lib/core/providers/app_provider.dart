@@ -249,7 +249,6 @@ class AppProvider with ChangeNotifier {
         'nom': nombre,
         'em': email,
         'pass': password,
-        'mot': motivo,
       },
     );
   }
