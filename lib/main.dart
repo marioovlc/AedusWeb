@@ -64,6 +64,16 @@ class AedusApp extends StatelessWidget {
           case '/monitoring':
             page = const MonitoringPage();
             break;
+          case '/logs':
+          case '/shop':
+          case '/settings':
+            page = Scaffold(
+              backgroundColor: AppTheme.background,
+              body: const Center(
+                child: Text('Funcionalidad en desarrollo', style: TextStyle(fontSize: 20, color: AppTheme.textLowPriority)),
+              ),
+            );
+            break;
           default:
             page = const LoginPage();
         }
