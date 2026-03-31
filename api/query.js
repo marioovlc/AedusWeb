@@ -5,15 +5,6 @@ const bcrypt = require('bcryptjs');
 const ACTION_MAP = {
   init_db: `
     CREATE SCHEMA IF NOT EXISTS gestion_incidencias;
-    CREATE TABLE IF NOT EXISTS gestion_incidencias.solicitudes_usuario (
-      id SERIAL PRIMARY KEY,
-      nombre VARCHAR(100) NOT NULL,
-      email VARCHAR(100) NOT NULL,
-      password_hash TEXT NOT NULL,
-      motivo TEXT,
-      fecha_solicitud TIMESTAMP DEFAULT NOW(),
-      estado VARCHAR(20) DEFAULT 'PENDIENTE'
-    );
   `,
   // Se excluye la contraseña para no fugar datos sensibles
   get_users: `SELECT id, name, email, rol, status, aedu_coins FROM neon_auth.user ORDER BY name ASC`,
