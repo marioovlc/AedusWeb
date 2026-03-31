@@ -3,6 +3,7 @@ import '../../data/models/user_model.dart';
 import '../../data/models/incident_model.dart';
 import '../../data/models/aula_model.dart';
 import '../../data/models/message_model.dart';
+import '../../data/models/log_model.dart';
 import '../services/database_service.dart';
 import '../services/ai_service.dart';
 
@@ -11,6 +12,7 @@ class AppProvider with ChangeNotifier {
   List<Incidencia> _incidencias = [];
   List<Usuario> _contactos = [];
   List<Mensaje> _mensajes = [];
+  List<LogEntry> _logs = [];
   Map<String, String> _kpis = {
     'Total Incidencias': '0',
     'Pendientes': '0',
@@ -26,6 +28,7 @@ class AppProvider with ChangeNotifier {
   List<Aula> get aulas => _aulas;
   List<Usuario> get usuariosAdmin => _usuariosAdmin;
   List<Mensaje> get mensajes => _mensajes;
+  List<LogEntry> get logs => _logs;
   Map<String, String> get kpis => _kpis;
 
   int get pendingIncidentsCount => _incidencias.where((i) => i.estadoNombre == 'PENDIENTE' || i.estadoNombre == 'NO LEIDO').length;
@@ -75,6 +78,7 @@ class AppProvider with ChangeNotifier {
       _fetchKPIs(),
       _fetchContactos(),
       _fetchAulas(),
+      fetchLogs(),
     ]);
     notifyListeners();
   }
@@ -170,6 +174,7 @@ class AppProvider with ChangeNotifier {
         'img': imagenUrl,
       },
     );
+    await createLog('CREAR INCIDENCIA', 'El usuario reportó la incidencia: $titulo');
     await refreshData();
   }
 
@@ -255,6 +260,7 @@ class AppProvider with ChangeNotifier {
       action: "approve_user",
       substitutionValues: {'id': id},
     );
+    await createLog('ACTUALIZAR USUARIO', 'Se ha aprobado el acceso del usuario ID: $id');
     await fetchAllUsers();
   }
 
@@ -264,7 +270,70 @@ class AppProvider with ChangeNotifier {
       action: "reject_user",
       substitutionValues: {'id': id},
     );
+    await createLog('ELIMINAR USUARIO', 'Se ha rechazado y eliminado al usuario ID: $id');
     await fetchAllUsers();
+  }
+
+  Future<void> fetchLogs() async {
+    final results = await _db.query("", action: "get_logs");
+    _logs = results.map((m) => LogEntry.fromMap(m)).toList();
+    notifyListeners();
+  }
+
+  Future<void> createLog(String accion, String detalles) async {
+    if (_currentUser == null) return;
+    try {
+      await _db.query(
+        "",
+        action: "create_log",
+        substitutionValues: {
+          'uId': _currentUser!.id,
+          'acc': accion,
+          'det': detalles,
+        },
+      );
+    } catch (e) {
+      debugPrint('Error logging action: $e');
+    }
+  }
+
+  Future<void> updateUserRole(String userId, String role, String userName) async {
+    await _db.query("", action: "update_user_role", substitutionValues: {'id': userId, 'rol': role});
+    await createLog('MODIFICAR ROL', 'Se cambió el rol de $userName a $role');
+    await fetchAllUsers();
+  }
+
+  Future<void> updateUserStatus(String userId, bool active, bool banned, String userName) async {
+    await _db.query("", action: "update_user_status", substitutionValues: {'id': userId, 'ban': banned, 'ev': active});
+    await createLog('MODIFICAR ESTADO', 'Se cambió el estado de $userName. Activo: $active, Banned: $banned');
+    await fetchAllUsers();
+  }
+
+  List<Map<String, dynamic>> getWorkloadLast7Days() {
+    final now = DateTime.now();
+    final List<Map<String, dynamic>> workload = [];
+    
+    for (int i = 6; i >= 0; i--) {
+      final targetDate = now.subtract(Duration(days: i));
+      int creadas = 0;
+      int resueltas = 0;
+      
+      for (final inc in _incidencias) {
+        if (inc.fecha.year == targetDate.year && inc.fecha.month == targetDate.month && inc.fecha.day == targetDate.day) {
+          creadas++;
+          if (inc.estadoNombre == 'RESUELTO' || inc.estadoNombre == 'ACABADO') {
+            resueltas++;
+          }
+        }
+      }
+      
+      workload.add({
+        'dayLabel': "${targetDate.day}/${targetDate.month}",
+        'creadas': creadas.toDouble(),
+        'resueltas': resueltas.toDouble()
+      });
+    }
+    return workload;
   }
 
   void logout() {

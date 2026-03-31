@@ -5,6 +5,13 @@ const bcrypt = require('bcryptjs');
 const ACTION_MAP = {
   init_db: `
     CREATE SCHEMA IF NOT EXISTS gestion_incidencias;
+    CREATE TABLE IF NOT EXISTS gestion_incidencias.logs (
+      id SERIAL PRIMARY KEY,
+      usuario_id VARCHAR(255) NOT NULL,
+      accion VARCHAR(255) NOT NULL,
+      detalles TEXT,
+      fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `,
   // Se excluye la contraseña para no fugar datos sensibles
   get_users: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins FROM neon_auth.user ORDER BY name ASC`,
@@ -17,7 +24,11 @@ const ACTION_MAP = {
   send_message: `INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, fecha, leido) VALUES (@me, @other, @txt, @img, @aud, NOW(), false) RETURNING *`,
   request_user: `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", aeducoins) VALUES (@nom, @em, @pass, 'USER', false, 0) RETURNING *`,
   approve_user: `UPDATE neon_auth.user SET "emailVerified" = true WHERE id = @id RETURNING *`,
-  reject_user: `DELETE FROM neon_auth.user WHERE id = @id RETURNING *`
+  reject_user: `DELETE FROM neon_auth.user WHERE id = @id RETURNING *`,
+  update_user_role: `UPDATE neon_auth.user SET role = @rol WHERE id = @id RETURNING *`,
+  update_user_status: `UPDATE neon_auth.user SET banned = @ban, "emailVerified" = @ev WHERE id = @id RETURNING *`,
+  get_logs: `SELECT l.*, u.name as usuario_nombre, u.email as usuario_email FROM gestion_incidencias.logs l LEFT JOIN neon_auth.user u ON l.usuario_id = u.id ORDER BY l.fecha DESC LIMIT 50`,
+  create_log: `INSERT INTO gestion_incidencias.logs (usuario_id, accion, detalles, fecha) VALUES (@uId, @acc, @det, NOW()) RETURNING *`
 };
 
 export default async function handler(req, res) {

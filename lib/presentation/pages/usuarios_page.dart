@@ -126,8 +126,16 @@ class _UsuariosPageState extends State<UsuariosPage> {
             )
           : Row(
               children: [
-                IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () {}),
-                IconButton(icon: const Icon(Icons.shield, size: 18), onPressed: () {}),
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 18), 
+                  tooltip: 'Modificar Estado',
+                  onPressed: () => _showStatusEditDialog(context, user)
+                ),
+                IconButton(
+                  icon: const Icon(Icons.shield, size: 18), 
+                  tooltip: 'Asignar Rol',
+                  onPressed: () => _showRoleEditDialog(context, user)
+                ),
               ],
             ),
         ),
@@ -176,6 +184,103 @@ class _UsuariosPageState extends State<UsuariosPage> {
         const SizedBox(width: 8),
         Text(label, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold)),
       ],
+    );
+  }
+
+  void _showRoleEditDialog(BuildContext context, Usuario user) {
+    String selectedRole = user.rol;
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text('Modificar Rol: ${user.nombre}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: ['Administrador', 'Mantenimiento', 'USER'].map((r) {
+                  return RadioListTile<String>(
+                    title: Text(r),
+                    value: r,
+                    groupValue: selectedRole,
+                    activeColor: AppTheme.primaryBlue,
+                    onChanged: (val) {
+                      setState(() { selectedRole = val!; });
+                    },
+                  );
+                }).toList(),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx), 
+                  child: const Text('Cancelar', style: TextStyle(color: AppTheme.textLowPriority))
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue, foregroundColor: Colors.white),
+                  onPressed: () {
+                    context.read<AppProvider>().updateUserRole(user.id, selectedRole, user.nombre);
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Guardar'),
+                ),
+              ],
+            );
+          }
+        );
+      }
+    );
+  }
+
+  void _showStatusEditDialog(BuildContext context, Usuario user) {
+    bool isActive = user.status != 'INACTIVO';
+    bool isBanned = user.status == 'BANEADO';
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text('Modificar Estado: ${user.nombre}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SwitchListTile(
+                    title: const Text('Cuenta Aprobada (Activa)'),
+                    subtitle: const Text('Permite al usuario acceder al sistema', style: TextStyle(fontSize: 12)),
+                    value: isActive,
+                    activeColor: AppTheme.success,
+                    onChanged: (val) => setState(() => isActive = val),
+                  ),
+                  const Divider(),
+                  SwitchListTile(
+                    title: const Text('Restringir Acceso (Baneado)'),
+                    subtitle: const Text('Deniega permanentemente el acceso', style: TextStyle(fontSize: 12)),
+                    value: isBanned,
+                    activeColor: AppTheme.danger,
+                    onChanged: (val) => setState(() => isBanned = val),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx), 
+                  child: const Text('Cancelar', style: TextStyle(color: AppTheme.textLowPriority))
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue, foregroundColor: Colors.white),
+                  onPressed: () {
+                    context.read<AppProvider>().updateUserStatus(user.id, isActive, isBanned, user.nombre);
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Guardar'),
+                ),
+              ],
+            );
+          }
+        );
+      }
     );
   }
 }

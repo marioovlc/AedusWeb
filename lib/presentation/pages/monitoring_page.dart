@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/providers/app_provider.dart';
 
 class MonitoringPage extends StatelessWidget {
   const MonitoringPage({super.key});
@@ -33,13 +35,13 @@ class MonitoringPage extends StatelessWidget {
           
           _buildSection('Carga de Trabajo de Mantenimiento'),
           const SizedBox(height: 16),
-          _buildWorkloadChart(),
+          _buildWorkloadChart(context),
           
           const SizedBox(height: 48),
           
-          _buildSection('Logs de Rendimiento'),
+          _buildSection('Logs de Actividad del Sistema'),
           const SizedBox(height: 16),
-          _buildPerformanceLogs(),
+          _buildPerformanceLogs(context),
         ],
       ),
     );
@@ -91,7 +93,22 @@ class MonitoringPage extends StatelessWidget {
     );
   }
 
-  Widget _buildWorkloadChart() {
+  Widget _buildWorkloadChart(BuildContext context) {
+    final workloadStats = context.watch<AppProvider>().getWorkloadLast7Days();
+    final List<BarChartGroupData> barGroups = [];
+    double maxY = 0;
+
+    for (int i = 0; i < workloadStats.length; i++) {
+        final double creadas = workloadStats[i]['creadas'];
+        final double resueltas = workloadStats[i]['resueltas'];
+        if (creadas > maxY) maxY = creadas;
+        if (resueltas > maxY) maxY = resueltas;
+        barGroups.add(_buildBarGroup(i, creadas, resueltas));
+    }
+
+    if (maxY == 0) maxY = 10;
+    else maxY = maxY * 1.5;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -100,12 +117,12 @@ class MonitoringPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Tickets atendidos vs Resueltos (7d)', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Tickets Nuevos vs Resueltos (7d)', style: TextStyle(fontWeight: FontWeight.bold)),
                 Row(
                   children: [
-                    _buildLegendItem('Atendidos', AppTheme.primaryBlue),
+                    _buildLegendItem('Nuevos', AppTheme.primaryBlue),
                     const SizedBox(width: 16),
-                    _buildLegendItem('Resueltas', AppTheme.secondaryIndigo),
+                    _buildLegendItem('Resueltos', AppTheme.secondaryIndigo),
                   ],
                 ),
               ],
@@ -115,18 +132,29 @@ class MonitoringPage extends StatelessWidget {
               height: 300,
               child: BarChart(
                 BarChartData(
-                  gridData: const FlGridData(show: false),
+                  maxY: maxY,
+                  gridData: const FlGridData(show: true, drawVerticalLine: false),
                   borderData: FlBorderData(show: false),
-                  titlesData: const FlTitlesData(show: false),
-                  barGroups: [
-                    _buildBarGroup(0, 15, 12),
-                    _buildBarGroup(1, 20, 18),
-                    _buildBarGroup(2, 10, 10),
-                    _buildBarGroup(3, 25, 20),
-                    _buildBarGroup(4, 18, 15),
-                    _buildBarGroup(5, 12, 11),
-                    _buildBarGroup(6, 30, 25),
-                  ],
+                  titlesData: FlTitlesData(
+                    show: true,
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          if (value >= 0 && value < workloadStats.length) {
+                             return Padding(
+                               padding: const EdgeInsets.only(top: 8.0),
+                               child: Text(workloadStats[value.toInt()]['dayLabel'] as String, style: const TextStyle(fontSize: 10, color: AppTheme.textLowPriority)),
+                             );
+                          }
+                          return const Text('');
+                        },
+                      ),
+                    ),
+                  ),
+                  barGroups: barGroups.isEmpty ? [_buildBarGroup(0, 0, 0)] : barGroups,
                 ),
               ),
             ),
@@ -156,25 +184,43 @@ class MonitoringPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPerformanceLogs() {
+  Widget _buildPerformanceLogs(BuildContext context) {
+    final logs = context.watch<AppProvider>().logs;
+
+    if (logs.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Center(child: Text('No hay logs disponibles.', style: TextStyle(color: AppTheme.textLowPriority))),
+        )
+      );
+    }
+
     return Card(
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: 5,
-        separatorBuilder: (context, index) => const Divider(),
+        itemCount: logs.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, index) {
-          final logs = [
-            'Database Query Optimized: incidence_fetch took 12ms',
-            'Cloudinary: 5 images compressed successfully',
-            'Groq AI: Rate limit within 20% of quota',
-            'Backup: nightly_dump.sql generated (45MB)',
-            'Identity: 30 new user sessions active',
-          ];
+          final log = logs[index];
+          
+          final Duration d = DateTime.now().difference(log.fecha);
+          String timeStr = 'ahora';
+          if (d.inDays > 0) timeStr = 'hace ${d.inDays}d';
+          else if (d.inHours > 0) timeStr = 'hace ${d.inHours}h';
+          else if (d.inMinutes > 0) timeStr = 'hace ${d.inMinutes}m';
+
           return ListTile(
-            leading: const Icon(Icons.code, color: AppTheme.primaryBlue, size: 20),
-            title: Text(logs[index], style: const TextStyle(fontSize: 13)),
-            trailing: const Text('hace 5m', style: TextStyle(color: AppTheme.textLowPriority, fontSize: 11)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            leading: CircleAvatar(
+               radius: 18,
+               backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
+               child: const Icon(Icons.history, color: AppTheme.primaryBlue, size: 18),
+            ),
+            title: Text('${log.usuarioNombre}: ${log.accion}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            subtitle: Text(log.detalles, style: const TextStyle(fontSize: 13, color: AppTheme.textLowPriority)),
+            trailing: Text(timeStr, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 12)),
           );
         },
       ),
