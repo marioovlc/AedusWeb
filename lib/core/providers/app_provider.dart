@@ -53,21 +53,17 @@ class AppProvider with ChangeNotifier {
   final AIService _ai = AIService();
 
   Future<bool> login(String email, String password) async {
-    try {
-      final results = await _db.query(
-        "", // SQL is ignored when action is 'login'
-        substitutionValues: {'email': email, 'password': password},
-        action: 'login',
-      );
+    final results = await _db.query(
+      "", // SQL is ignored when action is 'login'
+      substitutionValues: {'email': email, 'password': password},
+      action: 'login',
+    );
 
-      if (results.isNotEmpty) {
-        _currentUser = Usuario.fromMap(results.first);
-        await refreshData();
-        notifyListeners();
-        return true;
-      }
-    } catch (e) {
-      debugPrint('Login error: $e');
+    if (results.isNotEmpty) {
+      _currentUser = Usuario.fromMap(results.first);
+      await refreshData();
+      notifyListeners();
+      return true;
     }
     return false;
   }

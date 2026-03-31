@@ -75,12 +75,12 @@ class DatabaseService {
         final List<dynamic> data = jsonDecode(response.body);
         return data.cast<Map<String, dynamic>>();
       } else {
-        debugPrint('Web Query Error: ${response.body}');
-        return [];
+        final body = jsonDecode(response.body);
+        final msg = body['error'] ?? 'Error desconocido (${response.statusCode})';
+        throw Exception(msg);
       }
     } catch (e) {
-      debugPrint('Web connection error: $e');
-      return [];
+      rethrow;
     }
   }
 

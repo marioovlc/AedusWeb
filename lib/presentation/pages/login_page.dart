@@ -17,20 +17,35 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
-    final success = await context.read<AppProvider>().login(
-      _emailController.text,
-      _passwordController.text,
-    );
-    setState(() => _isLoading = false);
+    try {
+      final success = await context.read<AppProvider>().login(
+        _emailController.text,
+        _passwordController.text,
+      );
 
-    if (success) {
-      if (mounted) Navigator.pushReplacementNamed(context, '/dashboard');
-    } else {
+      if (success) {
+        if (mounted) Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error de autenticación. Verifica tus credenciales.')),
+          );
+        }
+      }
+    } catch (e) {
       if (mounted) {
+        // Extraer el mensaje limpio de la excepción
+        final msg = e.toString().replaceFirst('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error de autenticación. Verifica tus credenciales.')),
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.orange[800],
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

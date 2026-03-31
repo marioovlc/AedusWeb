@@ -113,7 +113,12 @@ export default async function handler(req, res) {
       if (!match) {
         return res.status(401).json({ error: 'Contraseña incorrecta' });
       }
-      
+
+      // BLOQUEO: Usuarios pendientes de aprobación (emailVerified = false)
+      if (user.emailVerified === false) {
+        return res.status(403).json({ error: 'Tu cuenta está pendiente de aprobación por un administrador.' });
+      }
+
       // No devolvemos el hash del password por seguridad
       delete user.password;
       return res.status(200).json([user]); // Devolvemos array para compatibilidad
