@@ -20,9 +20,9 @@ class Usuario {
       id: map['id'].toString(),
       nombre: map['name'] as String? ?? 'Desconocido',
       email: map['email'] as String? ?? '',
-      rol: map['role'] as String? ?? 'USER',
-      status: map['status']?.toString() ?? ((map['banned'] == true) ? 'BANEADO' : 'ACTIVO'),
-      aeduCoins: map['aeducoins'] as int? ?? 0,
+      rol: map['role'] as String? ?? map['rol'] as String? ?? 'USER',
+      status: map['status']?.toString() ?? ((map['banned'] == true) ? 'BANEADO' : (map['emailVerified'] == false ? 'INACTIVO' : 'ACTIVO')),
+      aeduCoins: map['aeducoins'] as int? ?? map['aedu_coins'] as int? ?? 0,
     );
   }
 
