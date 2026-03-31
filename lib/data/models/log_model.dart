@@ -6,6 +6,7 @@ class LogEntry {
   final String accion;
   final String detalles;
   final DateTime fecha;
+  final String categoria;
 
   LogEntry({
     required this.id,
@@ -15,6 +16,7 @@ class LogEntry {
     required this.accion,
     required this.detalles,
     required this.fecha,
+    this.categoria = 'USUARIO',
   });
 
   factory LogEntry.fromMap(Map<String, dynamic> map) {
@@ -26,6 +28,7 @@ class LogEntry {
       accion: map['accion']?.toString() ?? 'Desconocida',
       detalles: map['detalles']?.toString() ?? '',
       fecha: map['fecha'] != null ? DateTime.parse(map['fecha'].toString()) : DateTime.now(),
+      categoria: map['categoria']?.toString() ?? 'USUARIO',
     );
   }
 
@@ -38,6 +41,7 @@ class LogEntry {
       'accion': accion,
       'detalles': detalles,
       'fecha': fecha.toIso8601String(),
+      'categoria': categoria,
     };
   }
 }

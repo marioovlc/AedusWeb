@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:csv/csv.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/incident_model.dart';
 import '../../data/models/aula_model.dart';
@@ -174,7 +177,27 @@ class AppProvider with ChangeNotifier {
         'img': imagenUrl,
       },
     );
-    await createLog('CREAR INCIDENCIA', 'El usuario reportó la incidencia: $titulo');
+    await createLog('CREAR INCIDENCIA', 'El usuario reportó la incidencia: $titulo', categoria: 'USUARIO');
+    await refreshData();
+  }
+
+  Future<void> updateIncidenciaEstado(int id, int estadoId, String uId) async {
+    await _db.query(
+      "",
+      action: "update_incidencia_estado",
+      substitutionValues: {
+        'id': id,
+        'eId': estadoId,
+      },
+    );
+
+    // Gamification: Award 50 AeduCoins if finished (Estado 4 = ACABADO usually)
+    if (estadoId == 4) {
+      await _db.query("", action: "update_user_coins", substitutionValues: {'uId': uId, 'coins': 50});
+      await createLog('RECOMPENSA', 'Usuario $uId recibió 50 AeduCoins por completar incidencia $id', categoria: 'SISTEMA');
+    }
+
+    await createLog('ACTUALIZAR INCIDENCIA', 'Estado de incidencia $id cambiado a $estadoId', categoria: 'SISTEMA');
     await refreshData();
   }
 
@@ -260,7 +283,7 @@ class AppProvider with ChangeNotifier {
       action: "approve_user",
       substitutionValues: {'id': id},
     );
-    await createLog('ACTUALIZAR USUARIO', 'Se ha aprobado el acceso del usuario ID: $id');
+    await createLog('ACTUALIZAR USUARIO', 'Se ha aprobado el acceso del usuario ID: $id', categoria: 'SISTEMA');
     await fetchAllUsers();
   }
 
@@ -270,7 +293,7 @@ class AppProvider with ChangeNotifier {
       action: "reject_user",
       substitutionValues: {'id': id},
     );
-    await createLog('ELIMINAR USUARIO', 'Se ha rechazado y eliminado al usuario ID: $id');
+    await createLog('ELIMINAR USUARIO', 'Se ha rechazado y eliminado al usuario ID: $id', categoria: 'SISTEMA');
     await fetchAllUsers();
   }
 
@@ -280,7 +303,7 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> createLog(String accion, String detalles) async {
+  Future<void> createLog(String accion, String detalles, {String categoria = 'USUARIO'}) async {
     if (_currentUser == null) return;
     try {
       await _db.query(
@@ -290,6 +313,7 @@ class AppProvider with ChangeNotifier {
           'uId': _currentUser!.id,
           'acc': accion,
           'det': detalles,
+          'cat': categoria,
         },
       );
     } catch (e) {
@@ -299,13 +323,13 @@ class AppProvider with ChangeNotifier {
 
   Future<void> updateUserRole(String userId, String role, String userName) async {
     await _db.query("", action: "update_user_role", substitutionValues: {'id': userId, 'rol': role});
-    await createLog('MODIFICAR ROL', 'Se cambió el rol de $userName a $role');
+    await createLog('MODIFICAR ROL', 'Se cambió el rol de $userName a $role', categoria: 'SISTEMA');
     await fetchAllUsers();
   }
 
   Future<void> updateUserStatus(String userId, bool active, bool banned, String userName) async {
     await _db.query("", action: "update_user_status", substitutionValues: {'id': userId, 'ban': banned, 'ev': active});
-    await createLog('MODIFICAR ESTADO', 'Se cambió el estado de $userName. Activo: $active, Banned: $banned');
+    await createLog('MODIFICAR ESTADO', 'Se cambió el estado de $userName. Activo: $active, Banned: $banned', categoria: 'SISTEMA');
     await fetchAllUsers();
   }
 
@@ -334,6 +358,67 @@ class AppProvider with ChangeNotifier {
       });
     }
     return workload;
+  }
+
+  Future<String?> exportLogsToCSV() async {
+    List<List<dynamic>> rows = [];
+    rows.add(["ID", "Usuario", "Email", "Acción", "Categoría", "Detalles", "Fecha"]);
+    
+    for (var log in _logs) {
+      rows.add([
+        log.id,
+        log.usuarioNombre,
+        log.usuarioEmail,
+        log.accion,
+        log.categoria,
+        log.detalles,
+        log.fecha.toIso8601String()
+      ]);
+    }
+
+    String csv = const ListToCsvConverter().convert(rows);
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final path = "${directory.path}/logs_${DateTime.now().millisecondsSinceEpoch}.csv";
+      final file = File(path);
+      await file.writeAsString(csv);
+      await createLog('EXPORTAR', 'Se exportaron los logs a CSV: $path', categoria: 'SISTEMA');
+      return path;
+    } catch (e) {
+      debugPrint("Error exporting logs: $e");
+      return null;
+    }
+  }
+
+  Future<String?> exportIncidenciasToCSV() async {
+    List<List<dynamic>> rows = [];
+    rows.add(["ID", "Título", "Estado", "UsuarioID", "AulaID", "CategoríaID", "Fecha", "Descripción"]);
+    
+    for (var inc in _incidencias) {
+      rows.add([
+        inc.id,
+        inc.titulo,
+        inc.estadoNombre,
+        inc.usuarioId,
+        inc.aulaId,
+        inc.categoriaId,
+        inc.fecha.toIso8601String(),
+        inc.descripcion
+      ]);
+    }
+
+    String csv = const ListToCsvConverter().convert(rows);
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final path = "${directory.path}/incidencias_${DateTime.now().millisecondsSinceEpoch}.csv";
+      final file = File(path);
+      await file.writeAsString(csv);
+      await createLog('EXPORTAR', 'Se exportaron las incidencias a CSV: $path', categoria: 'SISTEMA');
+      return path;
+    } catch (e) {
+      debugPrint("Error exporting incidencias: $e");
+      return null;
+    }
   }
 
   void logout() {

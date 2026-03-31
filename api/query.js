@@ -13,6 +13,7 @@ const ACTION_MAP = {
       fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     ALTER TABLE gestion_incidencias.logs ADD COLUMN IF NOT EXISTS fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    ALTER TABLE gestion_incidencias.logs ADD COLUMN IF NOT EXISTS categoria VARCHAR(50) DEFAULT 'USUARIO';
   `,
   // Se excluye la contraseña para no fugar datos sensibles
   get_users: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins FROM neon_auth.user ORDER BY name ASC`,
@@ -29,7 +30,9 @@ const ACTION_MAP = {
   update_user_role: `UPDATE neon_auth.user SET role = @rol WHERE id = @id RETURNING *`,
   update_user_status: `UPDATE neon_auth.user SET banned = @ban, "emailVerified" = @ev WHERE id = @id RETURNING *`,
   get_logs: `SELECT l.*, u.name as usuario_nombre, u.email as usuario_email FROM gestion_incidencias.logs l LEFT JOIN neon_auth.user u ON l.usuario_id::text = u.id::text ORDER BY l.fecha DESC LIMIT 50`,
-  create_log: `INSERT INTO gestion_incidencias.logs (usuario_id, accion, detalles, fecha) VALUES (@uId, @acc, @det, NOW()) RETURNING *`
+  create_log: `INSERT INTO gestion_incidencias.logs (usuario_id, accion, detalles, fecha, categoria) VALUES (@uId, @acc, @det, NOW(), @cat) RETURNING *`,
+  update_incidencia_estado: `UPDATE gestion_incidencias.incidencias SET estado_id = @eId WHERE id = @id RETURNING *`,
+  update_user_coins: `UPDATE neon_auth.user SET aeducoins = aeducoins + @coins WHERE id = @uId RETURNING *`
 };
 
 export default async function handler(req, res) {
