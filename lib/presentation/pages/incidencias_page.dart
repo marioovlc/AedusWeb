@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../data/models/incident_model.dart';
+import '../../data/models/aula_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import '../../core/services/storage_service.dart';
@@ -19,7 +20,7 @@ class IncidenciasPage extends StatefulWidget {
 class _IncidenciasPageState extends State<IncidenciasPage> {
   final _tituloController = TextEditingController();
   final _descController = TextEditingController();
-  String _selectedAula = 'Aula 101';
+  Aula? _selectedAula;
   String _selectedCategory = 'Hardware';
   bool _isCreating = false;
   String? _aiSuggestion;
@@ -47,8 +48,16 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
       uploadedUrl = await StorageService().uploadFile(_imageBytes!, _imageName ?? 'incident_img.png');
     }
 
-    final aulaId = int.parse(_selectedAula.split(' ').last);
-    final catId = _selectedCategory == 'Hardware' ? 1 : 2;
+    final aulaId = _selectedAula?.id ?? 1; // Default to 1 if not selected (should not happen)
+    
+    // Improved category mapping
+    final Map<String, int> categoryIds = {
+      'Hardware': 1,
+      'Software': 2,
+      'Red': 3,
+      'Otros': 4,
+    };
+    final catId = categoryIds[_selectedCategory] ?? 4;
 
     if (!mounted) return;
 
@@ -146,15 +155,14 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildDropdown(
-                        'Aula', 
-                        context.watch<AppProvider>().aulas.map((e) => e.nombre).toList(), 
+                      child: _buildAulaDropdown(
+                        context.watch<AppProvider>().aulas, 
                         _selectedAula, 
-                        (v) => setState(() => _selectedAula = v!)
+                        (v) => setState(() => _selectedAula = v)
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildDropdown('Categoría', ['Hardware', 'Software', 'Red', 'Otros'], _selectedCategory, (v) => setState(() => _selectedCategory = v!))),
+                    Expanded(child: _buildCategoryDropdown(['Hardware', 'Software', 'Red', 'Otros'], _selectedCategory, (v) => setState(() => _selectedCategory = v!))),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -248,11 +256,53 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     );
   }
 
-  Widget _buildDropdown(String label, List<String> options, String selected, ValueChanged<String?> onChanged) {
+  Widget _buildAulaDropdown(List<Aula> options, Aula? selected, ValueChanged<Aula?> onChanged) {
+    // Ensure selected is part of options or null
+    if (selected != null && !options.any((a) => a.id == selected!.id)) {
+      selected = null;
+    }
+    
+    // Default to first if null and options exist
+    if (selected == null && options.isNotEmpty) {
+      selected = options.first;
+      // We don't call setState here as we are in build, but we ensure the value is correct for the widget
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 13, fontWeight: FontWeight.w600)),
+        const Text('Aula', style: TextStyle(color: AppTheme.textLowPriority, fontSize: 13, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.borders),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<Aula>(
+              isExpanded: true,
+              value: selected,
+              dropdownColor: AppTheme.surface,
+              hint: const Text('Seleccionar Aula'),
+              style: const TextStyle(color: AppTheme.textHighPriority),
+              items: options.map((e) => DropdownMenuItem(value: e, child: Text(e.nombre))).toList(),
+              onChanged: (v) {
+                onChanged(v);
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryDropdown(List<String> options, String selected, ValueChanged<String?> onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Categoría', style: TextStyle(color: AppTheme.textLowPriority, fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
