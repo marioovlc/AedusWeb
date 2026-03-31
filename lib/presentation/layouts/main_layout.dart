@@ -88,7 +88,7 @@ class _MainLayoutState extends State<MainLayout> {
                   ),
                   _buildNavItem(context, 'Connect Hub', FontAwesomeIcons.comments, '/connect'),
                   
-                  if (context.watch<AppProvider>().currentUser?.rol == 'Administrador') ...[
+                  if (context.watch<AppProvider>().currentUser?.rol == 'Administrador' || context.watch<AppProvider>().currentUser?.rol.toUpperCase() == 'ADMIN') ...[
                     const SizedBox(height: 24),
                     _buildSectionTitle('ADMINISTRACIÓN'),
                     _buildNavItem(context, 'Usuarios', FontAwesomeIcons.users, '/users'),
