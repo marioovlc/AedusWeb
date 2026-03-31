@@ -26,7 +26,7 @@ class _MainLayoutState extends State<MainLayout> {
     return Scaffold(
       drawer: isMobile ? _buildSidebar(context) : null,
       appBar: isMobile ? AppBar(
-        title: const Text('AEDUS'),
+        title: Image.asset('lib/assets/aedus.png', height: 30),
         backgroundColor: AppTheme.background,
       ) : null,
       body: Row(
@@ -53,19 +53,7 @@ class _MainLayoutState extends State<MainLayout> {
           // Logo Area
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 40.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const FaIcon(FontAwesomeIcons.robot, color: AppTheme.primaryBlue, size: 28),
-                const SizedBox(width: 12),
-                Text(
-                  'AEDUS',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    letterSpacing: 2.0,
-                  ),
-                ),
-              ],
-            ),
+            child: Image.asset('lib/assets/aedus.png', height: 40),
           ),
 
           // Main Navigation
@@ -80,7 +68,7 @@ class _MainLayoutState extends State<MainLayout> {
                   _buildNavItem(
                     context, 
                     'Incidencias', 
-                    FontAwesomeIcons.exclamationTriangle, 
+                    FontAwesomeIcons.triangleExclamation, 
                     '/incidencias', 
                     badgeCount: context.watch<AppProvider>().pendingIncidentsCount > 0 
                         ? context.watch<AppProvider>().pendingIncidentsCount 

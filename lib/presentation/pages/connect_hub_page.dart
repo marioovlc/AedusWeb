@@ -3,12 +3,14 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/message_model.dart';
+import '../../core/services/storage_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ConnectHubPage extends StatefulWidget {
   const ConnectHubPage({super.key});
@@ -41,8 +43,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
   Future<void> _startRecording() async {
     try {
       if (await _audioRecorder.hasPermission()) {
-        final path = '${Directory.systemTemp.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-        await _audioRecorder.start(const RecordConfig(), path: path);
+        await _audioRecorder.start(const RecordConfig(), path: ''); 
         setState(() => _isRecording = true);
       }
     } catch (e) {
@@ -55,7 +56,14 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
       final path = await _audioRecorder.stop();
       setState(() => _isRecording = false);
       if (path != null) {
-        debugPrint('Grabación guardada en: $path');
+        final uri = Uri.parse(path);
+        final response = await http.get(uri);
+        final bytes = response.bodyBytes;
+        
+        final url = await StorageService().uploadFile(bytes, 'audio_${DateTime.now().millisecondsSinceEpoch}.m4a', isAudio: true);
+        if (url != null) {
+          _sendMessage(audioUrl: url);
+        }
       }
     } catch (e) {
       debugPrint('Error stopping recording: $e');
@@ -65,7 +73,11 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
   Future<void> _pickImage() async {
     final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      debugPrint('Imagen seleccionada: ${image.path}');
+      final bytes = await image.readAsBytes();
+      final url = await StorageService().uploadFile(bytes, image.name);
+      if (url != null) {
+        _sendMessage(imageUrl: url);
+      }
     }
   }
 
@@ -135,14 +147,14 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
       selected: isActive,
       selectedTileColor: AppTheme.primaryBlue.withOpacity(0.05),
       leading: CircleAvatar(
-        backgroundColor: isAI ? AppTheme.primaryBlue.withOpacity(0.1) : AppTheme.cards,
+        backgroundColor: isAI ? AppTheme.primaryBlue.withValues(alpha: 0.1) : AppTheme.cards,
         child: isAI 
           ? const FaIcon(FontAwesomeIcons.robot, size: 14, color: AppTheme.primaryBlue)
           : Text(contact.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 12, color: Colors.white)),
       ),
       title: Text(contact.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
       subtitle: Text(contact.rol, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 12)),
-      trailing: isActive ? const CircleAvatar(radius: 4, backgroundColor: AppTheme.primaryBlue) : null,
+      trailing: isActive ? CircleAvatar(radius: 4, backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.05)) : null,
     );
   }
 
@@ -184,7 +196,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
                   return _buildAIResponse("¡Hola! Soy tu asistente Aedus. ¿En qué puedo ayudarte hoy con el sistema?");
                 }
 
-                return _buildMessage(msg.contenido, isMe);
+                return _buildMessage(msg, isMe);
               },
             ),
           ),
@@ -202,9 +214,9 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
         margin: const EdgeInsets.only(bottom: 24),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.primaryBlue.withOpacity(0.1),
+          color: AppTheme.primaryBlue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.5)),
+          border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,7 +236,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
     );
   }
 
-  Widget _buildMessage(String text, bool isMe) {
+  Widget _buildMessage(Mensaje msg, bool isMe) {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -240,7 +252,28 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
             bottomRight: Radius.circular(isMe ? 0 : 16),
           ),
         ),
-        child: Text(text, style: const TextStyle(color: Colors.white, height: 1.4)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (msg.imagenUrl != null) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CachedNetworkImage(
+                  imageUrl: msg.imagenUrl!,
+                  placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                  errorWidget: (context, url, error) => const Icon(Icons.broken_image),
+                ),
+              ),
+              if (msg.contenido.isNotEmpty) const SizedBox(height: 8),
+            ],
+            if (msg.audioUrl != null) ...[
+              AudioPlayerWidget(url: msg.audioUrl!),
+              if (msg.contenido.isNotEmpty) const SizedBox(height: 8),
+            ],
+            if (msg.contenido.isNotEmpty)
+              Text(msg.contenido, style: const TextStyle(color: Colors.white, height: 1.4)),
+          ],
+        ),
       ),
     );
   }
@@ -291,8 +324,17 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
     );
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  void _sendMessage({String? imageUrl, String? audioUrl}) {
+    if (_activeContact == null) return;
+    final text = _messageController.text.trim();
+    if (text.isEmpty && imageUrl == null && audioUrl == null) return;
+    
+    context.read<AppProvider>().sendMessage(
+      _activeContact!.id, 
+      text,
+      imagenUrl: imageUrl,
+      audioUrl: audioUrl,
+    );
     _messageController.clear();
   }
 
@@ -308,7 +350,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
           const SizedBox(height: 32),
           CircleAvatar(
             radius: 50,
-            backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
+            backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
             child: Text(_activeContact!.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
           ),
           const SizedBox(height: 24),
@@ -334,6 +376,71 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
           Text(label, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 12)),
           const SizedBox(height: 4),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        ],
+      ),
+    );
+  }
+}
+
+class AudioPlayerWidget extends StatefulWidget {
+  final String url;
+  const AudioPlayerWidget({super.key, required this.url});
+
+  @override
+  State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
+}
+
+class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
+  final _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (mounted) setState(() => _isPlaying = state == PlayerState.playing);
+    });
+    _audioPlayer.onDurationChanged.listen((newDuration) {
+      if (mounted) setState(() => _duration = newDuration);
+    });
+    _audioPlayer.onPositionChanged.listen((newPosition) {
+      if (mounted) setState(() => _position = newPosition);
+    });
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, size: 20, color: Colors.white),
+            onPressed: () async {
+              if (_isPlaying) {
+                await _audioPlayer.pause();
+              } else {
+                await _audioPlayer.play(UrlSource(widget.url));
+              }
+            },
+          ),
+          Text(
+            '${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / ${_duration.inMinutes}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}',
+            style: const TextStyle(color: Colors.white, fontSize: 10),
+          ),
         ],
       ),
     );

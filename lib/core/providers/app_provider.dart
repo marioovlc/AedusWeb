@@ -54,7 +54,7 @@ class AppProvider with ChangeNotifier {
         return true;
       }
     } catch (e) {
-      print('Login error: $e');
+      debugPrint('Login error: $e');
     }
     return false;
   }
@@ -152,6 +152,45 @@ class AppProvider with ChangeNotifier {
       },
     );
     await refreshData();
+  }
+
+  Future<void> sendMessage(String receiverId, String text, {String? imagenUrl, String? audioUrl}) async {
+    if (_currentUser == null) return;
+
+    // 1. Persist message in DB
+    await _db.query(
+      "INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, fecha, leido) VALUES (@me, @other, @txt, @img, @aud, NOW(), false)",
+      substitutionValues: {
+        'me': _currentUser!.id,
+        'other': receiverId,
+        'txt': text,
+        'img': imagenUrl,
+        'aud': audioUrl,
+      },
+    );
+
+    // 2. Local update for immediate feedback
+    await fetchMessages(receiverId);
+
+    // 3. AI logic
+    if (receiverId == 'aedus-ai-system') {
+      _triggerAIResponse(text);
+    }
+  }
+
+  Future<void> _triggerAIResponse(String userText) async {
+    final aiResponse = await _ai.getSummary(userText);
+    
+    // Save AI response to DB
+    await _db.query(
+      "INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, fecha, leido) VALUES ('aedus-ai-system', @me, @txt, NOW(), false)",
+      substitutionValues: {
+        'me': _currentUser!.id,
+        'txt': aiResponse,
+      },
+    );
+    
+    await fetchMessages('aedus-ai-system');
   }
 
   Future<String> getAISuggestion(String title, String description) async {

@@ -5,7 +5,9 @@ import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../data/models/incident_model.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:typed_data';
+import '../../core/services/storage_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class IncidenciasPage extends StatefulWidget {
   const IncidenciasPage({super.key});
@@ -21,13 +23,18 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
   String _selectedCategory = 'Hardware';
   bool _isCreating = false;
   String? _aiSuggestion;
-  File? _selectedImage;
+  Uint8List? _imageBytes;
+  String? _imageName;
   final _picker = ImagePicker();
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      setState(() => _selectedImage = File(pickedFile.path));
+      final bytes = await pickedFile.readAsBytes();
+      setState(() {
+        _imageBytes = bytes;
+        _imageName = pickedFile.name;
+      });
     }
   }
 
@@ -35,16 +42,22 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     if (_tituloController.text.isEmpty) return;
     setState(() => _isCreating = true);
     
-    // Simplification: mapping names to IDs for this demo
+    String? uploadedUrl;
+    if (_imageBytes != null) {
+      uploadedUrl = await StorageService().uploadFile(_imageBytes!, _imageName ?? 'incident_img.png');
+    }
+
     final aulaId = int.parse(_selectedAula.split(' ').last);
     final catId = _selectedCategory == 'Hardware' ? 1 : 2;
+
+    if (!mounted) return;
 
     await context.read<AppProvider>().createIncidencia(
       _tituloController.text,
       _descController.text,
       aulaId,
       catId,
-      imagenUrl: _selectedImage?.path, // Simplified for now
+      imagenUrl: uploadedUrl,
     );
     
     _tituloController.clear();
@@ -52,7 +65,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     setState(() {
       _isCreating = false;
       _aiSuggestion = null;
-      _selectedImage = null;
+      _imageBytes = null;
     });
 
     if (mounted) {
@@ -152,7 +165,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                     OutlinedButton.icon(
                       onPressed: _pickImage,
                       icon: const Icon(Icons.attach_file),
-                      label: Text(_selectedImage == null ? 'ADJUNTAR IMAGEN' : 'CAMBIAR IMAGEN'),
+                      label: Text(_imageBytes == null ? 'ADJUNTAR IMAGEN' : 'CAMBIAR IMAGEN'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.all(16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -177,11 +190,11 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                     ),
                   ],
                 ),
-                if (_selectedImage != null) ...[
+                if (_imageBytes != null) ...[
                   const SizedBox(height: 16),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.file(_selectedImage!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                    child: Image.memory(_imageBytes!, height: 150, width: double.infinity, fit: BoxFit.cover),
                   ),
                 ],
                 if (_aiSuggestion != null) ...[
@@ -329,14 +342,23 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
         padding: const EdgeInsets.all(20.0),
         child: Row(
           children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                ),
+                child: incident.imagenUrl != null 
+                    ? CachedNetworkImage(
+                        imageUrl: incident.imagenUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                        errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: AppTheme.textLowPriority),
+                      )
+                    : const Icon(Icons.image, color: AppTheme.textLowPriority),
               ),
-              child: const Icon(Icons.image, color: AppTheme.textLowPriority),
             ),
             const SizedBox(width: 20),
             Expanded(
