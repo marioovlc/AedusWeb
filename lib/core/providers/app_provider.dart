@@ -130,6 +130,18 @@ class AppProvider with ChangeNotifier {
 
   Future<void> fetchMessages(String receiverId) async {
     if (_currentUser == null) return;
+    
+    if (receiverId == 'aedus-ai-system') {
+      // AI messages are transient and held in memory during the session.
+      // We don't clear them if they already exist to maintain session history.
+      if (_mensajes.isNotEmpty && (_mensajes.first.senderId == 'aedus-ai-system' || _mensajes.first.receiverId == 'aedus-ai-system')) {
+        return; 
+      }
+      _mensajes = []; // Clear if we were looking at another contact
+      notifyListeners();
+      return;
+    }
+
     final results = await _db.query(
       "SELECT * FROM gestion_incidencias.mensajes WHERE (usuario_id = @me AND receptor_id = @other) OR (usuario_id = @other AND receptor_id = @me) ORDER BY fecha ASC",
       substitutionValues: {'me': _currentUser!.id, 'other': receiverId},
@@ -157,40 +169,59 @@ class AppProvider with ChangeNotifier {
   Future<void> sendMessage(String receiverId, String text, {String? imagenUrl, String? audioUrl}) async {
     if (_currentUser == null) return;
 
-    // 1. Persist message in DB
-    await _db.query(
-      "INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, fecha, leido) VALUES (@me, @other, @txt, @img, @aud, NOW(), false)",
-      substitutionValues: {
-        'me': _currentUser!.id,
-        'other': receiverId,
-        'txt': text,
-        'img': imagenUrl,
-        'aud': audioUrl,
-      },
+    final mensaje = Mensaje(
+      id: 0,
+      senderId: _currentUser!.id,
+      receiverId: receiverId,
+      contenido: text,
+      imagenUrl: imagenUrl,
+      audioUrl: audioUrl,
+      fecha: DateTime.now(),
+      isRead: false,
     );
 
-    // 2. Local update for immediate feedback
-    await fetchMessages(receiverId);
-
-    // 3. AI logic
     if (receiverId == 'aedus-ai-system') {
+      // AI messages: Session-only update (No DB)
+      _mensajes.add(mensaje);
+      notifyListeners();
       _triggerAIResponse(text);
+      return;
+    }
+
+    try {
+      // Standard messages: Persist in DB
+      await _db.query(
+        "INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, fecha, leido) VALUES (@me, @other, @txt, @img, @aud, NOW(), false)",
+        substitutionValues: {
+          'me': _currentUser!.id,
+          'other': receiverId,
+          'txt': text,
+          'img': imagenUrl,
+          'aud': audioUrl,
+        },
+      );
+      
+      // Update local list from DB to get the correct ID/state
+      await fetchMessages(receiverId);
+    } catch (e) {
+      debugPrint('Error sending message: $e');
     }
   }
 
   Future<void> _triggerAIResponse(String userText) async {
     final aiResponse = await _ai.getSummary(userText);
     
-    // Save AI response to DB
-    await _db.query(
-      "INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, fecha, leido) VALUES ('aedus-ai-system', @me, @txt, NOW(), false)",
-      substitutionValues: {
-        'me': _currentUser!.id,
-        'txt': aiResponse,
-      },
+    final responseMsg = Mensaje(
+      id: 0,
+      senderId: 'aedus-ai-system',
+      receiverId: _currentUser!.id,
+      contenido: aiResponse,
+      fecha: DateTime.now(),
+      isRead: true,
     );
-    
-    await fetchMessages('aedus-ai-system');
+
+    _mensajes.add(responseMsg);
+    notifyListeners();
   }
 
   Future<String> getAISuggestion(String title, String description) async {

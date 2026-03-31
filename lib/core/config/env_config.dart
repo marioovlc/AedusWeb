@@ -12,18 +12,22 @@ class EnvConfig {
   static String get cloudinaryApiSecret => _get('CLOUDINARY_API_SECRET');
 
   static String _get(String key) {
+    String value = '';
+
     // 1. Try build-time constants (must use literals)
     switch (key) {
-      case 'DB_URL': return const String.fromEnvironment('DB_URL');
-      case 'DB_USER': return const String.fromEnvironment('DB_USER');
-      case 'DB_PASS': return const String.fromEnvironment('DB_PASS');
-      case 'AI_API_KEY': return const String.fromEnvironment('AI_API_KEY');
-      case 'AI_MODEL': return const String.fromEnvironment('AI_MODEL');
-      case 'AI_API_URL': return const String.fromEnvironment('AI_API_URL');
-      case 'CLOUDINARY_CLOUD_NAME': return const String.fromEnvironment('CLOUDINARY_CLOUD_NAME');
-      case 'CLOUDINARY_API_KEY': return const String.fromEnvironment('CLOUDINARY_API_KEY');
-      case 'CLOUDINARY_API_SECRET': return const String.fromEnvironment('CLOUDINARY_API_SECRET');
+      case 'DB_URL': value = const String.fromEnvironment('DB_URL'); break;
+      case 'DB_USER': value = const String.fromEnvironment('DB_USER'); break;
+      case 'DB_PASS': value = const String.fromEnvironment('DB_PASS'); break;
+      case 'AI_API_KEY': value = const String.fromEnvironment('AI_API_KEY'); break;
+      case 'AI_MODEL': value = const String.fromEnvironment('AI_MODEL'); break;
+      case 'AI_API_URL': value = const String.fromEnvironment('AI_API_URL'); break;
+      case 'CLOUDINARY_CLOUD_NAME': value = const String.fromEnvironment('CLOUDINARY_CLOUD_NAME'); break;
+      case 'CLOUDINARY_API_KEY': value = const String.fromEnvironment('CLOUDINARY_API_KEY'); break;
+      case 'CLOUDINARY_API_SECRET': value = const String.fromEnvironment('CLOUDINARY_API_SECRET'); break;
     }
+
+    if (value.isNotEmpty) return value;
 
     // 2. Try dotenv (local development)
     try {

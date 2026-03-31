@@ -22,7 +22,7 @@ class AIService {
         body: jsonEncode({
           'model': _model,
           'messages': [
-            {'role': 'system', 'content': 'Eres un asistente experto de la plataforma Aedus.'},
+            {'role': 'system', 'content': 'Eres un asistente experto de la plataforma Aedus. Tus respuestas deben ser BREVES, PRECISAS y DIRECTAS, orientadas a ayudar al usuario con su consulta técnica o de soporte.'},
             {'role': 'user', 'content': prompt},
           ],
         }),

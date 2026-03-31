@@ -51,7 +51,11 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.auto_awesome, color: AppTheme.primaryBlue, size: 48),
+                Image.asset(
+                  'lib/assets/aedus.png',
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Aedus Login',
