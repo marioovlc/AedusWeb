@@ -25,6 +25,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
   bool loadingAI = false;
   List<ComentarioIncidencia>? _comentarios;
   final TextEditingController _commentController = TextEditingController();
+  bool _isInternal = false;
 
   @override
   void initState() {
@@ -63,7 +64,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
     if (texto.isEmpty) return;
 
     _commentController.clear();
-    final nuevoComentario = await context.read<AppProvider>().addComentarioIncidencia(widget.incidencia.id, texto);
+    final nuevoComentario = await context.read<AppProvider>().addComentarioIncidencia(widget.incidencia.id, texto, isInternal: _isInternal);
     if (nuevoComentario != null && mounted) {
       setState(() {
         _comentarios?.add(nuevoComentario);
@@ -95,7 +96,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                     style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
                   ),
                 ),
-                IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                IconButton(onPressed: () { if (mounted) Navigator.pop(context); }, icon: const Icon(Icons.close)),
               ],
             ),
             const Divider(height: 32),
@@ -181,11 +182,19 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
+                            if (widget.showAdminActions)
+                              IconButton(
+                                icon: Icon(_isInternal ? Icons.lock : Icons.lock_open, color: _isInternal ? appColors.gold : appColors.textLow),
+                                tooltip: _isInternal ? 'Nota Interna (Solo Staff)' : 'Comentario Público',
+                                onPressed: () => setState(() => _isInternal = !_isInternal),
+                              ),
                             Expanded(
                               child: TextField(
                                 controller: _commentController,
                                 decoration: InputDecoration(
-                                  hintText: 'Añadir un comentario...',
+                                  hintText: _isInternal ? 'Añadir nota interna...' : 'Añadir un comentario...',
+                                  filled: _isInternal,
+                                  fillColor: _isInternal ? appColors.gold.withValues(alpha: 0.1) : null,
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                                 ),
@@ -194,7 +203,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                             ),
                             const SizedBox(width: 8),
                             CircleAvatar(
-                              backgroundColor: theme.colorScheme.primary,
+                              backgroundColor: _isInternal ? appColors.gold : theme.colorScheme.primary,
                               child: IconButton(
                                 icon: const Icon(Icons.send, color: Colors.white, size: 18),
                                 onPressed: _enviarComentario,
@@ -260,10 +269,10 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
             children: [
               Text(
                 c.usuarioNombre, 
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: isMe ? theme.colorScheme.primary : theme.colorScheme.onSurface)
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: c.isInternal ? appColors.gold : (isMe ? theme.colorScheme.primary : theme.colorScheme.onSurface))
               ),
               const SizedBox(width: 4),
-              if (!isMe && (c.usuarioRol == 'ADMIN' || c.usuarioRol == 'MANTENIMIENTO'))
+              if (c.usuarioRol == 'ADMIN' || c.usuarioRol == 'MANTENIMIENTO')
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   decoration: BoxDecoration(
@@ -272,15 +281,20 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                   ),
                   child: Text('STAFF', style: TextStyle(fontSize: 8, color: appColors.gold, fontWeight: FontWeight.bold)),
                 ),
+              if (c.isInternal)
+                Container(
+                  margin: const EdgeInsets.only(left: 4),
+                  child: Icon(Icons.lock, size: 12, color: appColors.gold),
+                ),
             ],
           ),
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isMe ? theme.colorScheme.primary.withValues(alpha: 0.1) : appColors.card,
+              color: c.isInternal ? appColors.gold.withValues(alpha: 0.2) : (isMe ? theme.colorScheme.primary.withValues(alpha: 0.1) : appColors.card),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isMe ? theme.colorScheme.primary.withValues(alpha: 0.3) : appColors.border),
+              border: Border.all(color: c.isInternal ? appColors.gold : (isMe ? theme.colorScheme.primary.withValues(alpha: 0.3) : appColors.border)),
             ),
             child: Text(c.texto, style: const TextStyle(fontSize: 14)),
           ),

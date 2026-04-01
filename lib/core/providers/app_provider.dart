@@ -31,7 +31,7 @@ class AppProvider with ChangeNotifier {
   List<StoreItem> _storeItems = [];
   String _currentTheme = 'Original';
   bool _isCompact = false;
-  Map<String, bool> _systemHealth = {
+  final Map<String, bool> _systemHealth = {
     'AI': true,
     'DB': true,
     'API': true,

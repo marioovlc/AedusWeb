@@ -50,6 +50,7 @@ dependencies:
   sticky_headers: ^0.3.0+2
   csv: ^6.0.0
   path_provider: ^2.1.5
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

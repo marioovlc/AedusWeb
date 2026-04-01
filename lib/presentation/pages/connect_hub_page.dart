@@ -38,7 +38,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
   final _imagePicker = ImagePicker();
   
   bool _isRecording = false;
-  bool _isInternalNote = false;
+  bool _isSupportMode = false;
   Timer? _refreshTimer;
 
   @override
@@ -412,18 +412,20 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
         children: [
           if (isStaff)
             IconButton(
-              icon: Icon(_isInternalNote ? Icons.lock : Icons.lock_open, color: _isInternalNote ? appColors.gold : appColors.textLow),
-              tooltip: _isInternalNote ? 'Modo Soporte: Solo Staff' : 'Mensaje Público',
-              onPressed: () => setState(() => _isInternalNote = !_isInternalNote),
+              icon: Icon(_isSupportMode ? Icons.lock : Icons.lock_open, color: _isSupportMode ? appColors.gold : appColors.textLow),
+              tooltip: _isSupportMode ? 'Modo Soporte: Activado' : 'Modo Normal: Público',
+              onPressed: () => setState(() => _isSupportMode = !_isSupportMode),
             ),
           Expanded(
             child: TextField(
               controller: _ticketMessageController,
               style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
-                hintText: _isInternalNote ? 'Escribiendo nota interna...' : 'Escribe un comentario público...',
-                hintStyle: TextStyle(color: _isInternalNote ? appColors.gold.withValues(alpha: 0.8) : appColors.textLow.withValues(alpha: 0.5)),
-                fillColor: _isInternalNote ? appColors.gold.withValues(alpha: 0.1) : appColors.card,
+                hintText: _isSupportMode ? 'Escribiendo en modo soporte...' : 'Escribe un mensaje para el ticket...',
+                hintStyle: TextStyle(color: _isSupportMode ? appColors.gold.withValues(alpha: 0.8) : appColors.textLow.withValues(alpha: 0.5)),
+                fillColor: _isSupportMode ? appColors.gold.withValues(alpha: 0.1) : appColors.card,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
               onSubmitted: (_) => _sendTicketComment(),
             ),
@@ -431,7 +433,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
           const SizedBox(width: 16),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: _isInternalNote ? appColors.gold : theme.colorScheme.primary, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: _isSupportMode ? appColors.gold : theme.colorScheme.primary, shape: BoxShape.circle),
             child: IconButton(
               icon: const Icon(Icons.send, color: Colors.white, size: 20),
               onPressed: _sendTicketComment,
@@ -446,13 +448,12 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
      final text = _ticketMessageController.text.trim();
      if (text.isEmpty || _activeTicket == null) return;
      _ticketMessageController.clear();
-     await context.read<AppProvider>().addComentarioIncidencia(_activeTicket!.id, text, isInternal: _isInternalNote);
+     await context.read<AppProvider>().addComentarioIncidencia(_activeTicket!.id, text, isInternal: _isSupportMode);
      _refreshTicketComments();
   }
 
   Widget _buildSharedTicket(BuildContext context, Mensaje msg, bool isMe) {
     final theme = Theme.of(context);
-    final appColors = theme.extension<AppColors>()!;
     final ticketIdStr = msg.contenido.split(':')[1].replaceAll(']', '').trim();
     final ticketId = int.tryParse(ticketIdStr) ?? 0;
     
@@ -588,15 +589,18 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
             itemBuilder: (context) => [
                PopupMenuItem(
                   value: 'img',
-                  child: const Text('Adjuntar Imagen'),
                   onTap: _pickImage,
+                  child: const Text('Adjuntar Imagen'),
                ),
                PopupMenuItem(
                   value: 'ticket',
-                  child: const Text('Compartir Ticket'),
                   onTap: () {
-                     Future.delayed(const Duration(milliseconds: 100), () => _showShareTicketDialog(context));
+                     Future.delayed(const Duration(milliseconds: 100), () {
+                       if (!mounted) return;
+                       _showShareTicketDialog(context);
+                     });
                   },
+                  child: const Text('Compartir Ticket'),
                )
             ],
           ),
@@ -686,7 +690,6 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
   Widget _buildTicketDetailsPanel(BuildContext context) {
     if (_activeTicket == null) return const SizedBox.shrink();
     final theme = Theme.of(context);
-    final appColors = theme.extension<AppColors>()!;
     final ticket = _activeTicket!;
 
     return ListView(

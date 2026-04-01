@@ -161,9 +161,11 @@ class _MonitoringPageState extends State<MonitoringPage> {
           ),
           ElevatedButton.icon(
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final appColors = Theme.of(context).extension<AppColors>()!;
               final path = await context.read<AppProvider>().exportLogsToCSV();
               if (path != null && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(content: Text('Logs exportados a: $path'), backgroundColor: appColors.success),
                 );
               }
@@ -246,10 +248,11 @@ class _MonitoringPageState extends State<MonitoringPage> {
           const Text('Todas las Incidencias del Sistema', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ElevatedButton.icon(
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final appColors = Theme.of(context).extension<AppColors>()!;
               final path = await context.read<AppProvider>().exportIncidenciasToCSV();
               if (path != null && mounted) {
-                final appColors = Theme.of(context).extension<AppColors>()!;
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(content: Text('Incidencias exportadas a: $path'), backgroundColor: appColors.success),
                 );
               }

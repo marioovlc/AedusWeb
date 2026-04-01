@@ -145,7 +145,7 @@ class SettingsPage extends StatelessWidget {
       value: val,
       onChanged: onChanged,
       contentPadding: EdgeInsets.zero,
-      activeColor: theme.colorScheme.primary,
+      activeThumbColor: theme.colorScheme.primary,
     );
   }
 }
