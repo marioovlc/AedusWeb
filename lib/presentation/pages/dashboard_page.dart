@@ -10,6 +10,8 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     final kpis = context.watch<AppProvider>().kpis;
 
     return SingleChildScrollView(
@@ -23,13 +25,13 @@ class DashboardPage extends StatelessWidget {
           // KPI Cards from Provider
           Row(
             children: [
-              Expanded(child: _buildKPICard('Total Incidencias', kpis['Total Incidencias'] ?? '0', FontAwesomeIcons.clipboardList, AppTheme.primaryBlue)),
+              Expanded(child: _buildKPICard(context, 'Total Incidencias', kpis['Total Incidencias'] ?? '0', FontAwesomeIcons.clipboardList, theme.colorScheme.primary)),
               const SizedBox(width: 20),
-              Expanded(child: _buildKPICard('Pendientes', kpis['Pendientes'] ?? '0', FontAwesomeIcons.clock, Colors.orange)),
+              Expanded(child: _buildKPICard(context, 'Pendientes', kpis['Pendientes'] ?? '0', FontAwesomeIcons.clock, Colors.orange)),
               const SizedBox(width: 20),
-              Expanded(child: _buildKPICard('Resueltas', kpis['Resueltas'] ?? '0', FontAwesomeIcons.circleCheck, AppTheme.success)),
+              Expanded(child: _buildKPICard(context, 'Resueltas', kpis['Resueltas'] ?? '0', FontAwesomeIcons.circleCheck, appColors.success)),
               const SizedBox(width: 20),
-              Expanded(child: _buildKPICard('Usuarios Activos', kpis['Usuarios Activos'] ?? '0', FontAwesomeIcons.userGroup, Colors.purple)),
+              Expanded(child: _buildKPICard(context, 'Usuarios Activos', kpis['Usuarios Activos'] ?? '0', FontAwesomeIcons.userGroup, Colors.purple)),
             ],
           ),
           
@@ -39,9 +41,9 @@ class DashboardPage extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 2, child: _buildLineChartCard()),
+              Expanded(flex: 2, child: _buildLineChartCard(context)),
               const SizedBox(width: 20),
-              Expanded(flex: 1, child: _buildBarChartCard()),
+              Expanded(flex: 1, child: _buildBarChartCard(context)),
             ],
           ),
           
@@ -51,7 +53,7 @@ class DashboardPage extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 2, child: _buildGamificationSection()),
+              Expanded(flex: 2, child: _buildGamificationSection(context)),
               const SizedBox(width: 20),
               Expanded(flex: 1, child: _buildAIAssistantCard(context)),
             ],
@@ -62,24 +64,27 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     final user = context.watch<AppProvider>().currentUser;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Dashboard',
-          style: Theme.of(context).textTheme.displayLarge,
+          style: theme.textTheme.displayLarge,
         ),
         const SizedBox(height: 8),
         Text(
           'Bienvenido de nuevo, ${user?.nombre ?? "Usuario"}. Aquí tienes el resumen del sistema.',
-          style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 16),
+          style: TextStyle(color: appColors.textLow, fontSize: 16),
         ),
       ],
     );
   }
 
-  Widget _buildKPICard(String title, String value, FaIconData icon, Color color) {
+  Widget _buildKPICard(BuildContext context, String title, String value, FaIconData icon, Color color) {
+    final appColors = Theme.of(context).extension<AppColors>()!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -97,23 +102,23 @@ class DashboardPage extends StatelessWidget {
                   ),
                   child: FaIcon(icon, color: color, size: 20),
                 ),
-                const Icon(Icons.more_vert, color: AppTheme.textLowPriority, size: 20),
+                Icon(Icons.more_vert, color: appColors.textLow, size: 20),
               ],
             ),
             const SizedBox(height: 20),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.textHighPriority,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               title,
-              style: const TextStyle(
-                color: AppTheme.textLowPriority,
+              style: TextStyle(
+                color: appColors.textLow,
                 fontSize: 14,
               ),
             ),
@@ -123,7 +128,8 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildLineChartCard() {
+  Widget _buildLineChartCard(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -154,13 +160,13 @@ class DashboardPage extends StatelessWidget {
                         const FlSpot(6, 4),
                       ],
                       isCurved: true,
-                      color: AppTheme.primaryBlue,
+                      color: theme.colorScheme.primary,
                       barWidth: 4,
                       isStrokeCapRound: true,
                       dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       ),
                     ),
                   ],
@@ -173,7 +179,9 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildBarChartCard() {
+  Widget _buildBarChartCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -193,9 +201,9 @@ class DashboardPage extends StatelessWidget {
                   titlesData: const FlTitlesData(show: false),
                   borderData: FlBorderData(show: false),
                   barGroups: [
-                    BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 8, color: AppTheme.primaryBlue)]),
-                    BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 10, color: AppTheme.secondaryIndigo)]),
-                    BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 14, color: AppTheme.success)]),
+                    BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 8, color: theme.colorScheme.primary)]),
+                    BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 10, color: theme.colorScheme.secondary)]),
+                    BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 14, color: appColors.success)]),
                     BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 6, color: Colors.orange)]),
                   ],
                 ),
@@ -207,33 +215,35 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildGamificationSection() {
+  Widget _buildGamificationSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Logros y Misiones'),
+        _buildSectionTitle(context, 'Logros y Misiones'),
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildAchievementItem('Primer Reporte', 'Has creado tu primera incidencia.', FontAwesomeIcons.award, AppTheme.gold)),
+            Expanded(child: _buildAchievementItem(context, 'Primer Reporte', 'Has creado tu primera incidencia.', FontAwesomeIcons.award, Theme.of(context).extension<AppColors>()!.gold)),
             const SizedBox(width: 16),
-            Expanded(child: _buildAchievementItem('Soporte Rápido', 'Resuelto en menos de 1 hora.', FontAwesomeIcons.bolt, Colors.cyan)),
+            Expanded(child: _buildAchievementItem(context, 'Soporte Rápido', 'Resuelto en menos de 1 hora.', FontAwesomeIcons.bolt, Colors.cyan)),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
       title,
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppTheme.textHighPriority),
+      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Theme.of(context).colorScheme.onSurface),
     );
   }
 
-  Widget _buildAchievementItem(String title, String desc, FaIconData icon, Color color) {
+  Widget _buildAchievementItem(BuildContext context, String title, String desc, FaIconData icon, Color color) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Card(
-      color: AppTheme.surface,
+      color: appColors.surface,
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: Container(
@@ -241,44 +251,45 @@ class DashboardPage extends StatelessWidget {
           decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
           child: FaIcon(icon, color: color, size: 24),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textHighPriority)),
-        subtitle: Text(desc, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 12)),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+        subtitle: Text(desc, style: TextStyle(color: appColors.textLow, fontSize: 12)),
       ),
     );
   }
 
   Widget _buildAIAssistantCard(BuildContext context) {
+    final theme = Theme.of(context);
     final kpis = context.watch<AppProvider>().kpis;
     return Card(
-      color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+      color: theme.colorScheme.primary.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: const BorderSide(color: AppTheme.primaryBlue, width: 1),
+        side: BorderSide(color: theme.colorScheme.primary, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                FaIcon(FontAwesomeIcons.wandMagicSparkles, color: AppTheme.primaryBlue, size: 18),
-                SizedBox(width: 12),
+                FaIcon(FontAwesomeIcons.wandMagicSparkles, color: theme.colorScheme.primary, size: 18),
+                const SizedBox(width: 12),
                 Text(
                   'Asistente AI',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryBlue),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.primary),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Resumen del sistema:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textHighPriority),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface),
             ),
             const SizedBox(height: 12),
             Text(
               'Actualmente hay ${kpis['Pendientes']} incidencias pendientes. El tiempo promedio de resolución ha bajado un 5% respecto a la semana pasada.',
-              style: const TextStyle(color: AppTheme.textHighPriority, height: 1.5, fontSize: 13),
+              style: TextStyle(color: theme.colorScheme.onSurface, height: 1.5, fontSize: 13),
             ),
           ],
         ),

@@ -8,6 +8,8 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     final user = context.watch<AppProvider>().currentUser;
     final currentTheme = context.watch<AppProvider>().currentTheme;
 
@@ -16,23 +18,23 @@ class SettingsPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Configuración',
-            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: AppTheme.textHighPriority),
+            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Personaliza tu experiencia en la plataforma Aedus.',
-            style: TextStyle(color: AppTheme.textLowPriority, fontSize: 16),
+            style: TextStyle(color: appColors.textLow, fontSize: 16),
           ),
           const SizedBox(height: 48),
 
-          _buildSection('Perfil de Usuario', children: [
-            _buildProfileCard(user),
+          _buildSection(context, 'Perfil de Usuario', children: [
+            _buildProfileCard(context, user),
           ]),
 
           const SizedBox(height: 40),
-          _buildSection('Personalización Visual', children: [
+          _buildSection(context, 'Personalización Visual', children: [
             const Text('Selecciona el tema de la interfaz:'),
             const SizedBox(height: 16),
             Wrap(
@@ -47,7 +49,7 @@ class SettingsPage extends StatelessWidget {
           ]),
 
           const SizedBox(height: 40),
-          _buildSection('Preferencias del Sistema', children: [
+          _buildSection(context, 'Preferencias del Sistema', children: [
             _buildSettingToggle(context, 'Notificaciones Desktop', true, (v) {}),
             _buildSettingToggle(context, 'Sonidos de Notificación', true, (v) {}),
             _buildSettingToggle(context, 'Modo Compacto', context.watch<AppProvider>().isCompact, (v) {
@@ -59,13 +61,14 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String title, {required List<Widget> children}) {
+  Widget _buildSection(BuildContext context, String title, {required List<Widget> children}) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
         ),
         const SizedBox(height: 24),
         ...children,
@@ -73,8 +76,10 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileCard(dynamic user) {
+  Widget _buildProfileCard(BuildContext context, dynamic user) {
     if (user == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     
     return Card(
       child: Padding(
@@ -83,10 +88,10 @@ class SettingsPage extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
               child: Text(
                 user.nombre.substring(0, 2).toUpperCase(),
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
               ),
             ),
             const SizedBox(width: 24),
@@ -96,9 +101,9 @@ class SettingsPage extends StatelessWidget {
                 children: [
                   Text(user.nombre, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text(user.email, style: const TextStyle(color: AppTheme.textLowPriority)),
+                  Text(user.email, style: TextStyle(color: appColors.textLow)),
                   const SizedBox(height: 12),
-                  _buildBadge(user.rol),
+                  _buildBadge(context, user.rol),
                 ],
               ),
             ),
@@ -106,7 +111,7 @@ class SettingsPage extends StatelessWidget {
               onPressed: () {},
               icon: const Icon(Icons.edit, size: 18),
               label: const Text('EDITAR PERFIL'),
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.surface),
+              style: ElevatedButton.styleFrom(backgroundColor: appColors.surface),
             ),
           ],
         ),
@@ -114,8 +119,9 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildBadge(String rol) {
-    Color color = AppTheme.primaryBlue;
+  Widget _buildBadge(BuildContext context, String rol) {
+    final theme = Theme.of(context);
+    Color color = theme.colorScheme.primary;
     if (rol == 'Administrador') color = Colors.purple;
     
     return Container(
@@ -132,12 +138,13 @@ class SettingsPage extends StatelessWidget {
   }
 
   Widget _buildSettingToggle(BuildContext context, String title, bool val, Function(bool) onChanged) {
+    final theme = Theme.of(context);
     return SwitchListTile(
-      title: Text(title),
+      title: Text(title, style: TextStyle(color: theme.colorScheme.onSurface)),
       value: val,
       onChanged: onChanged,
       contentPadding: EdgeInsets.zero,
-      activeColor: AppTheme.primaryBlue,
+      activeColor: theme.colorScheme.primary,
     );
   }
 }
@@ -151,6 +158,9 @@ class _ThemeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+
     return InkWell(
       onTap: () => context.read<AppProvider>().setTheme(name),
       borderRadius: BorderRadius.circular(16),
@@ -161,18 +171,18 @@ class _ThemeCard extends StatelessWidget {
           color: color,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isActive ? AppTheme.primaryBlue : AppTheme.borders,
+            color: isActive ? theme.colorScheme.primary : appColors.border,
             width: isActive ? 3 : 1,
           ),
-          boxShadow: isActive ? [BoxShadow(color: AppTheme.primaryBlue.withValues(alpha: 0.2), blurRadius: 10)] : null,
+          boxShadow: isActive ? [BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.2), blurRadius: 10)] : null,
         ),
         child: Stack(
           children: [
             if (isActive)
-              const Positioned(
+              Positioned(
                 top: 8,
                 right: 8,
-                child: Icon(Icons.check_circle, color: AppTheme.primaryBlue, size: 20),
+                child: Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 20),
               ),
             Center(
               child: Text(

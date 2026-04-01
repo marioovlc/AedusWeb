@@ -8,6 +8,7 @@ import '../../data/models/incident_model.dart';
 import '../../data/models/aula_model.dart';
 import '../../data/models/message_model.dart';
 import '../../data/models/log_model.dart';
+import '../../data/models/comentario_incidencia_model.dart';
 import '../services/database_service.dart';
 import '../services/ai_service.dart';
 import '../utils/file_helper.dart';
@@ -216,6 +217,33 @@ class AppProvider with ChangeNotifier {
 
     await createLog('ACTUALIZAR INCIDENCIA', 'Estado de incidencia $id cambiado a $estadoId', categoria: 'SISTEMA');
     await refreshData();
+  }
+
+  Future<List<ComentarioIncidencia>> getComentariosIncidencia(int incidenciaId) async {
+    final results = await _db.query(
+      "",
+      action: "get_comentarios_incidencia",
+      substitutionValues: {'iId': incidenciaId},
+    );
+    return results.map((m) => ComentarioIncidencia.fromMap(m)).toList();
+  }
+
+  Future<ComentarioIncidencia?> addComentarioIncidencia(int incidenciaId, String texto) async {
+    if (_currentUser == null) return null;
+    final results = await _db.query(
+      "",
+      action: "add_comentario_incidencia",
+      substitutionValues: {
+        'iId': incidenciaId,
+        'uId': _currentUser!.id,
+        'txt': texto,
+      },
+    );
+    if (results.isNotEmpty) {
+      await createLog('NUEVO COMENTARIO', 'Usuario ${_currentUser!.nombre} comentó en incidencia #$incidenciaId', categoria: 'USUARIO');
+      return ComentarioIncidencia.fromMap({...results.first, 'usuario_nombre': _currentUser!.nombre, 'usuario_rol': _currentUser!.rol});
+    }
+    return null;
   }
 
   Future<void> sendMessage(String receiverId, String text, {String? imagenUrl, String? audioUrl}) async {

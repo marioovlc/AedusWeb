@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import '../../core/services/storage_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/incident_detail_dialog.dart';
 
 class IncidenciasPage extends StatefulWidget {
   const IncidenciasPage({super.key});
@@ -103,7 +104,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           const SizedBox(height: 32),
           Expanded(
             child: Row(
@@ -113,7 +114,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                 Expanded(flex: 2, child: _buildCreationForm(context)),
                 const SizedBox(width: 32),
                 // Right Panel: My Tickets
-                Expanded(flex: 3, child: _buildTicketList(incidencias)),
+                Expanded(flex: 3, child: _buildTicketList(context, incidencias)),
               ],
             ),
           ),
@@ -122,51 +123,56 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     );
   }
 
-  Widget _buildHeader() {
-    return const Column(
+  Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Gestión de Incidencias',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: AppTheme.textHighPriority),
+          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           'Reporta problemas técnicos y realiza el seguimiento en tiempo real.',
-          style: TextStyle(color: AppTheme.textLowPriority, fontSize: 16),
+          style: TextStyle(color: appColors.textLow, fontSize: 16),
         ),
       ],
     );
   }
 
   Widget _buildCreationForm(BuildContext context) {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildFormCard(
+            context,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Nueva Incidencia', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('Nueva Incidencia', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                 const SizedBox(height: 24),
-                _buildTextField('Título de la incidencia', 'Ej: Proyector no enciende', _tituloController),
+                _buildTextField(context, 'Título de la incidencia', 'Ej: Proyector no enciende', _tituloController),
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
                       child: _buildAulaDropdown(
+                        context,
                         context.watch<AppProvider>().aulas, 
                         _selectedAula, 
                         (v) => setState(() => _selectedAula = v)
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildCategoryDropdown(['Hardware', 'Software', 'Red', 'Otros'], _selectedCategory, (v) => setState(() => _selectedCategory = v!))),
+                    Expanded(child: _buildCategoryDropdown(context, ['Hardware', 'Software', 'Red', 'Otros'], _selectedCategory, (v) => setState(() => _selectedCategory = v!))),
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildTextField('Descripción detallada', 'Escribe aquí los pasos para reproducir el error...', _descController, maxLines: 5),
+                _buildTextField(context, 'Descripción detallada', 'Escribe aquí los pasos para reproducir el error...', _descController, maxLines: 5),
                 const SizedBox(height: 24),
                 Row(
                   children: [
@@ -175,6 +181,8 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                       icon: const Icon(Icons.attach_file),
                       label: Text(_imageBytes == null ? 'ADJUNTAR IMAGEN' : 'CAMBIAR IMAGEN'),
                       style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.primary,
+                        side: BorderSide(color: theme.colorScheme.primary),
                         padding: const EdgeInsets.all(16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -182,7 +190,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                     const Spacer(),
                     Container(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [AppTheme.primaryBlue, AppTheme.secondaryIndigo]),
+                        gradient: LinearGradient(colors: [theme.colorScheme.primary, theme.colorScheme.secondary]),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ElevatedButton.icon(
@@ -207,15 +215,19 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                 ],
                 if (_aiSuggestion != null) ...[
                   const SizedBox(height: 24),
-                  _buildAIHintCard(_aiSuggestion!),
+                  _buildAIHintCard(context, _aiSuggestion!),
                 ],
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isCreating ? null : _submitIncident,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                    ),
                     child: _isCreating 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Text('ENVIAR INCIDENCIA'),
                   ),
                 ),
@@ -227,36 +239,44 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     );
   }
 
-  Widget _buildFormCard({required Widget child}) {
+  Widget _buildFormCard(BuildContext context, {required Widget child}) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: AppTheme.cards,
+        color: appColors.card,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.borders),
+        border: Border.all(color: appColors.border),
       ),
       child: child,
     );
   }
 
-  Widget _buildTextField(String label, String hint, TextEditingController controller, {int maxLines = 1}) {
+  Widget _buildTextField(BuildContext context, String label, String hint, TextEditingController controller, {int maxLines = 1}) {
+    final appColors = Theme.of(context).extension<AppColors>()!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 13, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(color: appColors.textLow, fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           maxLines: maxLines,
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: hint,
+            hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildAulaDropdown(List<Aula> options, Aula? selected, ValueChanged<Aula?> onChanged) {
+  Widget _buildAulaDropdown(BuildContext context, List<Aula> options, Aula? selected, ValueChanged<Aula?> onChanged) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    
     // Ensure selected is part of options or null
     if (selected != null && !options.any((a) => a.id == selected!.id)) {
       selected = null;
@@ -265,32 +285,29 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     // Default to first if null and options exist
     if (selected == null && options.isNotEmpty) {
       selected = options.first;
-      // We don't call setState here as we are in build, but we ensure the value is correct for the widget
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Aula', style: TextStyle(color: AppTheme.textLowPriority, fontSize: 13, fontWeight: FontWeight.w600)),
+        Text('Aula', style: TextStyle(color: appColors.textLow, fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: AppTheme.surface,
+            color: appColors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.borders),
+            border: Border.all(color: appColors.border),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<Aula>(
               isExpanded: true,
               value: selected,
-              dropdownColor: AppTheme.surface,
-              hint: const Text('Seleccionar Aula'),
-              style: const TextStyle(color: AppTheme.textHighPriority),
+              dropdownColor: appColors.surface,
+              hint: Text('Seleccionar Aula', style: TextStyle(color: appColors.textLow)),
+              style: TextStyle(color: theme.colorScheme.onSurface),
               items: options.map((e) => DropdownMenuItem(value: e, child: Text(e.nombre))).toList(),
-              onChanged: (v) {
-                onChanged(v);
-              },
+              onChanged: onChanged,
             ),
           ),
         ),
@@ -298,25 +315,27 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     );
   }
 
-  Widget _buildCategoryDropdown(List<String> options, String selected, ValueChanged<String?> onChanged) {
+  Widget _buildCategoryDropdown(BuildContext context, List<String> options, String selected, ValueChanged<String?> onChanged) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Categoría', style: TextStyle(color: AppTheme.textLowPriority, fontSize: 13, fontWeight: FontWeight.w600)),
+        Text('Categoría', style: TextStyle(color: appColors.textLow, fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: AppTheme.surface,
+            color: appColors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.borders),
+            border: Border.all(color: appColors.border),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               isExpanded: true,
               value: selected,
-              dropdownColor: AppTheme.surface,
-              style: const TextStyle(color: AppTheme.textHighPriority),
+              dropdownColor: appColors.surface,
+              style: TextStyle(color: theme.colorScheme.onSurface),
               items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
               onChanged: onChanged,
             ),
@@ -326,22 +345,23 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     );
   }
 
-  Widget _buildAIHintCard(String text) {
+  Widget _buildAIHintCard(BuildContext context, String text) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+        color: theme.colorScheme.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.5)),
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
-          const FaIcon(FontAwesomeIcons.lightbulb, color: AppTheme.primaryBlue),
+          FaIcon(FontAwesomeIcons.lightbulb, color: theme.colorScheme.primary),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(color: AppTheme.textHighPriority, fontSize: 13),
+              style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 13),
             ),
           ),
         ],
@@ -349,16 +369,17 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     );
   }
 
-  Widget _buildTicketList(List<Incidencia> incidencias) {
+  Widget _buildTicketList(BuildContext context, List<Incidencia> incidencias) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Tickets Recientes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Tickets Recientes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
             IconButton(
-              icon: const Icon(Icons.refresh, color: AppTheme.primaryBlue),
+              icon: Icon(Icons.refresh, color: theme.colorScheme.primary),
               onPressed: () => context.read<AppProvider>().refreshData(),
             ),
           ],
@@ -368,7 +389,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
           child: ListView.builder(
             itemCount: incidencias.length,
             itemBuilder: (context, index) {
-              return _buildTicketCard(incidencias[index]);
+              return _buildTicketCard(context, incidencias[index]);
             },
           ),
         ),
@@ -376,21 +397,31 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     );
   }
 
-  Widget _buildTicketCard(Incidencia incident) {
+  Widget _buildTicketCard(BuildContext context, Incidencia incident) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     Color statusColor;
     switch (incident.estadoNombre.toUpperCase()) {
       case 'ACABADO':
-      case 'RESUELTO': statusColor = AppTheme.success; break;
+      case 'RESUELTO': statusColor = appColors.success; break;
       case 'PENDIENTE':
       case 'EN REVISION': statusColor = Colors.orange; break;
-      default: statusColor = AppTheme.primaryBlue;
+      default: statusColor = theme.colorScheme.primary;
     }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => IncidentDetailDialog(incidencia: incident, showAdminActions: false),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
@@ -398,16 +429,16 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: AppTheme.surface,
+                  color: appColors.surface,
                 ),
                 child: incident.imagenUrl != null 
                     ? CachedNetworkImage(
                         imageUrl: incident.imagenUrl!,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                        errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: AppTheme.textLowPriority),
+                        errorWidget: (context, url, error) => Icon(Icons.broken_image, color: appColors.textLow),
                       )
-                    : const Icon(Icons.image, color: AppTheme.textLowPriority),
+                    : Icon(Icons.image, color: appColors.textLow),
               ),
             ),
             const SizedBox(width: 20),
@@ -420,26 +451,26 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                     children: [
                       Text(
                         incident.titulo,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.onSurface),
                       ),
-                      _buildStatusBadge(incident.estadoNombre, statusColor),
+                      _buildStatusBadge(context, incident.estadoNombre, statusColor),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     incident.descripcion,
-                    style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 14),
+                    style: TextStyle(color: appColors.textLow, fontSize: 14),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 12, color: AppTheme.textLowPriority),
+                      Icon(Icons.calendar_today, size: 12, color: appColors.textLow),
                       const SizedBox(width: 6),
                       Text(
                         '${incident.fecha.day}/${incident.fecha.month} ${incident.fecha.hour}:${incident.fecha.minute}', 
-                        style: const TextStyle(fontSize: 12, color: AppTheme.textLowPriority),
+                        style: TextStyle(fontSize: 12, color: appColors.textLow),
                       ),
                       const SizedBox(width: 20),
                       Icon(Icons.category, size: 12, color: statusColor),
@@ -456,10 +487,11 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
           ],
         ),
       ),
+      ),
     );
   }
 
-  Widget _buildStatusBadge(String text, Color color) {
+  Widget _buildStatusBadge(BuildContext context, String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

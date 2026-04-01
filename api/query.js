@@ -14,6 +14,14 @@ const ACTION_MAP = {
     );
     ALTER TABLE gestion_incidencias.logs ADD COLUMN IF NOT EXISTS fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
     ALTER TABLE gestion_incidencias.logs ADD COLUMN IF NOT EXISTS categoria VARCHAR(50) DEFAULT 'USUARIO';
+    
+    CREATE TABLE IF NOT EXISTS gestion_incidencias.comentarios_incidencia (
+      id SERIAL PRIMARY KEY,
+      incidencia_id INT NOT NULL,
+      usuario_id VARCHAR(255) NOT NULL,
+      texto TEXT NOT NULL,
+      fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `,
   // Se excluye la contraseña para no fugar datos sensibles
   get_users: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins FROM neon_auth.user ORDER BY name ASC`,
@@ -32,7 +40,9 @@ const ACTION_MAP = {
   get_logs: `SELECT l.*, u.name as usuario_nombre, u.email as usuario_email FROM gestion_incidencias.logs l LEFT JOIN neon_auth.user u ON l.usuario_id::text = u.id::text ORDER BY l.fecha DESC LIMIT 50`,
   create_log: `INSERT INTO gestion_incidencias.logs (usuario_id, accion, detalles, fecha, categoria) VALUES (@uId, @acc, @det, NOW(), @cat) RETURNING *`,
   update_incidencia_estado: `UPDATE gestion_incidencias.incidencias SET estado_id = @eId WHERE id = @id RETURNING *`,
-  update_user_coins: `UPDATE neon_auth.user SET aeducoins = aeducoins + @coins WHERE id = @uId RETURNING *`
+  update_user_coins: `UPDATE neon_auth.user SET aeducoins = aeducoins + @coins WHERE id = @uId RETURNING *`,
+  get_comentarios_incidencia: `SELECT c.*, u.name as usuario_nombre, u.role as usuario_rol FROM gestion_incidencias.comentarios_incidencia c JOIN neon_auth.user u ON c.usuario_id::text = u.id::text WHERE c.incidencia_id = @iId ORDER BY c.fecha ASC`,
+  add_comentario_incidencia: `INSERT INTO gestion_incidencias.comentarios_incidencia (incidencia_id, usuario_id, texto, fecha) VALUES (@iId, @uId, @txt, NOW()) RETURNING *`
 };
 
 export default async function handler(req, res) {

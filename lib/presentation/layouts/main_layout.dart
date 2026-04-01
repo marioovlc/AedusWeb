@@ -21,20 +21,21 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     bool isMobile = MediaQuery.of(context).size.width < 900;
 
     return Scaffold(
       drawer: isMobile ? _buildSidebar(context) : null,
       appBar: isMobile ? AppBar(
         title: Image.asset('lib/assets/aedus.png', height: 45),
-        backgroundColor: AppTheme.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
       ) : null,
       body: Row(
         children: [
           if (!isMobile) _buildSidebar(context),
           Expanded(
             child: Container(
-              color: AppTheme.background,
+              color: theme.scaffoldBackgroundColor,
               child: widget.child,
             ),
           ),
@@ -45,6 +46,8 @@ class _MainLayoutState extends State<MainLayout> {
 
   Widget _buildSidebar(BuildContext context) {
     final provider = context.watch<AppProvider>();
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     bool isCompact = provider.isCompact;
     
     return AnimatedContainer(
@@ -53,8 +56,8 @@ class _MainLayoutState extends State<MainLayout> {
       width: isCompact ? 84 : 260,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: AppTheme.surface,
-        border: Border(right: BorderSide(color: AppTheme.borders.withValues(alpha: 0.5))),
+        color: appColors.surface,
+        border: Border(right: BorderSide(color: appColors.border.withValues(alpha: 0.5))),
       ),
       child: Column(
         children: [
@@ -67,13 +70,13 @@ class _MainLayoutState extends State<MainLayout> {
               horizontal: isCompact ? 12.0 : 20.0
             ),
             decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+              color: theme.colorScheme.primary.withValues(alpha: 0.05),
               border: Border(
-                bottom: BorderSide(color: AppTheme.borders.withValues(alpha: 0.5)),
+                bottom: BorderSide(color: appColors.border.withValues(alpha: 0.5)),
               ),
             ),
             child: isCompact 
-              ? const Center(child: FaIcon(FontAwesomeIcons.solidStar, color: AppTheme.primaryBlue, size: 28))
+              ? Center(child: FaIcon(FontAwesomeIcons.solidStar, color: theme.colorScheme.primary, size: 28))
               : Image.asset(
                   'lib/assets/aedus.png',
                   fit: BoxFit.contain,
@@ -89,7 +92,7 @@ class _MainLayoutState extends State<MainLayout> {
               child: Column(
                 crossAxisAlignment: isCompact ? CrossAxisAlignment.center : CrossAxisAlignment.start,
                 children: [
-                  if (!isCompact) _buildSectionTitle('PRINCIPAL'),
+                  if (!isCompact) _buildSectionTitle(context, 'PRINCIPAL'),
                   _buildNavItem(context, 'Dashboard', FontAwesomeIcons.gaugeHigh, '/dashboard', isCompact: isCompact),
                   _buildNavItem(
                     context, 
@@ -106,7 +109,7 @@ class _MainLayoutState extends State<MainLayout> {
                   
                   if (provider.currentUser?.rol == 'Administrador' || provider.currentUser?.rol.toUpperCase() == 'ADMIN') ...[
                     const SizedBox(height: 24),
-                    if (!isCompact) _buildSectionTitle('ADMINISTRACIÓN'),
+                    if (!isCompact) _buildSectionTitle(context, 'ADMINISTRACIÓN'),
                     _buildNavItem(context, 'Usuarios', FontAwesomeIcons.users, '/users', isCompact: isCompact),
                     _buildNavItem(context, 'Monitorización', FontAwesomeIcons.chartLine, '/monitoring', isCompact: isCompact),
                   ],
@@ -127,7 +130,7 @@ class _MainLayoutState extends State<MainLayout> {
                 _buildNavItem(context, 'Cerrar Sesión', FontAwesomeIcons.rightFromBracket, '/login', 
                   isCompact: isCompact,
                   hoverColor: Colors.red.withValues(alpha: 0.1),
-                  iconColor: AppTheme.textLowPriority,
+                  iconColor: appColors.textLow,
                   onTap: () {
                     context.read<AppProvider>().logout();
                     Navigator.pushReplacementNamed(context, '/login');
@@ -141,13 +144,14 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    final appColors = Theme.of(context).extension<AppColors>()!;
     return Padding(
       padding: const EdgeInsets.only(left: 12, bottom: 12, top: 12),
       child: Text(
         title,
-        style: const TextStyle(
-          color: AppTheme.textLowPriority,
+        style: TextStyle(
+          color: appColors.textLow,
           fontSize: 11,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,
@@ -167,6 +171,8 @@ class _MainLayoutState extends State<MainLayout> {
     Color? iconColor,
     VoidCallback? onTap,
   }) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     bool isActive = widget.currentRoute == route;
 
     Widget navContent;
@@ -175,7 +181,7 @@ class _MainLayoutState extends State<MainLayout> {
         child: FaIcon(
           icon, 
           size: 20, 
-          color: isActive ? AppTheme.primaryBlue : (iconColor ?? AppTheme.textLowPriority),
+          color: isActive ? theme.colorScheme.primary : (iconColor ?? appColors.textLow),
         ),
       );
     } else {
@@ -184,14 +190,14 @@ class _MainLayoutState extends State<MainLayout> {
           FaIcon(
             icon, 
             size: 18, 
-            color: isActive ? AppTheme.primaryBlue : (iconColor ?? AppTheme.textLowPriority),
+            color: isActive ? theme.colorScheme.primary : (iconColor ?? appColors.textLow),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               title,
               style: TextStyle(
-                color: isActive ? AppTheme.textHighPriority : AppTheme.textLowPriority,
+                color: isActive ? theme.colorScheme.onSurface : appColors.textLow,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                 fontSize: 14,
               ),
@@ -202,7 +208,7 @@ class _MainLayoutState extends State<MainLayout> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: AppTheme.danger,
+                color: appColors.danger,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -220,7 +226,7 @@ class _MainLayoutState extends State<MainLayout> {
         Navigator.pushReplacementNamed(context, route);
       },
       borderRadius: BorderRadius.circular(12),
-      hoverColor: hoverColor ?? AppTheme.primaryBlue.withValues(alpha: 0.05),
+      hoverColor: hoverColor ?? theme.colorScheme.primary.withValues(alpha: 0.05),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(
@@ -229,7 +235,7 @@ class _MainLayoutState extends State<MainLayout> {
         ),
         margin: const EdgeInsets.only(bottom: 4),
         decoration: BoxDecoration(
-          color: isActive ? AppTheme.primaryBlue.withValues(alpha: 0.1) : Colors.transparent,
+          color: isActive ? theme.colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: navContent,
@@ -247,6 +253,8 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildUserCard(BuildContext context, bool isCompact) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     final user = context.watch<AppProvider>().currentUser;
     if (user == null) return const SizedBox.shrink();
 
@@ -257,7 +265,7 @@ class _MainLayoutState extends State<MainLayout> {
           message: '${user.nombre} (${user.rol})\n🪙 ${user.aeduCoins}',
           child: CircleAvatar(
             radius: 20,
-            backgroundColor: AppTheme.primaryBlue,
+            backgroundColor: theme.colorScheme.primary,
             child: Text(
               user.nombre.substring(0, 1).toUpperCase(),
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
@@ -271,19 +279,19 @@ class _MainLayoutState extends State<MainLayout> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.cards,
+        color: appColors.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borders),
+        border: Border.all(color: appColors.border),
       ),
       child: Row(
         children: [
           Container(
             width: 40,
             height: 40,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [AppTheme.primaryBlue, AppTheme.secondaryIndigo],
+                colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
               ),
             ),
             child: Center(
@@ -300,12 +308,12 @@ class _MainLayoutState extends State<MainLayout> {
               children: [
                 Text(
                   user.nombre,
-                  style: const TextStyle(color: AppTheme.textHighPriority, fontWeight: FontWeight.bold, fontSize: 13),
+                  style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   user.rol,
-                  style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 11),
+                  style: TextStyle(color: appColors.textLow, fontSize: 11),
                 ),
               ],
             ),
@@ -315,7 +323,7 @@ class _MainLayoutState extends State<MainLayout> {
               const Text('🪙', style: TextStyle(fontSize: 14)),
               Text(
                 user.aeduCoins.toString(),
-                style: TextStyle(color: AppTheme.gold.withValues(alpha: 0.9), fontSize: 10, fontWeight: FontWeight.bold),
+                style: TextStyle(color: appColors.gold.withValues(alpha: 0.9), fontSize: 10, fontWeight: FontWeight.bold),
               ),
             ],
           ),

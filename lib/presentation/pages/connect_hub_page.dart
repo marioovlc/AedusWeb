@@ -100,6 +100,8 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     final provider = context.watch<AppProvider>();
     final contactos = provider.contactos;
     final mensajes = provider.mensajes;
@@ -107,37 +109,41 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
     return Row(
       children: [
         // Panel 1: Contacts (Left)
-        Expanded(flex: 2, child: _buildContactsPanel(contactos)),
-        const VerticalDivider(width: 1, color: AppTheme.borders),
+        Expanded(flex: 2, child: _buildContactsPanel(context, contactos)),
+        VerticalDivider(width: 1, color: appColors.border),
         // Panel 2: Chat (Center)
-        Expanded(flex: 4, child: _buildChatPanel(mensajes)),
-        const VerticalDivider(width: 1, color: AppTheme.borders),
+        Expanded(flex: 4, child: _buildChatPanel(context, mensajes)),
+        VerticalDivider(width: 1, color: appColors.border),
         // Panel 3: Details (Right)
-        Expanded(flex: 2, child: _buildDetailsPanel()),
+        Expanded(flex: 2, child: _buildDetailsPanel(context)),
       ],
     );
   }
 
-  Widget _buildContactsPanel(List<Usuario> contactos) {
+  Widget _buildContactsPanel(BuildContext context, List<Usuario> contactos) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.all(24.0),
           child: TextField(
+            style: TextStyle(color: theme.colorScheme.onSurface),
             decoration: InputDecoration(
               hintText: 'Buscar...',
-              prefixIcon: const Icon(Icons.search, size: 20),
-              fillColor: AppTheme.surface,
+              hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
+              prefixIcon: Icon(Icons.search, size: 20, color: appColors.textLow),
+              fillColor: appColors.surface,
             ),
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.0),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Row(
             children: [
-              _TabItem(title: 'Personas', isActive: true),
-              SizedBox(width: 16),
-              _TabItem(title: 'Tickets', isActive: false),
+              _TabItem(title: 'Personas', isActive: true, context: context),
+              const SizedBox(width: 16),
+              _TabItem(title: 'Tickets', isActive: false, context: context),
             ],
           ),
         ),
@@ -147,7 +153,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
             itemCount: contactos.length,
             itemBuilder: (context, index) {
               final contact = contactos[index];
-              return _buildContactItem(contact, _activeContact?.id == contact.id);
+              return _buildContactItem(context, contact, _activeContact?.id == contact.id);
             },
           ),
         ),
@@ -155,29 +161,33 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
     );
   }
 
-  Widget _buildContactItem(Usuario contact, bool isActive) {
+  Widget _buildContactItem(BuildContext context, Usuario contact, bool isActive) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     bool isAI = contact.id == 'aedus-ai-system';
     
     return ListTile(
       onTap: () => _selectContact(contact),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       selected: isActive,
-      selectedTileColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
+      selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.05),
       leading: CircleAvatar(
-        backgroundColor: isAI ? AppTheme.primaryBlue.withValues(alpha: 0.1) : AppTheme.cards,
+        backgroundColor: isAI ? theme.colorScheme.primary.withValues(alpha: 0.1) : appColors.card,
         child: isAI 
-          ? const FaIcon(FontAwesomeIcons.robot, size: 14, color: AppTheme.primaryBlue)
-          : Text(contact.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 12, color: Colors.white)),
+          ? FaIcon(FontAwesomeIcons.robot, size: 14, color: theme.colorScheme.primary)
+          : Text(contact.nombre.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface)),
       ),
-      title: Text(contact.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-      subtitle: Text(contact.rol, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 12)),
-      trailing: isActive ? CircleAvatar(radius: 4, backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.05)) : null,
+      title: Text(contact.nombre, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface)),
+      subtitle: Text(contact.rol, style: TextStyle(color: appColors.textLow, fontSize: 12)),
+      trailing: isActive ? CircleAvatar(radius: 4, backgroundColor: theme.colorScheme.primary) : null,
     );
   }
 
-  Widget _buildChatPanel(List<Mensaje> mensajes) {
+  Widget _buildChatPanel(BuildContext context, List<Mensaje> mensajes) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     if (_activeContact == null) {
-      return const Center(child: Text('Selecciona un contacto para chatear', style: TextStyle(color: AppTheme.textLowPriority)));
+      return Center(child: Text('Selecciona un contacto para chatear', style: TextStyle(color: appColors.textLow)));
     }
 
     return Column(
@@ -185,20 +195,20 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
         // Chat Header
         Container(
           padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(color: AppTheme.background),
+          decoration: BoxDecoration(color: theme.scaffoldBackgroundColor),
           child: Row(
             children: [
-              Text(_activeContact!.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(_activeContact!.nombre, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.onSurface)),
               const Spacer(),
-              const Icon(Icons.videocam_outlined, color: AppTheme.textLowPriority),
+              Icon(Icons.videocam_outlined, color: appColors.textLow),
               const SizedBox(width: 16),
-              const Icon(Icons.phone_outlined, color: AppTheme.textLowPriority),
+              Icon(Icons.phone_outlined, color: appColors.textLow),
               const SizedBox(width: 16),
-              const Icon(Icons.more_vert, color: AppTheme.textLowPriority),
+              Icon(Icons.more_vert, color: appColors.textLow),
             ],
           ),
         ),
-        const Divider(height: 1, color: AppTheme.borders),
+        Divider(height: 1, color: appColors.border),
         // Chat Messages
         Expanded(
           child: Container(
@@ -210,50 +220,53 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
                 final isMe = msg.senderId == context.read<AppProvider>().currentUser?.id;
                 
                 if (_activeContact?.id == 'aedus-ai-system' && index == 0) {
-                  return _buildAIResponse("¡Hola! Soy tu asistente Aedus. ¿En qué puedo ayudarte hoy con el sistema?");
+                  return _buildAIResponse(context, "¡Hola! Soy tu asistente Aedus. ¿En qué puedo ayudarte hoy con el sistema?");
                 }
 
-                return _buildMessage(msg, isMe);
+                return _buildMessage(context, msg, isMe);
               },
             ),
           ),
         ),
         // Chat Input
-        _buildChatInput(),
+        _buildChatInput(context),
       ],
     );
   }
 
-  Widget _buildAIResponse(String text) {
+  Widget _buildAIResponse(BuildContext context, String text) {
+    final theme = Theme.of(context);
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 24),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.5)),
+          border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                FaIcon(FontAwesomeIcons.wandMagicSparkles, size: 14, color: AppTheme.primaryBlue),
-                SizedBox(width: 8),
-                Text('Sugerencia IA', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue, fontSize: 13)),
+                FaIcon(FontAwesomeIcons.wandMagicSparkles, size: 14, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text('Sugerencia IA', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 13)),
               ],
             ),
             const SizedBox(height: 12),
-            Text(text, style: const TextStyle(color: AppTheme.textHighPriority, height: 1.5)),
+            Text(text, style: TextStyle(color: theme.colorScheme.onSurface, height: 1.5)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMessage(Mensaje msg, bool isMe) {
+  Widget _buildMessage(BuildContext context, Mensaje msg, bool isMe) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -261,7 +274,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
         padding: const EdgeInsets.all(16),
         constraints: const BoxConstraints(maxWidth: 400),
         decoration: BoxDecoration(
-          color: isMe ? AppTheme.primaryBlue : AppTheme.cards,
+          color: isMe ? theme.colorScheme.primary : appColors.card,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -288,29 +301,33 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
               if (msg.contenido.isNotEmpty) const SizedBox(height: 8),
             ],
             if (msg.contenido.isNotEmpty)
-              Text(msg.contenido, style: const TextStyle(color: Colors.white, height: 1.4)),
+              Text(msg.contenido, style: TextStyle(color: isMe ? Colors.white : theme.colorScheme.onSurface, height: 1.4)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildChatInput() {
+  Widget _buildChatInput(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Container(
       padding: const EdgeInsets.all(24),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.add, color: AppTheme.textLowPriority),
+            icon: Icon(Icons.add, color: appColors.textLow),
             onPressed: _pickImage,
           ),
           const SizedBox(width: 16),
           Expanded(
             child: TextField(
               controller: _messageController,
+              style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: _isRecording ? 'Grabando audio...' : 'Escribe un mensaje...',
-                fillColor: AppTheme.cards,
+                hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
+                fillColor: appColors.card,
                 suffixIcon: GestureDetector(
                   onLongPress: _startRecording,
                   onLongPressUp: _stopRecording,
@@ -319,7 +336,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
                     child: FaIcon(
                       FontAwesomeIcons.microphone, 
                       size: 16, 
-                      color: _isRecording ? AppTheme.danger : AppTheme.textLowPriority
+                      color: _isRecording ? appColors.danger : appColors.textLow
                     ),
                   ),
                 ),
@@ -330,7 +347,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
           const SizedBox(width: 16),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(color: AppTheme.primaryBlue, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
             child: IconButton(
               icon: const Icon(Icons.send, color: Colors.white, size: 20),
               onPressed: _sendMessage,
@@ -355,7 +372,9 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
     _messageController.clear();
   }
 
-  Widget _buildDetailsPanel() {
+  Widget _buildDetailsPanel(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     if (_activeContact == null) return const SizedBox.shrink();
 
     return Padding(
@@ -363,36 +382,38 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text('Detalles del Usuario', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Text('Detalles del Usuario', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.onSurface)),
           const SizedBox(height: 32),
           CircleAvatar(
             radius: 50,
-            backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
-            child: Text(_activeContact!.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+            child: Text(_activeContact!.nombre.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
           ),
           const SizedBox(height: 24),
-          Text(_activeContact!.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-          Text(_activeContact!.rol, style: const TextStyle(color: AppTheme.textLowPriority)),
+          Text(_activeContact!.nombre, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: theme.colorScheme.onSurface)),
+          Text(_activeContact!.rol, style: TextStyle(color: appColors.textLow)),
           const SizedBox(height: 32),
           const Divider(),
           const SizedBox(height: 32),
-          _buildInfoRow('Email', _activeContact!.email),
-          _buildInfoRow('Estado', _activeContact!.status),
-          _buildInfoRow('Coins', _activeContact!.aeduCoins.toString()),
+          _buildInfoRow(context, 'Email', _activeContact!.email),
+          _buildInfoRow(context, 'Estado', _activeContact!.status),
+          _buildInfoRow(context, 'Coins', _activeContact!.aeduCoins.toString()),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 12)),
+          Text(label, style: TextStyle(color: appColors.textLow, fontSize: 12)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: theme.colorScheme.onSurface)),
         ],
       ),
     );
@@ -438,14 +459,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: Colors.black.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, size: 20, color: Colors.white),
+            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, size: 20, color: Theme.of(context).colorScheme.primary),
             onPressed: () async {
               if (_isPlaying) {
                 await _audioPlayer.pause();
@@ -456,7 +477,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
           Text(
             '${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / ${_duration.inMinutes}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}',
-            style: const TextStyle(color: Colors.white, fontSize: 10),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 10),
           ),
         ],
       ),
@@ -467,16 +488,19 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 class _TabItem extends StatelessWidget {
   final String title;
   final bool isActive;
-  const _TabItem({required this.title, required this.isActive});
+  final BuildContext context;
+  const _TabItem({required this.title, required this.isActive, required this.context});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(this.context);
+    final appColors = theme.extension<AppColors>()!;
     return Column(
       children: [
         Text(
           title,
           style: TextStyle(
-            color: isActive ? AppTheme.primaryBlue : AppTheme.textLowPriority,
+            color: isActive ? theme.colorScheme.primary : appColors.textLow,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -485,7 +509,7 @@ class _TabItem extends StatelessWidget {
             margin: const EdgeInsets.only(top: 4),
             width: 20,
             height: 2,
-            color: AppTheme.primaryBlue,
+            color: theme.colorScheme.primary,
           ),
       ],
     );

@@ -10,6 +10,7 @@ class StorePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<AppProvider>().currentUser;
     if (user == null) return const Center(child: CircularProgressIndicator());
+    final theme = Theme.of(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(32.0),
@@ -19,7 +20,7 @@ class StorePage extends StatelessWidget {
           _buildHero(context, user.aeduCoins),
           const SizedBox(height: 48),
           
-          _buildSectionTitle('Power-ups de Sistema'),
+          _buildSectionTitle(context, 'Power-ups de Sistema'),
           const SizedBox(height: 24),
           _buildItemGrid(context, [
             _StoreItem(
@@ -34,19 +35,19 @@ class StorePage extends StatelessWidget {
               description: '10 sugerencias técnicas adicionales para tus incidencias.',
               price: 300,
               icon: Icons.auto_awesome,
-              color: AppTheme.primaryBlue,
+              color: theme.colorScheme.primary,
             ),
             _StoreItem(
               name: 'Soporte Directo',
               description: 'Acceso a un canal de chat prioritario con administradores.',
               price: 500,
               icon: Icons.support_agent,
-              color: AppTheme.success,
+              color: theme.extension<AppColors>()!.success,
             ),
           ]),
 
           const SizedBox(height: 48),
-          _buildSectionTitle('Personalización Premium'),
+          _buildSectionTitle(context, 'Personalización Premium'),
           const SizedBox(height: 24),
           _buildItemGrid(context, [
             _StoreItem(
@@ -54,7 +55,7 @@ class StorePage extends StatelessWidget {
               description: 'Añade un destello premium a tu avatar en los chats.',
               price: 200,
               icon: Icons.stars,
-              color: AppTheme.gold,
+              color: theme.extension<AppColors>()!.gold,
             ),
             _StoreItem(
               name: 'Tema Cyberpunk',
@@ -77,19 +78,20 @@ class StorePage extends StatelessWidget {
   }
 
   Widget _buildHero(BuildContext context, int coins) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.primaryBlue, AppTheme.secondaryIndigo],
+        gradient: LinearGradient(
+          colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryBlue.withOpacity(0.3),
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -108,14 +110,14 @@ class StorePage extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Canjea tus AeduCoins por ventajas exclusivas.',
-                style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 16),
               ),
             ],
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -134,10 +136,10 @@ class StorePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textHighPriority),
+      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
     );
   }
 
@@ -160,6 +162,8 @@ class StorePage extends StatelessWidget {
   }
 
   Widget _buildItemCard(BuildContext context, _StoreItem item) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Card(
       elevation: 0,
       child: Padding(
@@ -170,7 +174,7 @@ class StorePage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: item.color.withOpacity(0.1),
+                color: item.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(item.icon, color: item.color, size: 28),
@@ -181,7 +185,7 @@ class StorePage extends StatelessWidget {
             Expanded(
               child: Text(
                 item.description,
-                style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 13),
+                style: TextStyle(color: appColors.textLow, fontSize: 13),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -196,14 +200,15 @@ class StorePage extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       item.price.toString(),
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.gold),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: appColors.gold),
                     ),
                   ],
                 ),
                 ElevatedButton(
                   onPressed: () => _confirmPurchase(context, item),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlue,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     minimumSize: Size.zero,
                   ),
@@ -218,10 +223,12 @@ class StorePage extends StatelessWidget {
   }
 
   void _confirmPurchase(BuildContext context, _StoreItem item) {
+    final appColors = Theme.of(context).extension<AppColors>()!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirmar Compra'),
+        backgroundColor: appColors.surface,
         content: Text('¿Deseas canjear ${item.price} AeduCoins por "${item.name}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
@@ -233,13 +240,13 @@ class StorePage extends StatelessWidget {
               if (success) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('¡Has adquirido "${item.name}"!'), backgroundColor: AppTheme.success),
+                    SnackBar(content: Text('¡Has adquirido "${item.name}"!'), backgroundColor: appColors.success),
                   );
                 }
               } else {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('No tienes suficientes AeduCoins.'), backgroundColor: AppTheme.danger),
+                    SnackBar(content: const Text('No tienes suficientes AeduCoins.'), backgroundColor: appColors.danger),
                   );
                 }
               }

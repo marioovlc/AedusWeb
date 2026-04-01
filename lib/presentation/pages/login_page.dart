@@ -51,17 +51,27 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           child: Container(
             width: 400,
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: appColors.surface,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppTheme.borders),
+              border: Border.all(color: appColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                )
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -73,10 +83,10 @@ class _LoginPageState extends State<LoginPage> {
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 32),
-                const Text(
+                Text(
                   'Gestión Inteligente de Incidencias',
                   style: TextStyle(
-                    color: AppTheme.primaryBlue, 
+                    color: theme.colorScheme.primary, 
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
                     fontSize: 16
@@ -84,29 +94,35 @@ class _LoginPageState extends State<LoginPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Inicia sesión para acceder a tu panel de control.',
-                  style: TextStyle(color: AppTheme.textLowPriority, fontSize: 13),
+                  style: TextStyle(color: appColors.textLow, fontSize: 13),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),
-                _buildTextField('Email', _emailController, false),
+                _buildTextField(context, 'Email', _emailController, false),
                 const SizedBox(height: 20),
-                _buildTextField('Contraseña', _passwordController, true),
+                _buildTextField(context, 'Contraseña', _passwordController, true),
                 const SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                     child: _isLoading 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('INGRESAR'),
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Text('INGRESAR', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/register'),
-                  child: const Text('Solicitar Usuario (Registrarse)', style: TextStyle(color: AppTheme.primaryBlue)),
+                  child: Text('Solicitar Usuario (Registrarse)', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -116,17 +132,22 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, bool isPassword) {
+  Widget _buildTextField(BuildContext context, String label, TextEditingController controller, bool isPassword) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 13, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(color: appColors.textLow, fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: isPassword,
+          style: TextStyle(color: theme.colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: 'Introduce tu $label',
+            hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
+            fillColor: appColors.card,
           ),
         ),
       ],

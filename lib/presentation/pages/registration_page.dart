@@ -35,14 +35,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
       );
       
       if (mounted) {
+        final theme = Theme.of(context);
+        final appColors = theme.extension<AppColors>()!;
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: AppTheme.surface,
-            title: const Text('Solicitud Enviada', style: TextStyle(color: AppTheme.textHighPriority)),
-            content: const Text(
+            backgroundColor: appColors.surface,
+            title: Text('Solicitud Enviada', style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+            content: Text(
               'Tu solicitud de usuario ha sido registrada correctamente. Un administrador la revisará pronto.',
-              style: TextStyle(color: AppTheme.textLowPriority),
+              style: TextStyle(color: appColors.textLow),
             ),
             actions: [
               TextButton(
@@ -69,20 +71,23 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           child: Container(
             width: 500,
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: appColors.surface,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppTheme.borders),
+              border: Border.all(color: appColors.border),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -92,43 +97,46 @@ class _RegistrationPageState extends State<RegistrationPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
+                Text(
                   'Solicitud de Usuario',
                   style: TextStyle(
-                    color: AppTheme.textHighPriority,
+                    color: theme.colorScheme.onSurface,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Completa el formulario para solicitar acceso al sistema.',
-                  style: TextStyle(color: AppTheme.textLowPriority, fontSize: 14),
+                  style: TextStyle(color: appColors.textLow, fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),
-                _buildTextField('Nombre Completo', _nombreController, false),
+                _buildTextField(context, 'Nombre Completo', _nombreController, false),
                 const SizedBox(height: 20),
-                _buildTextField('Email', _emailController, false),
+                _buildTextField(context, 'Email', _emailController, false),
                 const SizedBox(height: 20),
-                _buildTextField('Contraseña Deseada', _passwordController, true),
+                _buildTextField(context, 'Contraseña Deseada', _passwordController, true),
                 const SizedBox(height: 20),
-                _buildTextField('Motivo de la solicitud (Opcional)', _motivoController, false, maxLines: 3),
+                _buildTextField(context, 'Motivo de la solicitud (Opcional)', _motivoController, false, maxLines: 3),
                 const SizedBox(height: 40),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _submitRequest,
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _isLoading 
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('ENVIAR SOLICITUD'),
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('ENVIAR SOLICITUD', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-                  child: const Text('YA TENGO CUENTA - VOLVER'),
+                  child: Text('YA TENGO CUENTA - VOLVER', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -138,18 +146,23 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, bool isPassword, {int maxLines = 1}) {
+  Widget _buildTextField(BuildContext context, String label, TextEditingController controller, bool isPassword, {int maxLines = 1}) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.textLowPriority, fontSize: 13, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(color: appColors.textLow, fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: isPassword,
           maxLines: maxLines,
+          style: TextStyle(color: theme.colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: 'Introduce tu $label',
+            hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
+            fillColor: appColors.card,
           ),
         ),
       ],
