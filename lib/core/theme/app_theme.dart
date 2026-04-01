@@ -3,10 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Theme Helper
-  static ThemeData getTheme(String themeName) {
+  static ThemeData getTheme(String themeName, {bool isAccessibilityMode = false}) {
     bool isLight = themeName == 'Blanco';
     bool isDaltonic = themeName == 'Daltónico';
-    bool isAccessible = themeName == 'Accesibilidad';
 
     // Default: Original (Dark)
     Color bg = const Color(0xFF060D1C);
@@ -35,7 +34,7 @@ class AppTheme {
       dang = const Color(0xFFDC2626);
       gld = const Color(0xFFD97706);
       brightness = Brightness.light;
-    } else if (isDaltonic || isAccessible) {
+    } else if (isDaltonic) {
       bg = Colors.black;
       surf = const Color(0xFF171717);
       crd = const Color(0xFF262626);
@@ -49,7 +48,13 @@ class AppTheme {
       gld = const Color(0xFFF1C40F);
     }
 
-    double scale = isAccessible ? 1.35 : 1.0;
+    double scale = isAccessibilityMode ? 1.25 : 1.0;
+    
+    // High contrast overrides for accessibility mode
+    if (isAccessibilityMode) {
+      txtLow = txtHigh.withValues(alpha: 0.9);
+      brd = txtHigh.withValues(alpha: 0.3);
+    }
 
     return ThemeData(
       useMaterial3: true,

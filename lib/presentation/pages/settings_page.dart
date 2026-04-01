@@ -47,7 +47,6 @@ class SettingsPage extends StatelessWidget {
                 _ThemeCard(name: 'Blanco', color: const Color(0xFFF8FAFC), isActive: currentTheme == 'Blanco'),
                 _ThemeCard(name: 'Original', color: const Color(0xFF060D1C), isActive: currentTheme == 'Original'),
                 _ThemeCard(name: 'Daltónico', color: Colors.black, isActive: currentTheme == 'Daltónico'),
-                _ThemeCard(name: 'Accesibilidad', color: Colors.black87, isActive: currentTheme == 'Accesibilidad'),
               ],
             ),
           ]),
@@ -58,6 +57,9 @@ class SettingsPage extends StatelessWidget {
             _buildSettingToggle(context, 'Sonidos de Notificación', true, (v) {}),
             _buildSettingToggle(context, 'Modo Compacto', context.watch<AppProvider>().isCompact, (v) {
               context.read<AppProvider>().setCompact(v);
+            }),
+            _buildSettingToggle(context, 'Modo Accesibilidad (Fuente y Contraste)', context.watch<AppProvider>().isAccessibilityMode, (v) {
+              context.read<AppProvider>().setAccessibilityMode(v);
             }),
           ]),
         ],

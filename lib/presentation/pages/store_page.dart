@@ -152,6 +152,8 @@ class StorePage extends StatelessWidget {
       case 'palette': return Icons.palette;
       case 'verified': return Icons.verified;
       case 'shield': return Icons.shield;
+      case 'coffee': return Icons.local_cafe;
+      case 'food': return Icons.restaurant;
       default: return Icons.auto_awesome;
     }
   }
@@ -270,6 +272,8 @@ class StorePage extends StatelessWidget {
       'palette': Icons.palette,
       'verified': Icons.verified,
       'shield': Icons.shield,
+      'coffee': Icons.local_cafe,
+      'food': Icons.restaurant,
     };
 
     final colorsMap = {

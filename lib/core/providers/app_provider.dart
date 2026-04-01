@@ -31,6 +31,7 @@ class AppProvider with ChangeNotifier {
   List<StoreItem> _storeItems = [];
   String _currentTheme = 'Original';
   bool _isCompact = false;
+  bool _isAccessibilityMode = false;
   final Map<String, bool> _systemHealth = {
     'AI': true,
     'DB': true,
@@ -48,10 +49,16 @@ class AppProvider with ChangeNotifier {
   Map<String, String> get kpis => _kpis;
   String get currentTheme => _currentTheme;
   bool get isCompact => _isCompact;
+  bool get isAccessibilityMode => _isAccessibilityMode;
   Map<String, bool> get systemHealth => _systemHealth;
 
   void setCompact(bool compact) {
     _isCompact = compact;
+    notifyListeners();
+  }
+
+  void setAccessibilityMode(bool mode) {
+    _isAccessibilityMode = mode;
     notifyListeners();
   }
 
@@ -110,7 +117,15 @@ class AppProvider with ChangeNotifier {
 
   Future<void> _fetchIncidencias() async {
     final results = await _db.query("", action: "get_incidencias");
-    _incidencias = results.map((m) => Incidencia.fromMap(m)).toList();
+    final allIncidencias = results.map((m) => Incidencia.fromMap(m)).toList();
+    
+    // Filtering: Only owners see their incidents, unless staff/admin
+    final role = _currentUser?.rol.toUpperCase();
+    if (role == 'ADMIN' || role == 'MANTENIMIENTO' || role == 'ADMINISTRADOR') {
+      _incidencias = allIncidencias;
+    } else {
+      _incidencias = allIncidencias.where((i) => i.usuarioId == _currentUser?.id).toList();
+    }
   }
 
   Future<void> _fetchKPIs() async {

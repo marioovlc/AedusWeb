@@ -28,8 +28,9 @@ class _MainLayoutState extends State<MainLayout> {
     return Scaffold(
       drawer: isMobile ? _buildSidebar(context) : null,
       appBar: isMobile ? AppBar(
-        title: Image.asset('lib/assets/aedus.png', height: 45),
+        title: Image.asset('lib/assets/aedus.png', height: 60),
         backgroundColor: theme.scaffoldBackgroundColor,
+        toolbarHeight: 80,
       ) : null,
       body: Row(
         children: [
@@ -67,7 +68,7 @@ class _MainLayoutState extends State<MainLayout> {
             duration: const Duration(milliseconds: 300),
             width: double.infinity,
             padding: EdgeInsets.symmetric(
-              vertical: isCompact ? 30.0 : 40.0, 
+              vertical: isCompact ? 30.0 : 60.0, 
               horizontal: isCompact ? 12.0 : 20.0
             ),
             decoration: BoxDecoration(
@@ -81,7 +82,7 @@ class _MainLayoutState extends State<MainLayout> {
               : Image.asset(
                   'lib/assets/aedus.png',
                   fit: BoxFit.contain,
-                  height: 80,
+                  height: 120,
                 ),
           ),
           const SizedBox(height: 10),

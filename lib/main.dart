@@ -42,7 +42,7 @@ class AedusApp extends StatelessWidget {
           title: 'Aedus App',
           debugShowCheckedModeBanner: false,
           themeMode: ThemeMode.dark,
-          darkTheme: AppTheme.getTheme(provider.currentTheme),
+          darkTheme: AppTheme.getTheme(provider.currentTheme, isAccessibilityMode: provider.isAccessibilityMode),
           initialRoute: '/login', // Start with Login
           onGenerateRoute: (settings) {
             Widget page;
