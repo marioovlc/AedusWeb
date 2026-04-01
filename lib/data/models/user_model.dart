@@ -5,6 +5,7 @@ class Usuario {
   final String rol;
   final String status;
   final int aeduCoins;
+  final String? avatarUrl;
 
   Usuario({
     required this.id,
@@ -13,6 +14,7 @@ class Usuario {
     required this.rol,
     required this.status,
     required this.aeduCoins,
+    this.avatarUrl,
   });
 
   factory Usuario.fromMap(Map<String, dynamic> map) {
@@ -23,6 +25,7 @@ class Usuario {
       rol: map['role'] as String? ?? map['rol'] as String? ?? 'USER',
       status: map['status']?.toString() ?? ((map['banned'] == true) ? 'BANEADO' : (map['emailVerified'] == false ? 'INACTIVO' : 'ACTIVO')),
       aeduCoins: map['aeducoins'] as int? ?? map['aedu_coins'] as int? ?? 0,
+      avatarUrl: map['avatar_url'] as String?,
     );
   }
 
@@ -34,6 +37,7 @@ class Usuario {
       'role': rol,
       'status': status,
       'aeducoins': aeduCoins,
+      'avatar_url': avatarUrl,
     };
   }
 }

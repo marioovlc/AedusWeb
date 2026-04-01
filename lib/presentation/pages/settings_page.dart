@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../core/services/storage_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 
@@ -87,13 +90,30 @@ class SettingsPage extends StatelessWidget {
         padding: const EdgeInsets.all(24.0),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-              child: Text(
-                user.nombre.substring(0, 2).toUpperCase(),
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
-              ),
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  backgroundImage: user.avatarUrl != null ? CachedNetworkImageProvider(user.avatarUrl!) : null,
+                  child: user.avatarUrl == null ? Text(
+                    user.nombre.substring(0, 2).toUpperCase(),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                  ) : null,
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: () => _pickAndUploadAvatar(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
+                      child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(width: 24),
             Expanded(
@@ -109,7 +129,7 @@ class SettingsPage extends StatelessWidget {
               ),
             ),
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () => _showEditProfileDialog(context, user),
               icon: const Icon(Icons.edit, size: 18),
               label: const Text('EDITAR PERFIL'),
               style: ElevatedButton.styleFrom(backgroundColor: appColors.surface),
@@ -146,6 +166,61 @@ class SettingsPage extends StatelessWidget {
       onChanged: onChanged,
       contentPadding: EdgeInsets.zero,
       activeThumbColor: theme.colorScheme.primary,
+    );
+  }
+
+  Future<void> _pickAndUploadAvatar(BuildContext context) async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      final url = await StorageService().uploadFile(bytes, image.name);
+      if (url != null && context.mounted) {
+        await context.read<AppProvider>().updateUserProfile(
+          name: context.read<AppProvider>().currentUser!.nombre,
+          email: context.read<AppProvider>().currentUser!.email,
+          avatarUrl: url,
+        );
+      }
+    }
+  }
+
+  void _showEditProfileDialog(BuildContext context, dynamic user) {
+    final nameController = TextEditingController(text: user.nombre);
+    final emailController = TextEditingController(text: user.email);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Perfil'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Nombre'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(labelText: 'Email'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCELAR')),
+          ElevatedButton(
+            onPressed: () async {
+              await context.read<AppProvider>().updateUserProfile(
+                name: nameController.text,
+                email: emailController.text,
+              );
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('GUARDAR'),
+          ),
+        ],
+      ),
     );
   }
 }

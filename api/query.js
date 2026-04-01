@@ -33,12 +33,15 @@ const ACTION_MAP = {
       color VARCHAR(20) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    -- Ensure avatar_url exists in the users table
+    ALTER TABLE neon_auth.user ADD COLUMN IF NOT EXISTS avatar_url TEXT;
   `,
   // Se excluye la contraseña para no fugar datos sensibles
-  get_users: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins FROM neon_auth.user ORDER BY name ASC`,
+  get_users: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins, avatar_url FROM neon_auth.user ORDER BY name ASC`,
   get_incidencias: `SELECT i.*, e.nombre as estado_nombre FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id ORDER BY i.fecha DESC`,
   get_kpis: `SELECT e.nombre as estado, count(*) as count FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id GROUP BY e.nombre`,
-  get_contactos: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins FROM neon_auth.user WHERE id != @id`,
+  get_contactos: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins, avatar_url FROM neon_auth.user WHERE id != @id`,
   get_aulas: `SELECT * FROM gestion_incidencias.aulas ORDER BY nombre ASC`,
   get_mensajes: `SELECT * FROM gestion_incidencias.mensajes WHERE (usuario_id = @me AND receptor_id = @other) OR (usuario_id = @other AND receptor_id = @me) ORDER BY fecha ASC`,
   create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img) RETURNING *`,
@@ -55,7 +58,8 @@ const ACTION_MAP = {
   get_comentarios_incidencia: `SELECT c.*, u.name as usuario_nombre, u.role as usuario_rol FROM gestion_incidencias.comentarios_incidencia c JOIN neon_auth.user u ON c.usuario_id::text = u.id::text WHERE c.incidencia_id = @iId AND (c.is_internal = false OR @rol IN ('ADMIN', 'MANTENIMIENTO')) ORDER BY c.fecha ASC`,
   add_comentario_incidencia: `INSERT INTO gestion_incidencias.comentarios_incidencia (incidencia_id, usuario_id, texto, fecha, is_internal) VALUES (@iId, @uId, @txt, NOW(), @internal) RETURNING *`,
   get_store_items: `SELECT * FROM gestion_incidencias.tienda_objetos ORDER BY price ASC`,
-  create_store_item: `INSERT INTO gestion_incidencias.tienda_objetos (name, description, price, icon, color) VALUES (@nom, @des, @pri, @ico, @col) RETURNING *`
+  create_store_item: `INSERT INTO gestion_incidencias.tienda_objetos (name, description, price, icon, color) VALUES (@nom, @des, @pri, @ico, @col) RETURNING *`,
+  update_user_profile: `UPDATE neon_auth.user SET name = @nom, email = @em, avatar_url = @img WHERE id = @id RETURNING *`
 };
 
 export default async function handler(req, res) {

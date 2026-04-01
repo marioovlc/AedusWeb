@@ -51,4 +51,14 @@ class Incidencia {
       'fecha': fecha.toIso8601String(),
     };
   }
+
+  String get categoriaNombre {
+    switch (categoriaId) {
+      case 1: return 'Hardware';
+      case 2: return 'Software';
+      case 3: return 'Red';
+      case 4: return 'Otros';
+      default: return 'General';
+    }
+  }
 }

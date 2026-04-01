@@ -150,15 +150,9 @@ class DashboardPage extends StatelessWidget {
                   borderData: FlBorderData(show: false),
                   lineBarsData: [
                     LineChartBarData(
-                      spots: [
-                        const FlSpot(0, 3),
-                        const FlSpot(1, 1),
-                        const FlSpot(2, 4),
-                        const FlSpot(3, 2),
-                        const FlSpot(4, 5),
-                        const FlSpot(5, 3),
-                        const FlSpot(6, 4),
-                      ],
+                      spots: context.read<AppProvider>().getWorkloadLast7Days().asMap().entries.map((e) {
+                         return FlSpot(e.key.toDouble(), e.value['creadas']);
+                      }).toList(),
                       isCurved: true,
                       color: theme.colorScheme.primary,
                       barWidth: 4,
@@ -200,12 +194,10 @@ class DashboardPage extends StatelessWidget {
                   gridData: const FlGridData(show: false),
                   titlesData: const FlTitlesData(show: false),
                   borderData: FlBorderData(show: false),
-                  barGroups: [
-                    BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 8, color: theme.colorScheme.primary)]),
-                    BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 10, color: theme.colorScheme.secondary)]),
-                    BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 14, color: appColors.success)]),
-                    BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 6, color: Colors.orange)]),
-                  ],
+                  barGroups: context.read<AppProvider>().getIncidenciasPorCategoria().entries.toList().asMap().entries.map((e) {
+                    final color = [theme.colorScheme.primary, theme.colorScheme.secondary, appColors.success, Colors.orange][e.key % 4];
+                    return BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: e.value.value.toDouble(), color: color)]);
+                  }).toList(),
                 ),
               ),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 
@@ -266,10 +267,11 @@ class _MainLayoutState extends State<MainLayout> {
           child: CircleAvatar(
             radius: 20,
             backgroundColor: theme.colorScheme.primary,
-            child: Text(
+            backgroundImage: user.avatarUrl != null ? CachedNetworkImageProvider(user.avatarUrl!) : null,
+            child: user.avatarUrl == null ? Text(
               user.nombre.substring(0, 1).toUpperCase(),
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-            ),
+            ) : null,
           ),
         ),
       );
@@ -290,16 +292,20 @@ class _MainLayoutState extends State<MainLayout> {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
+              gradient: user.avatarUrl == null ? LinearGradient(
                 colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
-              ),
+              ) : null,
+              image: user.avatarUrl != null ? DecorationImage(
+                image: CachedNetworkImageProvider(user.avatarUrl!),
+                fit: BoxFit.cover,
+              ) : null,
             ),
-            child: Center(
+            child: user.avatarUrl == null ? Center(
               child: Text(
                 user.nombre.substring(0, 2).toUpperCase(), 
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
               ),
-            ),
+            ) : null,
           ),
           const SizedBox(width: 12),
           Expanded(

@@ -132,7 +132,7 @@ class AppProvider with ChangeNotifier {
       'Total Incidencias': total.toString(),
       'Pendientes': pendientes.toString(),
       'Resueltas': resueltas.toString(),
-      'Usuarios Activos': '8', // Mock for now or count from session
+      'Usuarios Activos': (_contactos.length + 1).toString(), // Including self
     };
   }
 
@@ -429,6 +429,36 @@ class AppProvider with ChangeNotifier {
       });
     }
     return workload;
+  }
+
+  Map<String, int> getIncidenciasPorCategoria() {
+    final Map<String, int> counts = {};
+    for (final inc in _incidencias) {
+      final cat = inc.categoriaNombre;
+      counts[cat] = (counts[cat] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  Future<void> updateUserProfile({required String name, required String email, String? avatarUrl}) async {
+    if (_currentUser == null) return;
+    
+    final results = await _db.query(
+      "", 
+      action: "update_user_profile", 
+      substitutionValues: {
+        'id': _currentUser!.id,
+        'nom': name,
+        'em': email,
+        'img': avatarUrl ?? _currentUser!.avatarUrl
+      }
+    );
+
+    if (results.isNotEmpty) {
+      _currentUser = Usuario.fromMap(results.first);
+      await createLog('ACTUALIZAR PERFIL', 'Información de perfil actualizada', categoria: 'USUARIO');
+      notifyListeners();
+    }
   }
 
   Future<String?> exportLogsToCSV() async {
