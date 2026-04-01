@@ -24,15 +24,35 @@ const ACTION_MAP = {
     );
     ALTER TABLE gestion_incidencias.comentarios_incidencia ADD COLUMN IF NOT EXISTS is_internal BOOLEAN DEFAULT false;
 
-    CREATE TABLE IF NOT EXISTS gestion_incidencias.tienda_objetos (
+    CREATE TABLE IF NOT EXISTS gestion_incidencias.store_items (
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       description TEXT NOT NULL,
       price INT NOT NULL DEFAULT 0,
-      icon VARCHAR(100) NOT NULL,
-      color VARCHAR(20) NOT NULL,
+      icon VARCHAR(100) NOT NULL DEFAULT 'star',
+      color VARCHAR(20) NOT NULL DEFAULT '#F2C94C',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    -- Migrate from tienda_objetos if exists
+    DO $$ 
+    BEGIN
+      IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'gestion_incidencias' AND table_name = 'tienda_objetos') THEN
+        INSERT INTO gestion_incidencias.store_items (id, name, description, price, icon, color, created_at)
+        SELECT id, name, description, price, icon, color, created_at FROM gestion_incidencias.tienda_objetos
+        ON CONFLICT (id) DO NOTHING;
+      END IF;
+    END $$;
+
+    -- Migrate from tienda_items (old java) if exists
+    DO $$ 
+    BEGIN
+      IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'tienda_items') THEN
+        INSERT INTO gestion_incidencias.store_items (name, description, price, icon, color)
+        SELECT nombre, descripcion, coste, 'star', '#F2C94C' FROM tienda_items
+        WHERE nombre NOT IN (SELECT name FROM gestion_incidencias.store_items);
+      END IF;
+    END $$;
 
     -- Ensure avatar_url exists in the users table
     ALTER TABLE neon_auth.user ADD COLUMN IF NOT EXISTS avatar_url TEXT;
@@ -63,8 +83,8 @@ const ACTION_MAP = {
   update_user_coins: `UPDATE neon_auth.user SET aeducoins = aeducoins + @coins WHERE id = @uId RETURNING *`,
   get_comentarios_incidencia: `SELECT c.*, u.name as usuario_nombre, u.role as usuario_rol FROM gestion_incidencias.comentarios_incidencia c JOIN neon_auth.user u ON c.usuario_id::text = u.id::text WHERE c.incidencia_id = @iId AND (c.is_internal = false OR @rol IN ('ADMIN', 'MANTENIMIENTO')) ORDER BY c.fecha ASC`,
   add_comentario_incidencia: `INSERT INTO gestion_incidencias.comentarios_incidencia (incidencia_id, usuario_id, texto, fecha, is_internal) VALUES (@iId, @uId, @txt, NOW(), @internal) RETURNING *`,
-  get_store_items: `SELECT * FROM gestion_incidencias.tienda_objetos ORDER BY price ASC`,
-  create_store_item: `INSERT INTO gestion_incidencias.tienda_objetos (name, description, price, icon, color) VALUES (@nom, @des, @pri, @ico, @col) RETURNING *`,
+  get_store_items: `SELECT * FROM gestion_incidencias.store_items ORDER BY price ASC`,
+  create_store_item: `INSERT INTO gestion_incidencias.store_items (name, description, price, icon, color) VALUES (@nom, @des, @pri, @ico, @col) RETURNING *`,
   update_user_profile: `UPDATE neon_auth.user SET name = @nom, email = @em, avatar_url = @img WHERE id = @id RETURNING *`
 };
 
