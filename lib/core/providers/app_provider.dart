@@ -287,7 +287,7 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> sendMessage(String receiverId, String text, {String? imagenUrl, String? audioUrl}) async {
+  Future<void> sendMessage(String receiverId, String text, {String? imageUrl, String? audioUrl, int? ticketLinkId}) async {
     if (_currentUser == null) return;
 
     final mensaje = Mensaje(
@@ -295,8 +295,9 @@ class AppProvider with ChangeNotifier {
       senderId: _currentUser!.id,
       receiverId: receiverId,
       contenido: text,
-      imagenUrl: imagenUrl,
+      imagenUrl: imageUrl,
       audioUrl: audioUrl,
+      ticketLinkId: ticketLinkId,
       fecha: DateTime.now(),
       isRead: false,
     );
@@ -318,8 +319,9 @@ class AppProvider with ChangeNotifier {
           'me': _currentUser!.id,
           'other': receiverId,
           'txt': text,
-          'img': imagenUrl,
+          'img': imageUrl,
           'aud': audioUrl,
+          'ticket_link_id': ticketLinkId,
         },
       );
       

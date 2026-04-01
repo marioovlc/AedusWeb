@@ -5,6 +5,9 @@ class Mensaje {
   final String contenido;
   final String? imagenUrl;
   final String? audioUrl;
+  final int? ticketLinkId;
+  final String? senderName;
+  final String? senderAvatarUrl;
   final DateTime fecha;
   final bool isRead;
 
@@ -15,6 +18,9 @@ class Mensaje {
     required this.contenido,
     this.imagenUrl,
     this.audioUrl,
+    this.ticketLinkId,
+    this.senderName,
+    this.senderAvatarUrl,
     required this.fecha,
     this.isRead = false,
   });
@@ -27,6 +33,9 @@ class Mensaje {
       contenido: map['texto'] as String? ?? '',
       imagenUrl: map['imagen_url'] as String?,
       audioUrl: map['audio_url'] as String?,
+      ticketLinkId: map['ticket_link_id'] as int?,
+      senderName: map['sender_name'] as String?,
+      senderAvatarUrl: map['sender_avatar'] as String?,
       fecha: map['fecha'] != null ? DateTime.parse(map['fecha'].toString()) : DateTime.now(),
       isRead: map['leido'] as bool? ?? false,
     );
@@ -39,6 +48,7 @@ class Mensaje {
       'texto': contenido,
       'imagen_url': imagenUrl,
       'audio_url': audioUrl,
+      'ticket_link_id': ticketLinkId,
       'fecha': fecha.toIso8601String(),
       'leido': isRead,
     };

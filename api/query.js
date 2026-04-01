@@ -43,9 +43,15 @@ const ACTION_MAP = {
   get_kpis: `SELECT e.nombre as estado, count(*) as count FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id GROUP BY e.nombre`,
   get_contactos: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins, avatar_url FROM neon_auth.user WHERE id != @id`,
   get_aulas: `SELECT * FROM gestion_incidencias.aulas ORDER BY nombre ASC`,
-  get_mensajes: `SELECT * FROM gestion_incidencias.mensajes WHERE (usuario_id = @me AND receptor_id = @other) OR (usuario_id = @other AND receptor_id = @me) ORDER BY fecha ASC`,
+  get_mensajes: `SELECT m.*, u.name as sender_name, u.avatar_url as sender_avatar 
+                  FROM gestion_incidencias.mensajes m 
+                  JOIN neon_auth.user u ON m.usuario_id::text = u.id::text 
+                  WHERE (m.usuario_id = @me AND m.receptor_id = @other) 
+                     OR (m.usuario_id = @other AND m.receptor_id = @me) 
+                  ORDER BY m.fecha ASC`,
   create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img) RETURNING *`,
-  send_message: `INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, fecha, leido) VALUES (@me, @other, @txt, @img, @aud, NOW(), false) RETURNING *`,
+  send_message: `INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, ticket_link_id, fecha, leido) 
+                  VALUES (@me, @other, @txt, @img, @aud, @ticket_link_id, NOW(), false) RETURNING *`,
   request_user: `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", aeducoins) VALUES (@nom, @em, @pass, 'USER', false, 0) RETURNING *`,
   approve_user: `UPDATE neon_auth.user SET "emailVerified" = true WHERE id = @id RETURNING *`,
   reject_user: `DELETE FROM neon_auth.user WHERE id = @id RETURNING *`,

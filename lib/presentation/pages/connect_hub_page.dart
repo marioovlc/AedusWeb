@@ -212,6 +212,10 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
                   return _buildAIResponse(context, "¡Hola! Soy tu asistente Aedus. ¿En qué puedo ayudarte hoy con el sistema?");
                 }
 
+                if (msg.ticketLinkId != null && msg.ticketLinkId! > 0) {
+                   return _buildSharedTicket(context, msg, isMe);
+                }
+
                 if (msg.contenido.startsWith('[TICKET_LINK]:')) {
                    return _buildSharedTicket(context, msg, isMe);
                 }
@@ -231,8 +235,18 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
 
   Widget _buildSharedTicket(BuildContext context, Mensaje msg, bool isMe) {
     final theme = Theme.of(context);
-    final ticketIdStr = msg.contenido.split(':')[1].replaceAll(']', '').trim();
-    final ticketId = int.tryParse(ticketIdStr) ?? 0;
+    
+    int ticketId = 0;
+    if (msg.ticketLinkId != null && msg.ticketLinkId! > 0) {
+      ticketId = msg.ticketLinkId!;
+    } else {
+      final parts = msg.contenido.split(':');
+      if (parts.length > 1) {
+        ticketId = int.tryParse(parts[1].replaceAll(']', '').trim()) ?? 0;
+      }
+    }
+    
+    final ticketIdStr = ticketId.toString();
     
     // Fallback if ticket is not found locally
     final allIncids = context.watch<AppProvider>().incidencias;
@@ -435,7 +449,7 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
                  title: Text(inc.titulo),
                  subtitle: Text(inc.estadoNombre),
                  onTap: () {
-                    _sendMessage(textOverride: '[TICKET_LINK]:${inc.id}');
+                    _sendMessage(ticketLinkId: inc.id);
                     Navigator.pop(ctx);
                  },
               );
@@ -445,16 +459,17 @@ class _ConnectHubPageState extends State<ConnectHubPage> {
     );
   }
 
-  void _sendMessage({String? imageUrl, String? audioUrl, String? textOverride}) {
+  void _sendMessage({String? imageUrl, String? audioUrl, int? ticketLinkId}) {
     if (_activeContact == null) return;
-    final text = textOverride ?? _messageController.text.trim();
-    if (text.isEmpty && imageUrl == null && audioUrl == null) return;
+    final text = _messageController.text.trim();
+    if (text.isEmpty && imageUrl == null && audioUrl == null && ticketLinkId == null) return;
     
     context.read<AppProvider>().sendMessage(
       _activeContact!.id, 
       text,
-      imagenUrl: imageUrl,
+      imageUrl: imageUrl,
       audioUrl: audioUrl,
+      ticketLinkId: ticketLinkId,
     );
     _messageController.clear();
   }
