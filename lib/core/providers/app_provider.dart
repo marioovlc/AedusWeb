@@ -9,6 +9,7 @@ import '../../data/models/aula_model.dart';
 import '../../data/models/message_model.dart';
 import '../../data/models/log_model.dart';
 import '../../data/models/comentario_incidencia_model.dart';
+import '../../data/models/store_item_model.dart';
 import '../services/database_service.dart';
 import '../services/ai_service.dart';
 import '../utils/file_helper.dart';
@@ -27,6 +28,7 @@ class AppProvider with ChangeNotifier {
   };
   List<Usuario> _usuariosAdmin = [];
   List<Aula> _aulas = [];
+  List<StoreItem> _storeItems = [];
   String _currentTheme = 'Original';
   bool _isCompact = false;
   Map<String, bool> _systemHealth = {
@@ -42,6 +44,7 @@ class AppProvider with ChangeNotifier {
   List<Usuario> get usuariosAdmin => _usuariosAdmin;
   List<Mensaje> get mensajes => _mensajes;
   List<LogEntry> get logs => _logs;
+  List<StoreItem> get storeItems => _storeItems;
   Map<String, String> get kpis => _kpis;
   String get currentTheme => _currentTheme;
   bool get isCompact => _isCompact;
@@ -99,6 +102,7 @@ class AppProvider with ChangeNotifier {
       _fetchKPIs(),
       _fetchContactos(),
       _fetchAulas(),
+      _fetchStoreItems(),
       fetchLogs(),
     ]);
     notifyListeners();
@@ -223,12 +227,15 @@ class AppProvider with ChangeNotifier {
     final results = await _db.query(
       "",
       action: "get_comentarios_incidencia",
-      substitutionValues: {'iId': incidenciaId},
+      substitutionValues: {
+        'iId': incidenciaId,
+        'rol': _currentUser?.rol ?? 'USER'
+      },
     );
     return results.map((m) => ComentarioIncidencia.fromMap(m)).toList();
   }
 
-  Future<ComentarioIncidencia?> addComentarioIncidencia(int incidenciaId, String texto) async {
+  Future<ComentarioIncidencia?> addComentarioIncidencia(int incidenciaId, String texto, {bool isInternal = false}) async {
     if (_currentUser == null) return null;
     final results = await _db.query(
       "",
@@ -237,13 +244,32 @@ class AppProvider with ChangeNotifier {
         'iId': incidenciaId,
         'uId': _currentUser!.id,
         'txt': texto,
+        'internal': isInternal,
       },
     );
     if (results.isNotEmpty) {
-      await createLog('NUEVO COMENTARIO', 'Usuario ${_currentUser!.nombre} comentó en incidencia #$incidenciaId', categoria: 'USUARIO');
+      await createLog('NUEVO COMENTARIO', 'Usuario ${_currentUser!.nombre} comentó en incidencia #$incidenciaId (Interno: $isInternal)', categoria: 'USUARIO');
       return ComentarioIncidencia.fromMap({...results.first, 'usuario_nombre': _currentUser!.nombre, 'usuario_rol': _currentUser!.rol});
     }
     return null;
+  }
+  
+  Future<void> _fetchStoreItems() async {
+    try {
+      final results = await _db.query("", action: "get_store_items");
+      _storeItems = results.map((m) => StoreItem.fromMap(m)).toList();
+    } catch(e) {
+      debugPrint('Error fetching store items: $e');
+    }
+  }
+
+  Future<void> createStoreItem(String name, String desc, int price, String icon, String color) async {
+    if (_currentUser == null) return;
+    await _db.query("", action: "create_store_item", substitutionValues: {
+      'nom': name, 'des': desc, 'pri': price, 'ico': icon, 'col': color
+    });
+    await _fetchStoreItems();
+    notifyListeners();
   }
 
   Future<void> sendMessage(String receiverId, String text, {String? imagenUrl, String? audioUrl}) async {

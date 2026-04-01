@@ -6,6 +6,7 @@ class AppTheme {
   static ThemeData getTheme(String themeName) {
     bool isLight = themeName == 'Blanco';
     bool isDaltonic = themeName == 'Daltónico';
+    bool isAccessible = themeName == 'Accesibilidad';
 
     // Default: Original (Dark)
     Color bg = const Color(0xFF060D1C);
@@ -34,7 +35,7 @@ class AppTheme {
       dang = const Color(0xFFDC2626);
       gld = const Color(0xFFD97706);
       brightness = Brightness.light;
-    } else if (isDaltonic) {
+    } else if (isDaltonic || isAccessible) {
       bg = Colors.black;
       surf = const Color(0xFF171717);
       crd = const Color(0xFF262626);
@@ -47,6 +48,8 @@ class AppTheme {
       dang = const Color(0xFFE74C3C);
       gld = const Color(0xFFF1C40F);
     }
+
+    double scale = isAccessible ? 1.35 : 1.0;
 
     return ThemeData(
       useMaterial3: true,
@@ -80,26 +83,26 @@ class AppTheme {
 
       textTheme: GoogleFonts.interTextTheme().copyWith(
         displayLarge: GoogleFonts.inter(
-          fontSize: 32,
+          fontSize: 32 * scale,
           fontWeight: FontWeight.bold,
           color: txtHigh,
         ),
         headlineLarge: GoogleFonts.inter(
-          fontSize: 26,
+          fontSize: 26 * scale,
           fontWeight: FontWeight.bold,
           color: txtHigh,
         ),
         headlineMedium: GoogleFonts.inter(
-          fontSize: 20,
+          fontSize: 20 * scale,
           fontWeight: FontWeight.bold,
           color: txtHigh,
         ),
         bodyLarge: GoogleFonts.inter(
-          fontSize: 16,
+          fontSize: 16 * scale,
           color: txtHigh,
         ),
         bodyMedium: GoogleFonts.inter(
-          fontSize: 14,
+          fontSize: 14 * scale,
           color: txtLow,
         ),
       ),

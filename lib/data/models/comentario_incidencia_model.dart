@@ -6,6 +6,7 @@ class ComentarioIncidencia {
   final String usuarioRol;
   final String texto;
   final DateTime fecha;
+  final bool isInternal;
 
   ComentarioIncidencia({
     required this.id,
@@ -15,6 +16,7 @@ class ComentarioIncidencia {
     required this.usuarioRol,
     required this.texto,
     required this.fecha,
+    this.isInternal = false,
   });
 
   factory ComentarioIncidencia.fromMap(Map<String, dynamic> map) {
@@ -26,6 +28,7 @@ class ComentarioIncidencia {
       usuarioRol: map['usuario_rol'] as String? ?? 'USER',
       texto: map['texto'] as String? ?? '',
       fecha: map['fecha'] != null ? DateTime.parse(map['fecha'].toString()) : DateTime.now(),
+      isInternal: map['is_internal'] == true || map['is_internal'] == 'true',
     );
   }
 
@@ -38,6 +41,7 @@ class ComentarioIncidencia {
       'usuario_rol': usuarioRol,
       'texto': texto,
       'fecha': fecha.toIso8601String(),
+      'is_internal': isInternal,
     };
   }
 }
