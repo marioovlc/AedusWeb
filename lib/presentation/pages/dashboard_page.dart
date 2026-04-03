@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../core/utils/responsive_utils.dart';
+import '../widgets/loading_shimmer.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -13,7 +14,9 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    final kpis = context.watch<AppProvider>().kpis;
+    final provider = context.watch<AppProvider>();
+    final kpis = provider.kpis;
+    final isLoading = provider.isLoading;
     final isMobile = ResponsiveLayout.isMobile(context);
     final isTablet = ResponsiveLayout.isTablet(context);
 
@@ -25,8 +28,10 @@ class DashboardPage extends StatelessWidget {
           _buildHeader(context),
           const SizedBox(height: 32),
           
-          // KPI Cards from Provider
-          isMobile || isTablet ? Column(
+          // KPI Cards
+          if (isLoading)
+            ShimmerKPIRow(isMobile: isMobile || isTablet)
+          else if (isMobile || isTablet) Column(
             children: [
               Row(
                 children: [
@@ -44,7 +49,7 @@ class DashboardPage extends StatelessWidget {
                 ],
               ),
             ]
-          ) : Row(
+          ) else Row(
             children: [
               Expanded(child: _buildKPICard(context, 'Total Incidencias', kpis['Total Incidencias'] ?? '0', FontAwesomeIcons.clipboardList, theme.colorScheme.primary)),
               const SizedBox(width: 20),
@@ -59,14 +64,31 @@ class DashboardPage extends StatelessWidget {
           const SizedBox(height: 32),
           
           // Charts Section
-          isMobile || isTablet ? Column(
+          if (isLoading)
+            isMobile || isTablet
+              ? Column(
+                  children: [
+                    ShimmerChartCard(height: 370),
+                    const SizedBox(height: 20),
+                    ShimmerChartCard(height: 370),
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 2, child: ShimmerChartCard(height: 370)),
+                    const SizedBox(width: 20),
+                    Expanded(flex: 1, child: ShimmerChartCard(height: 370)),
+                  ],
+                )
+          else if (isMobile || isTablet) Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildLineChartCard(context),
               const SizedBox(height: 20),
               _buildBarChartCard(context),
             ],
-          ) : Row(
+          ) else Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(flex: 2, child: _buildLineChartCard(context)),
@@ -77,7 +99,7 @@ class DashboardPage extends StatelessWidget {
           
           const SizedBox(height: 32),
           
-          // Bottom Grid: Gamification & AI Assistant
+          // Bottom Grid
           isMobile || isTablet ? Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

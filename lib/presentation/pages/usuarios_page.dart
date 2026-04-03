@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../data/models/user_model.dart';
 import '../../core/utils/responsive_utils.dart';
+import '../widgets/loading_shimmer.dart';
 
 class UsuariosPage extends StatefulWidget {
   const UsuariosPage({super.key});
@@ -23,7 +24,9 @@ class _UsuariosPageState extends State<UsuariosPage> {
 
   @override
   Widget build(BuildContext context) {
-    final users = context.watch<AppProvider>().usuariosAdmin;
+    final provider = context.watch<AppProvider>();
+    final users = provider.usuariosAdmin;
+    final isLoading = provider.isLoading;
     final isMobile = ResponsiveLayout.isMobile(context);
 
     return Padding(
@@ -34,7 +37,9 @@ class _UsuariosPageState extends State<UsuariosPage> {
           _buildHeader(context),
           const SizedBox(height: 32),
           Expanded(
-            child: _buildUserTable(context, users),
+            child: isLoading
+                ? const SingleChildScrollView(child: ShimmerUserTable())
+                : _buildUserTable(context, users),
           ),
         ],
       ),

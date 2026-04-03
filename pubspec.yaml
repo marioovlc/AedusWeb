@@ -51,6 +51,8 @@ dependencies:
   csv: ^6.0.0
   path_provider: ^2.1.5
   web: ^1.1.1
+  shimmer: ^3.0.0
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:

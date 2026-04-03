@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../data/models/store_item_model.dart';
 import '../../core/utils/responsive_utils.dart';
+import '../widgets/loading_shimmer.dart';
 
 class StorePage extends StatelessWidget {
   const StorePage({super.key});
@@ -14,7 +15,10 @@ class StorePage extends StatelessWidget {
     final user = provider.currentUser;
     if (user == null) return const Center(child: CircularProgressIndicator());
     final items = provider.storeItems;
+    final isLoading = provider.isLoading;
     final theme = Theme.of(context);
+    final crossAxisCount = ResponsiveLayout.isMobile(context) ? 1 
+                         : (ResponsiveLayout.isTablet(context) ? 2 : 3);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -28,17 +32,17 @@ class StorePage extends StatelessWidget {
           ) 
         : null,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(32.0),
+        padding: EdgeInsets.all(ResponsiveLayout.isMobile(context) ? 16.0 : 32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHero(context, user.aeduCoins),
             const SizedBox(height: 48),
-            
             _buildSectionTitle(context, 'Artículos Disponibles'),
             const SizedBox(height: 24),
-            
-            if (items.isEmpty)
+            if (isLoading)
+              ShimmerStoreGrid(crossAxisCount: crossAxisCount)
+            else if (items.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(32.0),
                 child: Center(child: Text('La tienda está vacía. Vuelve más tarde.')),

@@ -32,6 +32,7 @@ class AppProvider with ChangeNotifier {
   String _currentTheme = 'Original';
   bool _isCompact = false;
   bool _isAccessibilityMode = false;
+  bool _isLoading = false;
   final Map<String, bool> _systemHealth = {
     'AI': true,
     'DB': true,
@@ -50,6 +51,7 @@ class AppProvider with ChangeNotifier {
   String get currentTheme => _currentTheme;
   bool get isCompact => _isCompact;
   bool get isAccessibilityMode => _isAccessibilityMode;
+  bool get isLoading => _isLoading;
   Map<String, bool> get systemHealth => _systemHealth;
 
   void setCompact(bool compact) {
@@ -104,6 +106,8 @@ class AppProvider with ChangeNotifier {
 
   Future<void> refreshData() async {
     if (_currentUser == null) return;
+    _isLoading = true;
+    notifyListeners();
     await Future.wait([
       _fetchIncidencias(),
       _fetchKPIs(),
@@ -112,6 +116,7 @@ class AppProvider with ChangeNotifier {
       _fetchStoreItems(),
       fetchLogs(),
     ]);
+    _isLoading = false;
     notifyListeners();
   }
 

@@ -11,6 +11,7 @@ import '../../core/services/storage_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/incident_detail_dialog.dart';
 import '../../core/utils/responsive_utils.dart';
+import '../widgets/loading_shimmer.dart';
 
 class IncidenciasPage extends StatefulWidget {
   const IncidenciasPage({super.key});
@@ -98,7 +99,8 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
 
   @override
   Widget build(BuildContext context) {
-    final incidencias = context.watch<AppProvider>().incidencias;
+    final provider = context.watch<AppProvider>();
+    final incidencias = provider.incidencias;
     final isMobile = ResponsiveLayout.isMobile(context);
 
     return Padding(
@@ -386,6 +388,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
 
   Widget _buildTicketList(BuildContext context, List<Incidencia> incidencias) {
     final theme = Theme.of(context);
+    final isLoading = context.watch<AppProvider>().isLoading;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -401,12 +404,14 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: ListView.builder(
-            itemCount: incidencias.length,
-            itemBuilder: (context, index) {
-              return _buildTicketCard(context, incidencias[index]);
-            },
-          ),
+          child: isLoading 
+            ? const ShimmerTicketList()
+            : ListView.builder(
+                itemCount: incidencias.length,
+                itemBuilder: (context, index) {
+                  return _buildTicketCard(context, incidencias[index]);
+                },
+              ),
         ),
       ],
     );
