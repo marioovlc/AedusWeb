@@ -10,6 +10,7 @@ import 'dart:typed_data';
 import '../../core/services/storage_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/incident_detail_dialog.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class IncidenciasPage extends StatefulWidget {
   const IncidenciasPage({super.key});
@@ -98,25 +99,39 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
   @override
   Widget build(BuildContext context) {
     final incidencias = context.watch<AppProvider>().incidencias;
+    final isMobile = ResponsiveLayout.isMobile(context);
 
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(context),
           const SizedBox(height: 32),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Left Panel: Form
-                Expanded(flex: 2, child: _buildCreationForm(context)),
-                const SizedBox(width: 32),
-                // Right Panel: My Tickets
-                Expanded(flex: 3, child: _buildTicketList(context, incidencias)),
-              ],
-            ),
+            child: isMobile 
+              ? SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildCreationForm(context),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        height: 500, 
+                        child: _buildTicketList(context, incidencias)
+                      ),
+                    ],
+                  ),
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left Panel: Form
+                    Expanded(flex: 2, child: _buildCreationForm(context)),
+                    const SizedBox(width: 32),
+                    // Right Panel: My Tickets
+                    Expanded(flex: 3, child: _buildTicketList(context, incidencias)),
+                  ],
+                ),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../data/models/user_model.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class UsuariosPage extends StatefulWidget {
   const UsuariosPage({super.key});
@@ -23,9 +24,10 @@ class _UsuariosPageState extends State<UsuariosPage> {
   @override
   Widget build(BuildContext context) {
     final users = context.watch<AppProvider>().usuariosAdmin;
+    final isMobile = ResponsiveLayout.isMobile(context);
 
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -79,17 +81,21 @@ class _UsuariosPageState extends State<UsuariosPage> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: SingleChildScrollView(
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(appColors.surface),
-            columns: [
-              DataColumn(label: Text('USUARIO', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
-              DataColumn(label: Text('EMAIL', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
-              DataColumn(label: Text('ROL', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
-              DataColumn(label: Text('ESTADO', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
-              DataColumn(label: Text('COINS', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
-              DataColumn(label: Text('ACCIONES', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
-            ],
-            rows: users.map((u) => _buildUserRow(context, u)).toList(),
+          scrollDirection: Axis.vertical,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(appColors.surface),
+              columns: [
+                DataColumn(label: Text('USUARIO', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('EMAIL', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('ROL', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('ESTADO', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('COINS', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('ACCIONES', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+              ],
+              rows: users.map((u) => _buildUserRow(context, u)).toList(),
+            ),
           ),
         ),
       ),

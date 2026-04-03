@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -13,9 +14,11 @@ class DashboardPage extends StatelessWidget {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
     final kpis = context.watch<AppProvider>().kpis;
+    final isMobile = ResponsiveLayout.isMobile(context);
+    final isTablet = ResponsiveLayout.isTablet(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -23,7 +26,25 @@ class DashboardPage extends StatelessWidget {
           const SizedBox(height: 32),
           
           // KPI Cards from Provider
-          Row(
+          isMobile || isTablet ? Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: _buildKPICard(context, 'Total Incidencias', kpis['Total Incidencias'] ?? '0', FontAwesomeIcons.clipboardList, theme.colorScheme.primary)),
+                  SizedBox(width: isMobile ? 10 : 20),
+                  Expanded(child: _buildKPICard(context, 'Pendientes', kpis['Pendientes'] ?? '0', FontAwesomeIcons.clock, Colors.orange)),
+                ],
+              ),
+              SizedBox(height: isMobile ? 10 : 20),
+              Row(
+                children: [
+                  Expanded(child: _buildKPICard(context, 'Resueltas', kpis['Resueltas'] ?? '0', FontAwesomeIcons.circleCheck, appColors.success)),
+                  SizedBox(width: isMobile ? 10 : 20),
+                  Expanded(child: _buildKPICard(context, 'Usuarios Activos', kpis['Usuarios Activos'] ?? '0', FontAwesomeIcons.userGroup, Colors.purple)),
+                ],
+              ),
+            ]
+          ) : Row(
             children: [
               Expanded(child: _buildKPICard(context, 'Total Incidencias', kpis['Total Incidencias'] ?? '0', FontAwesomeIcons.clipboardList, theme.colorScheme.primary)),
               const SizedBox(width: 20),
@@ -38,7 +59,14 @@ class DashboardPage extends StatelessWidget {
           const SizedBox(height: 32),
           
           // Charts Section
-          Row(
+          isMobile || isTablet ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildLineChartCard(context),
+              const SizedBox(height: 20),
+              _buildBarChartCard(context),
+            ],
+          ) : Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(flex: 2, child: _buildLineChartCard(context)),
@@ -50,10 +78,17 @@ class DashboardPage extends StatelessWidget {
           const SizedBox(height: 32),
           
           // Bottom Grid: Gamification & AI Assistant
-          Row(
+          isMobile || isTablet ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildGamificationSection(context, isMobile),
+              const SizedBox(height: 20),
+              _buildAIAssistantCard(context),
+            ],
+          ) : Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 2, child: _buildGamificationSection(context)),
+              Expanded(flex: 2, child: _buildGamificationSection(context, false)),
               const SizedBox(width: 20),
               Expanded(flex: 1, child: _buildAIAssistantCard(context)),
             ],
@@ -207,19 +242,28 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildGamificationSection(BuildContext context) {
+  Widget _buildGamificationSection(BuildContext context, bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(context, 'Logros y Misiones'),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildAchievementItem(context, 'Primer Reporte', 'Has creado tu primera incidencia.', FontAwesomeIcons.award, Theme.of(context).extension<AppColors>()!.gold)),
-            const SizedBox(width: 16),
-            Expanded(child: _buildAchievementItem(context, 'Soporte Rápido', 'Resuelto en menos de 1 hora.', FontAwesomeIcons.bolt, Colors.cyan)),
-          ],
-        ),
+        if (isMobile)
+          Column(
+            children: [
+              _buildAchievementItem(context, 'Primer Reporte', 'Has creado tu primera incidencia.', FontAwesomeIcons.award, Theme.of(context).extension<AppColors>()!.gold),
+              const SizedBox(height: 16),
+              _buildAchievementItem(context, 'Soporte Rápido', 'Resuelto en menos de 1 hora.', FontAwesomeIcons.bolt, Colors.cyan),
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(child: _buildAchievementItem(context, 'Primer Reporte', 'Has creado tu primera incidencia.', FontAwesomeIcons.award, Theme.of(context).extension<AppColors>()!.gold)),
+              const SizedBox(width: 16),
+              Expanded(child: _buildAchievementItem(context, 'Soporte Rápido', 'Resuelto en menos de 1 hora.', FontAwesomeIcons.bolt, Colors.cyan)),
+            ],
+          ),
       ],
     );
   }

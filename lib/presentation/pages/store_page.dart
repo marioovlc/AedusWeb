@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../data/models/store_item_model.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class StorePage extends StatelessWidget {
   const StorePage({super.key});
@@ -117,14 +118,17 @@ class StorePage extends StatelessWidget {
   }
 
   Widget _buildItemGrid(BuildContext context, List<StoreItem> items) {
+    int crossAxisCount = ResponsiveLayout.isMobile(context) ? 1 : 
+                         (ResponsiveLayout.isTablet(context) ? 2 : 3);
+    
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
         crossAxisSpacing: 24,
         mainAxisSpacing: 24,
-        childAspectRatio: 1.2,
+        childAspectRatio: ResponsiveLayout.isMobile(context) ? 1.5 : 1.2,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {

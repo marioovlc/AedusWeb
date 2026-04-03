@@ -79,7 +79,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
       body: Center(
         child: SingleChildScrollView(
           child: Container(
-            width: 500,
+            constraints: const BoxConstraints(maxWidth: 500),
+            margin: const EdgeInsets.symmetric(horizontal: 20),
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
               color: appColors.surface,
