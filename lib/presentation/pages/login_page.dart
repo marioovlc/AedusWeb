@@ -1,157 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/providers/app_provider.dart';
+import '../../core/utils/responsive_utils.dart';
+import 'auth/login_desktop.dart';
+import 'auth/login_mobile.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isLoading = false;
-
-  Future<void> _login() async {
-    setState(() => _isLoading = true);
-    try {
-      final success = await context.read<AppProvider>().login(
-        _emailController.text,
-        _passwordController.text,
-      );
-
-      if (success) {
-        if (mounted) Navigator.pushReplacementNamed(context, '/dashboard');
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error de autenticación. Verifica tus credenciales.')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        // Extraer el mensaje limpio de la excepción
-        final msg = e.toString().replaceFirst('Exception: ', '');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            backgroundColor: Colors.orange[800],
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final appColors = theme.extension<AppColors>()!;
-
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.all(40),
-            decoration: BoxDecoration(
-              color: appColors.surface,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: appColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                )
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 10),
-                Image.asset(
-                  'lib/assets/aedus.png',
-                  height: 120, // Increased size
-                  fit: BoxFit.contain,
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  'Gestión Inteligente de Incidencias',
-                  style: TextStyle(
-                    color: theme.colorScheme.primary, 
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    fontSize: 16
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Inicia sesión para acceder a tu panel de control.',
-                  style: TextStyle(color: appColors.textLow, fontSize: 13),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 40),
-                _buildTextField(context, 'Email', _emailController, false),
-                const SizedBox(height: 20),
-                _buildTextField(context, 'Contraseña', _passwordController, true),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: _isLoading 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('INGRESAR', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () => Navigator.pushNamed(context, '/register'),
-                  child: Text('Solicitar Usuario (Registrarse)', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(BuildContext context, String label, TextEditingController controller, bool isPassword) {
-    final theme = Theme.of(context);
-    final appColors = theme.extension<AppColors>()!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(color: appColors.textLow, fontSize: 13, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: isPassword,
-          style: TextStyle(color: theme.colorScheme.onSurface),
-          decoration: InputDecoration(
-            hintText: 'Introduce tu $label',
-            hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
-            fillColor: appColors.card,
-          ),
-        ),
-      ],
+    return const ResponsiveLayout(
+      mobile: LoginMobile(),
+      desktop: LoginDesktop(),
     );
   }
 }
