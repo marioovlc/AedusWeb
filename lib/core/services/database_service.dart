@@ -36,31 +36,17 @@ class DatabaseService {
   }
 
   Future<List<Map<String, dynamic>>> query(String sql, {Map<String, dynamic>? substitutionValues, String? action}) async {
-    if (kIsWeb) {
-      return _queryWeb(sql, substitutionValues, action: action);
-    }
-
-    if (_connection == null) await connect();
-    try {
-      final result = await _connection?.execute(sql, parameters: substitutionValues);
-      
-      List<Map<String, dynamic>> list = [];
-      if (result != null) {
-        for (final row in result) {
-          list.add(row.toColumnMap());
-        }
-      }
-      return list;
-    } catch (e) {
-      debugPrint('Query error: $e');
-      return [];
-    }
+    // Unify all platforms to use the API
+    return _queryAPI(sql, substitutionValues, action: action);
   }
 
-  Future<List<Map<String, dynamic>>> _queryWeb(String sql, Map<String, dynamic>? parameters, {String? action}) async {
+  Future<List<Map<String, dynamic>>> _queryAPI(String sql, Map<String, dynamic>? parameters, {String? action}) async {
     try {
+      final baseUrl = EnvConfig.apiUrl;
+      final uri = kIsWeb ? Uri.parse('/api/query') : Uri.parse('$baseUrl/api/query');
+
       final response = await http.post(
-        Uri.parse('/api/query'),
+        uri,
         headers: {
           'Content-Type': 'application/json',
           'X-API-KEY': EnvConfig.internalApiKey,
@@ -69,7 +55,7 @@ class DatabaseService {
           'parameters': parameters,
           'action': action,
         }),
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
@@ -80,6 +66,7 @@ class DatabaseService {
         throw Exception(msg);
       }
     } catch (e) {
+      debugPrint('API Query Error: $e');
       rethrow;
     }
   }

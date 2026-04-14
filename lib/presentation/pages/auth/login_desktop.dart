@@ -66,8 +66,8 @@ class _LoginDesktopState extends State<LoginDesktop> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
+                    theme.colorScheme.primary.withValues(alpha: 0.7),
                     const Color(0xFF060D1C), // Deep Navy
-                    theme.colorScheme.primary.withValues(alpha: 0.8),
                   ],
                 ),
               ),
@@ -138,7 +138,22 @@ class _LoginDesktopState extends State<LoginDesktop> {
           Expanded(
             flex: 2,
             child: Container(
-              color: theme.scaffoldBackgroundColor,
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                border: Border(
+                  left: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    width: 1,
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    blurRadius: 40,
+                    offset: const Offset(-10, 0),
+                  ),
+                ],
+              ),
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 80),

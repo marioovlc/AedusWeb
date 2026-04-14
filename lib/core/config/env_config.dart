@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EnvConfig {
@@ -11,6 +12,7 @@ class EnvConfig {
   static String get cloudinaryCloudName => _get('CLOUDINARY_CLOUD_NAME');
   static String get cloudinaryApiKey => _get('CLOUDINARY_API_KEY');
   static String get cloudinaryApiSecret => _get('CLOUDINARY_API_SECRET');
+  static String get apiUrl => _get('API_URL');
 
   static String _get(String key) {
     String value = '';
@@ -27,6 +29,7 @@ class EnvConfig {
       case 'CLOUDINARY_CLOUD_NAME': value = const String.fromEnvironment('CLOUDINARY_CLOUD_NAME'); break;
       case 'CLOUDINARY_API_KEY': value = const String.fromEnvironment('CLOUDINARY_API_KEY'); break;
       case 'CLOUDINARY_API_SECRET': value = const String.fromEnvironment('CLOUDINARY_API_SECRET'); break;
+      case 'API_URL': value = const String.fromEnvironment('API_URL'); break;
     }
 
     if (value.isNotEmpty) return value;
@@ -42,6 +45,10 @@ class EnvConfig {
       case 'CLOUDINARY_CLOUD_NAME': return 'dbdpkml2m';
       case 'CLOUDINARY_API_KEY': return '242661642536897';
       case 'CLOUDINARY_API_SECRET': return 'aYOctG0R9k_Z9v_pguDlZ3wtrM8';
+      case 'API_URL': 
+        // If web, relative path works. If mobile emulator, use 10.0.2.2 (default for Android)
+        if (kIsWeb) return ''; 
+        return 'http://10.0.2.2:3000'; // Default for local dev on Android emulator. If production, use API_URL env var.
     }
 
     return '';
