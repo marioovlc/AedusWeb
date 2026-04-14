@@ -48,7 +48,7 @@ class _RegistrationMobileState extends State<RegistrationMobile> {
               const SizedBox(height: 32),
               const Text('Crea tu cuenta', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
               const SizedBox(height: 8),
-              const Text('Únete a la plataforma Aedus', style: TextStyle(color: Colors.grey, fontSize: 16)),
+              const Text('Únete a la plataforma Aedus', style: TextStyle(color: Colors.white70, fontSize: 16)),
               const SizedBox(height: 40),
               TextField(
                 controller: _nombreController,

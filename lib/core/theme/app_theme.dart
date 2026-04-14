@@ -15,7 +15,7 @@ class AppTheme {
     Color prim = const Color(0xFF4F8EF7);
     Color sec = const Color(0xFF818CF8);
     Color txtHigh = const Color(0xFFF1F5F9);
-    Color txtLow = const Color(0xFF64748B);
+    Color txtLow = const Color(0xFFCBD5E1); // Very light grey (almost white) for high legibility
     Color succ = const Color(0xFF059669);
     Color dang = const Color(0xFFDC2626);
     Color gld = const Color(0xFFFCD34D);
@@ -42,7 +42,7 @@ class AppTheme {
       prim = const Color(0xFF2D6AAF); // Cobalt Blue
       sec = const Color(0xFF1D4E89);
       txtHigh = Colors.white;
-      txtLow = const Color(0xFFA3A3A3);
+      txtLow = const Color(0xFFE5E5E5); // Near-white for maximum contrast
       succ = const Color(0xFF2ECC71);
       dang = const Color(0xFFE74C3C);
       gld = const Color(0xFFF1C40F);

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/providers/app_provider.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../core/theme/app_theme.dart';
 
 class SettingsMobile extends StatelessWidget {
   const SettingsMobile({super.key});
@@ -66,7 +67,7 @@ class SettingsMobile extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(user.nombre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text(user.email, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            Text(user.email, style: TextStyle(fontSize: 13, color: theme.extension<AppColors>()!.textLow)),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => _showEditProfileDialog(context, user), 

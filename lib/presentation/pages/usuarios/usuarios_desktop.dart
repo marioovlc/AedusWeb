@@ -225,19 +225,21 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
               backgroundColor: appColors.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: Text('Modificar Rol: ${user.nombre}', style: const TextStyle(fontWeight: FontWeight.bold)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: ['Administrador', 'Mantenimiento', 'USER'].map((r) {
-                  return RadioListTile<String>(
-                    title: Text(r),
-                    value: r,
-                    groupValue: selectedRole,
-                    activeColor: theme.colorScheme.primary,
-                    onChanged: (val) {
-                      setState(() { selectedRole = val!; });
-                    },
-                  );
-                }).toList(),
+              content: RadioGroup<String>(
+                groupValue: selectedRole,
+                onChanged: (val) {
+                  setState(() { selectedRole = val!; });
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: ['Administrador', 'Mantenimiento', 'USER'].map((r) {
+                    return RadioListTile<String>(
+                      title: Text(r),
+                      value: r,
+                      activeColor: theme.colorScheme.primary,
+                    );
+                  }).toList(),
+                ),
               ),
               actions: [
                 TextButton(

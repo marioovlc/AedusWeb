@@ -211,11 +211,31 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
   }
 
   Widget _buildAulaDropdown() {
+    final theme = Theme.of(context);
     final provider = context.watch<AppProvider>();
-    return DropdownButton<Aula>(isExpanded: true, value: _selectedAula ?? (provider.aulas.isNotEmpty ? provider.aulas.first : null), items: provider.aulas.map((e) => DropdownMenuItem(value: e, child: Text(e.nombre))).toList(), onChanged: (v) => setState(() => _selectedAula = v));
+    return DropdownButton<Aula>(
+      isExpanded: true, 
+      underline: Container(height: 1, color: theme.dividerColor),
+      value: _selectedAula ?? (provider.aulas.isNotEmpty ? provider.aulas.first : null), 
+      items: provider.aulas.map((e) => DropdownMenuItem(
+        value: e, 
+        child: Text(e.nombre, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14))
+      )).toList(), 
+      onChanged: (v) => setState(() => _selectedAula = v)
+    );
   }
 
   Widget _buildCategoryDropdown() {
-    return DropdownButton<String>(isExpanded: true, value: _selectedCategory, items: ['Hardware', 'Software', 'Red', 'Otros'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => _selectedCategory = v!));
+    final theme = Theme.of(context);
+    return DropdownButton<String>(
+      isExpanded: true, 
+      underline: Container(height: 1, color: theme.dividerColor),
+      value: _selectedCategory, 
+      items: ['Hardware', 'Software', 'Red', 'Otros'].map((e) => DropdownMenuItem(
+        value: e, 
+        child: Text(e, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14))
+      )).toList(), 
+      onChanged: (v) => setState(() => _selectedCategory = v!)
+    );
   }
 }
