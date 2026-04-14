@@ -57,7 +57,7 @@ class _LoginDesktopState extends State<LoginDesktop> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Row(
         children: [
-          // Left Side: Branding / Image
+          // Left Side: Branding / Aedus Aesthetic
           Expanded(
             flex: 3,
             child: Container(
@@ -66,20 +66,19 @@ class _LoginDesktopState extends State<LoginDesktop> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    theme.colorScheme.primary,
-                    theme.colorScheme.secondary,
-                    const Color(0xFF000000),
+                    const Color(0xFF060D1C), // Deep Navy
+                    theme.colorScheme.primary.withValues(alpha: 0.8),
                   ],
                 ),
               ),
               child: Stack(
                 children: [
-                   // Background Pattern / Aesthetics
+                   // Tech Grid Pattern
                    Positioned.fill(
                     child: Opacity(
-                      opacity: 0.1,
+                      opacity: 0.05,
                       child: CustomPaint(
-                        painter: _PatternPainter(theme.colorScheme.onPrimary),
+                        painter: _PatternPainter(Colors.white),
                       ),
                     ),
                   ),
@@ -87,28 +86,44 @@ class _LoginDesktopState extends State<LoginDesktop> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset(
-                          'lib/assets/aedus.png',
-                          height: 200,
-                          color: Colors.white,
+                        Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                          ),
+                          child: Image.asset(
+                            'lib/assets/aedus.png',
+                            height: 120,
+                            color: Colors.white,
+                          ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 48),
                         const Text(
                           'AEDUS PLATFORM',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 4,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 8,
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          'Intelligent Incident Management System',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 18,
-                            letterSpacing: 1.2,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'ECOSISTEMA DE GESTIÓN INTELIGENTE',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
                           ),
                         ),
                       ],
@@ -119,11 +134,11 @@ class _LoginDesktopState extends State<LoginDesktop> {
             ),
           ),
           
-          // Right Side: Login Form
+          // Right Side: Integrated Login Form
           Expanded(
             flex: 2,
             child: Container(
-              color: appColors.surface,
+              color: theme.scaffoldBackgroundColor,
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 80),
@@ -133,37 +148,52 @@ class _LoginDesktopState extends State<LoginDesktop> {
                     children: [
                       Text(
                         'Iniciar Sesión',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
+                        style: theme.textTheme.displayLarge,
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Ingresa tus credenciales para acceder al panel administrativo.',
+                        'Acceso exclusivo para personal autorizado.',
                         style: TextStyle(color: appColors.textLow, fontSize: 16),
                       ),
                       const SizedBox(height: 48),
-                      _buildTextField(context, 'Email', 'usuario@dominio.com', _emailController, false),
-                      const SizedBox(height: 24),
-                      _buildTextField(context, 'Contraseña', '••••••••', _passwordController, true),
-                      const SizedBox(height: 48),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 60,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _login,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 8,
-                            shadowColor: theme.colorScheme.primary.withValues(alpha: 0.4),
-                          ),
-                          child: _isLoading 
-                              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
-                              : const Text('ACCEDER AL PORTAL', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      // Form Card
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: appColors.card,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: appColors.border),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            _buildTextField(context, 'Email Corporativo', 'usuario@dominio.com', _emailController, false),
+                            const SizedBox(height: 24),
+                            _buildTextField(context, 'Contraseña', '••••••••', _passwordController, true),
+                            const SizedBox(height: 40),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _login,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: theme.colorScheme.primary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  elevation: 0,
+                                ),
+                                child: _isLoading 
+                                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+                                    : const Text('ACCEDER AL PORTAL', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -176,7 +206,7 @@ class _LoginDesktopState extends State<LoginDesktop> {
                               style: TextStyle(color: appColors.textLow),
                               children: [
                                 TextSpan(
-                                  text: 'Solicita acceso aquí',
+                                  text: 'Solicita acceso',
                                   style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
                                 ),
                               ],

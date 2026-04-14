@@ -77,7 +77,7 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Row(
         children: [
-          // Left Side: Branding (reversed to match login style but with different content)
+          // Left Side: Branding / Aedus Aesthetic
           Expanded(
             flex: 3,
             child: Container(
@@ -86,20 +86,19 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
                   begin: Alignment.bottomRight,
                   end: Alignment.topLeft,
                   colors: [
-                    theme.colorScheme.secondary,
-                    const Color(0xFF000000),
-                    theme.colorScheme.primary,
+                    const Color(0xFF060D1C), // Deep Navy
+                    theme.colorScheme.secondary.withValues(alpha: 0.8),
                   ],
                 ),
               ),
               child: Stack(
                 children: [
-                   // Background Pattern
+                   // Tech Grid Pattern
                    Positioned.fill(
                     child: Opacity(
-                      opacity: 0.1,
+                      opacity: 0.05,
                       child: CustomPaint(
-                        painter: _CirclePatternPainter(theme.colorScheme.onPrimary),
+                        painter: _PatternPainter(Colors.white),
                       ),
                     ),
                   ),
@@ -107,28 +106,39 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.security, size: 120, color: Colors.white),
-                        const SizedBox(height: 40),
+                        Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                          ),
+                          child: const Icon(Icons.security, size: 100, color: Colors.white),
+                        ),
+                        const SizedBox(height: 48),
                         const Text(
                           'ÚNETE A AEDUS',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 4,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 8,
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 60),
-                          child: Text(
-                            'Genera un entorno de trabajo más eficiente y conectado. Solicita tu cuenta de acceso hoy mismo.',
-                            textAlign: TextAlign.center,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.secondary.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'SOLICITUD DE ACCESO AL SISTEMA',
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 18,
-                              letterSpacing: 1.2,
-                              height: 1.5,
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
                             ),
                           ),
                         ),
@@ -140,11 +150,11 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
             ),
           ),
           
-          // Right Side: Registration Form
+          // Right Side: Integrated Registration Form
           Expanded(
             flex: 2,
             child: Container(
-              color: appColors.surface,
+              color: theme.scaffoldBackgroundColor,
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 80),
@@ -154,39 +164,47 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
                     children: [
                       Text(
                         'Crear Solicitud',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
+                        style: theme.textTheme.displayLarge,
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Completa el formulario para que un administrador revise tu perfil.',
+                        'Completa el formulario para la revisión administrativa.',
                         style: TextStyle(color: appColors.textLow, fontSize: 16),
                       ),
                       const SizedBox(height: 48),
-                      _buildTextField(context, 'Nombre Completo', 'Ej: Mario Valtierra', _nombreController, false),
-                      const SizedBox(height: 20),
-                      _buildTextField(context, 'Email Corporativo', 'usuario@dominio.com', _emailController, false),
-                      const SizedBox(height: 20),
-                      _buildTextField(context, 'Contraseña', 'Crea una contraseña segura', _passController, true),
-                      const SizedBox(height: 48),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 60,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _register,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.secondary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 8,
-                            shadowColor: theme.colorScheme.secondary.withValues(alpha: 0.4),
-                          ),
-                          child: _isLoading 
-                              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
-                              : const Text('ENVIAR SOLICITUD', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      // Form Card
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: appColors.card,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: appColors.border),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildTextField(context, 'Nombre Completo', 'Ej: Mario Valtierra', _nombreController, false),
+                            const SizedBox(height: 20),
+                            _buildTextField(context, 'Email Corporativo', 'usuario@dominio.com', _emailController, false),
+                            const SizedBox(height: 20),
+                            _buildTextField(context, 'Contraseña', 'Crea una contraseña segura', _passController, true),
+                            const SizedBox(height: 40),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _register,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: theme.colorScheme.secondary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  elevation: 0,
+                                ),
+                                child: _isLoading 
+                                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+                                    : const Text('ENVIAR SOLICITUD', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -251,9 +269,9 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
   }
 }
 
-class _CirclePatternPainter extends CustomPainter {
+class _PatternPainter extends CustomPainter {
   final Color color;
-  _CirclePatternPainter(this.color);
+  _PatternPainter(this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -262,9 +280,12 @@ class _CirclePatternPainter extends CustomPainter {
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
 
-    for (int i = 0; i < 10; i++) {
-       canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.2), 50.0 * i, paint);
-       canvas.drawCircle(Offset(size.width * 0.1, size.height * 0.8), 30.0 * i, paint);
+    const step = 40.0;
+    for (double i = 0; i < size.width; i += step) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i < size.height; i += step) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
     }
   }
 
