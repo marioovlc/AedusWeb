@@ -12,27 +12,8 @@ class DatabaseService {
   Connection? _connection;
 
   Future<void> connect() async {
-    if (kIsWeb) return; // No direct connection on web
-
-    final String user = EnvConfig.dbUser;
-    final String pass = EnvConfig.dbPass;
-    final host = 'ep-mute-frog-agiqzzew-pooler.c-2.eu-central-1.aws.neon.tech';
-    const database = 'neondb';
-
-    try {
-      _connection = await Connection.open(
-        Endpoint(
-          host: host,
-          database: database,
-          username: user,
-          password: pass,
-        ),
-        settings: const ConnectionSettings(sslMode: SslMode.require),
-      );
-      debugPrint('Connected to PostgreSQL (Neon)');
-    } catch (e) {
-      debugPrint('Error connecting to DB: $e');
-    }
+    // La conexión a PostgreSQL directa ha sido deprecada (unificada con API web).
+    debugPrint('DatabaseService: Modo API en todas las plataformas.');
   }
 
   Future<List<Map<String, dynamic>>> query(String sql, {Map<String, dynamic>? substitutionValues, String? action}) async {
@@ -60,6 +41,11 @@ class DatabaseService {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.cast<Map<String, dynamic>>();
+      } else if (response.statusCode == 403) {
+        final body = jsonDecode(response.body);
+        final msg = body['error'] ?? 'Forbidden';
+        debugPrint('Authentication Error: $msg. Check INTERNAL_API_KEY in env_config.dart and Vercel dashboard.');
+        throw Exception(msg);
       } else {
         final body = jsonDecode(response.body);
         final msg = body['error'] ?? 'Error desconocido (${response.statusCode})';

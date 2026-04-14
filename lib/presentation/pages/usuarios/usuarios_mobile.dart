@@ -23,6 +23,7 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final provider = context.watch<AppProvider>();
     final users = provider.usuariosAdmin;
     final isLoading = provider.isLoading;
@@ -31,24 +32,36 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: Colors.white,
         child: const Icon(Icons.person_add),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Usuarios', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-            const SizedBox(height: 16),
-            Expanded(
-              child: isLoading 
-                ? const ShimmerUserTable() // Or a mobile shimmer
-                : ListView.builder(
-                    itemCount: users.length,
-                    itemBuilder: (ctx, i) => _buildUserCard(context, users[i]),
-                  ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () => provider.fetchAllUsers(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Text('Usuarios', style: theme.textTheme.displayLarge?.copyWith(fontSize: 28)),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: isLoading 
+                    ? const ShimmerUserTable() 
+                    : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: users.length,
+                        itemBuilder: (ctx, i) => _buildUserCard(context, users[i]),
+                      ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -95,17 +108,140 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
                     Text('🪙 ${user.aeduCoins}', style: const TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
-                Row(
-                  children: [
-                    IconButton(icon: const Icon(Icons.edit_outlined, size: 20), onPressed: () {}),
-                    IconButton(icon: const Icon(Icons.shield_outlined, size: 20), onPressed: () {}),
-                  ],
-                ),
+                if (user.status == 'INACTIVO') 
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.check_circle_outline, color: appColors.success, size: 24), 
+                        onPressed: () => context.read<AppProvider>().approveUser(user.id)
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.cancel_outlined, color: appColors.danger, size: 24), 
+                        onPressed: () => context.read<AppProvider>().rejectUser(user.id)
+                      ),
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, size: 20), 
+                        onPressed: () => _showStatusEditDialog(context, user)
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.shield_outlined, size: 20), 
+                        onPressed: () => _showRoleEditDialog(context, user)
+                      ),
+                    ],
+                  ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showRoleEditDialog(BuildContext context, Usuario user) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    String selectedRole = user.rol;
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: appColors.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text('Modificar Rol: ${user.nombre}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: ['Administrador', 'Mantenimiento', 'USER'].map((r) {
+                  return RadioListTile<String>(
+                    title: Text(r),
+                    value: r,
+                    groupValue: selectedRole,
+                    activeColor: theme.colorScheme.primary,
+                    onChanged: (val) {
+                      setState(() { selectedRole = val!; });
+                    },
+                  );
+                }).toList(),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx), 
+                  child: Text('Cancelar', style: TextStyle(color: appColors.textLow))
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white),
+                  onPressed: () {
+                    ctx.read<AppProvider>().updateUserRole(user.id, selectedRole, user.nombre);
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Guardar'),
+                ),
+              ],
+            );
+          }
+        );
+      }
+    );
+  }
+
+  void _showStatusEditDialog(BuildContext context, Usuario user) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    bool isActive = user.status != 'INACTIVO';
+    bool isBanned = user.status == 'BANEADO';
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: appColors.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text('Modificar Estado: ${user.nombre}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SwitchListTile(
+                    title: const Text('Cuenta Aprobada'),
+                    subtitle: Text('Permite el acceso al sistema', style: TextStyle(fontSize: 11, color: appColors.textLow)),
+                    value: isActive,
+                    activeThumbColor: appColors.success,
+                    onChanged: (val) => setState(() => isActive = val),
+                  ),
+                  const Divider(),
+                  SwitchListTile(
+                    title: const Text('Restringir Acceso (Baneado)'),
+                    subtitle: Text('Deniega permanentemente el acceso', style: TextStyle(fontSize: 11, color: appColors.textLow)),
+                    value: isBanned,
+                    activeThumbColor: appColors.danger,
+                    onChanged: (val) => setState(() => isBanned = val),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx), 
+                  child: Text('Cancelar', style: TextStyle(color: appColors.textLow))
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white),
+                  onPressed: () {
+                    ctx.read<AppProvider>().updateUserStatus(user.id, isActive, isBanned, user.nombre);
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Guardar'),
+                ),
+              ],
+            );
+          }
+        );
+      }
     );
   }
 

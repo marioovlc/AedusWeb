@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint, kDebugMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EnvConfig {
@@ -32,23 +32,33 @@ class EnvConfig {
       case 'API_URL': value = const String.fromEnvironment('API_URL'); break;
     }
 
-    if (value.isNotEmpty) return value;
+    if (value.isNotEmpty) {
+      if (kDebugMode) debugPrint('EnvConfig: $key loaded from Environment');
+      return value;
+    }
 
     // 2. Try dotenv (local development)
     try {
       final fromDotEnv = dotenv.maybeGet(key);
-      if (fromDotEnv != null && fromDotEnv.isNotEmpty) return fromDotEnv;
+      if (fromDotEnv != null && fromDotEnv.isNotEmpty) {
+        if (kDebugMode) debugPrint('EnvConfig: $key loaded from DotEnv');
+        return fromDotEnv;
+      }
     } catch (_) {}
 
     // 3. Last resort fallbacks for essential Web services (safe public IDs)
+    if (kDebugMode && key == 'INTERNAL_API_KEY') {
+       debugPrint('EnvConfig: $key using Fallback');
+    }
     switch (key) {
       case 'CLOUDINARY_CLOUD_NAME': return 'dbdpkml2m';
       case 'CLOUDINARY_API_KEY': return '242661642536897';
       case 'CLOUDINARY_API_SECRET': return 'aYOctG0R9k_Z9v_pguDlZ3wtrM8';
+      case 'INTERNAL_API_KEY': return 'AedusSecureAuthKey2026!';
       case 'API_URL': 
-        // If web, relative path works. If mobile emulator, use 10.0.2.2 (default for Android)
+        // If web, relative path works. If mobile, apuntamos directo a Vercel
         if (kIsWeb) return ''; 
-        return 'http://10.0.2.2:3000'; // Default for local dev on Android emulator. If production, use API_URL env var.
+        return 'https://aedus-web.vercel.app';
     }
 
     return '';

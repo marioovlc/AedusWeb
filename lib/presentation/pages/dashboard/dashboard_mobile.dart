@@ -28,23 +28,18 @@ class DashboardMobile extends StatelessWidget {
           // KPI Grid (2x2)
           if (isLoading)
             const ShimmerKPIRow(isMobile: true)
-          else Column(
+          else GridView.count(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 1.3,
             children: [
-              Row(
-                children: [
-                  Expanded(child: _buildKPICard(context, 'Total', kpis['Total Incidencias'] ?? '0', FontAwesomeIcons.clipboardList, theme.colorScheme.primary)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildKPICard(context, 'Pend.', kpis['Pendientes'] ?? '0', FontAwesomeIcons.clock, Colors.orange)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: _buildKPICard(context, 'Resuel.', kpis['Resueltas'] ?? '0', FontAwesomeIcons.circleCheck, appColors.success)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildKPICard(context, 'Activos', kpis['Usuarios Activos'] ?? '0', FontAwesomeIcons.userGroup, Colors.purple)),
-                ],
-              ),
+              _buildKPICard(context, 'Total', kpis['Total Incidencias'] ?? '0', FontAwesomeIcons.clipboardList, theme.colorScheme.primary),
+              _buildKPICard(context, 'Pend.', kpis['Pendientes'] ?? '0', FontAwesomeIcons.clock, Colors.orange),
+              _buildKPICard(context, 'Resuel.', kpis['Resueltas'] ?? '0', FontAwesomeIcons.circleCheck, appColors.success),
+              _buildKPICard(context, 'Activos', kpis['Usuarios Activos'] ?? '0', FontAwesomeIcons.userGroup, Colors.purple),
             ],
           ),
           

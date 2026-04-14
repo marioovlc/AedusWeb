@@ -60,151 +60,147 @@ class _LoginDesktopState extends State<LoginDesktop> {
           // Left Side: Branding / Aedus Aesthetic
           Expanded(
             flex: 3,
-            child: Container(
-              child: Stack(
-                children: [
-                   // Tech Grid Pattern
-                   Positioned.fill(
-                    child: Opacity(
-                      opacity: 0.05,
-                      child: CustomPaint(
-                        painter: _PatternPainter(Colors.white),
-                      ),
+            child: Stack(
+              children: [
+                // Tech Grid Pattern
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: 0.05,
+                    child: CustomPaint(
+                      painter: _PatternPainter(Colors.white),
                     ),
                   ),
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(32),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                          ),
-                          child: Image.asset(
-                            'lib/assets/aedus.png',
-                            height: 120,
-                            color: Colors.white,
-                          ),
+                ),
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         ),
-                        const SizedBox(height: 48),
-                        const Text(
-                          'AEDUS PLATFORM',
+                        child: Image.asset(
+                          'lib/assets/aedus.png',
+                          height: 120,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      const Text(
+                        'AEDUS PLATFORM',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 8,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'ECOSISTEMA DE GESTIÓN INTELIGENTE',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 8,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'ECOSISTEMA DE GESTIÓN INTELIGENTE',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           
           // Right Side: Integrated Login Form
           Expanded(
             flex: 2,
-            child: Container(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 80),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Iniciar Sesión',
-                        style: theme.textTheme.displayLarge,
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 80),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Iniciar Sesión',
+                      style: theme.textTheme.displayLarge,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Acceso exclusivo para personal autorizado.',
+                      style: TextStyle(color: appColors.textLow, fontSize: 16),
+                    ),
+                    const SizedBox(height: 48),
+                    // Form Card
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: appColors.card,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: appColors.border),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Acceso exclusivo para personal autorizado.',
-                        style: TextStyle(color: appColors.textLow, fontSize: 16),
-                      ),
-                      const SizedBox(height: 48),
-                      // Form Card
-                      Container(
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          color: appColors.card,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: appColors.border),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            _buildTextField(context, 'Email Corporativo', 'usuario@dominio.com', _emailController, false),
-                            const SizedBox(height: 24),
-                            _buildTextField(context, 'Contraseña', '••••••••', _passwordController, true),
-                            const SizedBox(height: 40),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 56,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _login,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: theme.colorScheme.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  elevation: 0,
-                                ),
-                                child: _isLoading 
-                                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
-                                    : const Text('ACCEDER AL PORTAL', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      child: Column(
+                        children: [
+                          _buildTextField(context, 'Email Corporativo', 'usuario@dominio.com', _emailController, false),
+                          const SizedBox(height: 24),
+                          _buildTextField(context, 'Contraseña', '••••••••', _passwordController, true),
+                          const SizedBox(height: 40),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _login,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                elevation: 0,
                               ),
+                              child: _isLoading 
+                                  ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+                                  : const Text('ACCEDER AL PORTAL', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 32),
-                      Center(
-                        child: TextButton(
-                          onPressed: () => Navigator.pushNamed(context, '/register'),
-                          child: RichText(
-                            text: TextSpan(
-                              text: '¿No tienes una cuenta? ',
-                              style: TextStyle(color: appColors.textLow),
-                              children: [
-                                TextSpan(
-                                  text: 'Solicita acceso',
-                                  style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
+                    ),
+                    const SizedBox(height: 32),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => Navigator.pushNamed(context, '/register'),
+                        child: RichText(
+                          text: TextSpan(
+                            text: '¿No tienes una cuenta? ',
+                            style: TextStyle(color: appColors.textLow),
+                            children: [
+                              TextSpan(
+                                text: 'Solicita acceso',
+                                style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),

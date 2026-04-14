@@ -80,11 +80,10 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
           // Left Side: Branding / Aedus Aesthetic
           Expanded(
             flex: 3,
-            child: Container(
-              child: Stack(
-                children: [
-                   // Tech Grid Pattern
-                   Positioned.fill(
+            child: Stack(
+              children: [
+                 // Tech Grid Pattern
+                 Positioned.fill(
                     child: Opacity(
                       opacity: 0.05,
                       child: CustomPaint(
@@ -135,17 +134,15 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
                       ],
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
           ),
           
           // Right Side: Integrated Registration Form
           Expanded(
             flex: 2,
-            child: Container(
-              child: Center(
-                child: SingleChildScrollView(
+            child: Center(
+              child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 80),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,7 +216,6 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

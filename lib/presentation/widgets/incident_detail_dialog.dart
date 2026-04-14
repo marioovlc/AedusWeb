@@ -76,176 +76,87 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 700;
+
     return Dialog(
       backgroundColor: appColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      insetPadding: EdgeInsets.all(isMobile ? 12 : 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      elevation: 0,
       child: Container(
-        width: 700,
-        height: 650,
-        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: appColors.surface,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: appColors.border.withValues(alpha: 0.5)),
+        ),
+        constraints: BoxConstraints(
+          maxWidth: isMobile ? double.infinity : 900,
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        padding: EdgeInsets.all(isMobile ? 20 : 32),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // HEADER
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.confirmation_number_outlined, color: theme.colorScheme.primary, size: 24),
+                ),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: Text(
-                    'Detalle de Incidencia #${widget.incidencia.id}', 
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Incidencia #${widget.incidencia.id}', 
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: appColors.textLow, letterSpacing: 1.2)
+                      ),
+                      Text(
+                        'Detalles del Ticket', 
+                        style: TextStyle(fontSize: isMobile ? 20 : 24, fontWeight: FontWeight.bold)
+                      ),
+                    ],
                   ),
                 ),
-                IconButton(onPressed: () { if (mounted) Navigator.pop(context); }, icon: const Icon(Icons.close)),
+                IconButton(
+                  onPressed: () { if (mounted) Navigator.pop(context); }, 
+                  icon: const Icon(Icons.close),
+                  style: IconButton.styleFrom(backgroundColor: appColors.card),
+                ),
               ],
             ),
-            const Divider(height: 32),
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 24),
 
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Lado izquierdo: Info e imagen
-                  Expanded(
-                    flex: 1,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(widget.incidencia.titulo, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-                          const SizedBox(height: 8),
-                          Text(widget.incidencia.descripcion, style: const TextStyle(fontSize: 16)),
-                          const SizedBox(height: 16),
-                          
-                          if (widget.incidencia.imagenUrl != null && widget.incidencia.imagenUrl!.isNotEmpty) ...[
-                            const SizedBox(height: 12),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: CachedNetworkImage(
-                                imageUrl: widget.incidencia.imagenUrl!,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  height: 200, 
-                                  color: appColors.card,
-                                  child: const Center(child: CircularProgressIndicator())
-                                ),
-                                errorWidget: (context, url, err) => Container(
-                                  height: 200,
-                                  color: appColors.card,
-                                  child: Icon(Icons.broken_image, size: 50, color: appColors.textLow),
-                                ),
-                              ),
-                            ),
-                          ],
-
-                          if (widget.showAdminActions) ...[
-                            const SizedBox(height: 24),
-                            _buildAISuggestionBox(context),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 32),
-                  // Lado derecho: Comentarios y acciones
-                  Expanded(
-                    flex: 1,
-                    child: Column(
+            Flexible(
+              child: SingleChildScrollView(
+                child: isMobile 
+                  ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Comentarios', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.onSurface)),
-                        const SizedBox(height: 12),
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: appColors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: appColors.border),
-                            ),
-                            child: _comentarios == null 
-                              ? const Center(child: CircularProgressIndicator())
-                              : _comentarios!.isEmpty
-                                ? Center(child: Text('No hay comentarios aún.', style: TextStyle(color: appColors.textLow)))
-                                : ListView.separated(
-                                    padding: const EdgeInsets.all(16),
-                                    itemCount: _comentarios!.length,
-                                    separatorBuilder: (context, index) => const Divider(),
-                                    itemBuilder: (context, index) {
-                                      final c = _comentarios![index];
-                                      final isMe = c.usuarioId == context.read<AppProvider>().currentUser?.id;
-                                      return _buildComentarioTile(context, c, isMe);
-                                    },
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            if (widget.showAdminActions)
-                              IconButton(
-                                icon: Icon(_isInternal ? Icons.lock : Icons.lock_open, color: _isInternal ? appColors.gold : appColors.textLow),
-                                tooltip: _isInternal ? 'Nota Interna (Solo Staff)' : 'Comentario Público',
-                                onPressed: () => setState(() => _isInternal = !_isInternal),
-                              ),
-                            Expanded(
-                              child: TextField(
-                                controller: _commentController,
-                                decoration: InputDecoration(
-                                  hintText: _isInternal ? 'Añadir nota interna...' : 'Añadir un comentario...',
-                                  filled: _isInternal,
-                                  fillColor: _isInternal ? appColors.gold.withValues(alpha: 0.1) : null,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                                ),
-                                onSubmitted: (_) => _enviarComentario(),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            CircleAvatar(
-                              backgroundColor: _isInternal ? appColors.gold : theme.colorScheme.primary,
-                              child: IconButton(
-                                icon: const Icon(Icons.send, color: Colors.white, size: 18),
-                                onPressed: _enviarComentario,
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        if (widget.showAdminActions) ...[
-                          const SizedBox(height: 24),
-                          const Text('Acciones del Administrador', style: TextStyle(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              _buildActionButton(context, 'LEIDO', theme.colorScheme.primary, 1),
-                              const SizedBox(width: 8),
-                              _buildActionButton(context, 'EN REVISIÓN', appColors.gold, 2), 
-                              const SizedBox(width: 8),
-                              _buildActionButton(context, 'ACABADO', appColors.success, 4), 
-                            ],
-                          ),
-                        ] else ...[
-                          const SizedBox(height: 24),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: appColors.card,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: appColors.border),
-                            ),
-                            child: Text(
-                              'Estado: ${widget.incidencia.estadoNombre}', 
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
+                        _buildInfoSection(context, theme, appColors, isMobile),
+                        const SizedBox(height: 32),
+                        _buildCommentsSection(context, theme, appColors, isMobile),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 3, child: _buildInfoSection(context, theme, appColors, isMobile)),
+                        const SizedBox(width: 40),
+                        Container(width: 1, height: 500, color: appColors.border.withValues(alpha: 0.5)),
+                        const SizedBox(width: 40),
+                        Expanded(flex: 2, child: _buildCommentsSection(context, theme, appColors, isMobile)),
                       ],
                     ),
-                  ),
-                ],
               ),
             ),
           ],
@@ -254,112 +165,268 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
     );
   }
 
+  Widget _buildInfoSection(BuildContext context, ThemeData theme, AppColors appColors, bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            widget.incidencia.categoriaNombre, 
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(widget.incidencia.titulo, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+        const SizedBox(height: 12),
+        Text(
+          widget.incidencia.descripcion, 
+          style: TextStyle(fontSize: 15, height: 1.6, color: appColors.textHigh.withValues(alpha: 0.8))
+        ),
+        const SizedBox(height: 24),
+        
+        if (widget.incidencia.imagenUrl != null && widget.incidencia.imagenUrl!.isNotEmpty) ...[
+          Text('ADJUNTO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: appColors.textLow, letterSpacing: 1)),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: CachedNetworkImage(
+              imageUrl: widget.incidencia.imagenUrl!,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              placeholder: (context, url) => Container(
+                height: 200, 
+                decoration: BoxDecoration(color: appColors.card, borderRadius: BorderRadius.circular(20)),
+                child: const Center(child: CircularProgressIndicator())
+              ),
+              errorWidget: (context, url, err) => Container(
+                height: 200,
+                decoration: BoxDecoration(color: appColors.card, borderRadius: BorderRadius.circular(20)),
+                child: Icon(Icons.broken_image, size: 50, color: appColors.textLow),
+              ),
+            ),
+          ),
+        ],
+
+        if (widget.showAdminActions) ...[
+          const SizedBox(height: 32),
+          _buildAISuggestionBox(context),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCommentsSection(BuildContext context, ThemeData theme, AppColors appColors, bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('COMENTARIOS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: appColors.textLow, letterSpacing: 1)),
+            if (_comentarios != null)
+              Text('${_comentarios!.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          height: isMobile ? 350 : 450,
+          decoration: BoxDecoration(
+            color: appColors.card.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: appColors.border.withValues(alpha: 0.3)),
+          ),
+          child: _comentarios == null 
+            ? const Center(child: CircularProgressIndicator())
+            : _comentarios!.isEmpty
+              ? Center(child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.chat_bubble_outline, color: appColors.textLow, size: 40),
+                    const SizedBox(height: 12),
+                    Text('Sin actividad aún.', style: TextStyle(color: appColors.textLow, fontSize: 14)),
+                  ],
+                ))
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _comentarios!.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final c = _comentarios![index];
+                    final isMe = c.usuarioId == context.read<AppProvider>().currentUser?.id;
+                    return _buildComentarioTile(context, c, isMe);
+                  },
+                ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: appColors.card,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: appColors.border),
+          ),
+          child: Row(
+            children: [
+              if (widget.showAdminActions)
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: Icon(_isInternal ? Icons.lock : Icons.lock_open, color: _isInternal ? appColors.gold : appColors.textLow, size: 20),
+                  tooltip: _isInternal ? 'Nota Interna' : 'Comentario Público',
+                  onPressed: () => setState(() => _isInternal = !_isInternal),
+                ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _commentController,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: _isInternal ? 'Nota interna...' : 'Escribe algo...',
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  onSubmitted: (_) => _enviarComentario(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: Icon(Icons.send_rounded, color: _isInternal ? appColors.gold : theme.colorScheme.primary, size: 20),
+                onPressed: _enviarComentario,
+                style: IconButton.styleFrom(
+                  backgroundColor: (_isInternal ? appColors.gold : theme.colorScheme.primary).withValues(alpha: 0.1),
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        if (widget.showAdminActions) ...[
+          const SizedBox(height: 32),
+          Text('ACTUALIZAR ESTADO', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: appColors.textLow, letterSpacing: 1)),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildActionButton(context, 'LEIDO', appColors.gold, 1),
+                const SizedBox(width: 8),
+                _buildActionButton(context, 'REVISIÓN', Colors.orange, 2), 
+                const SizedBox(width: 8),
+                _buildActionButton(context, 'ACABADO', appColors.success, 4), 
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildComentarioTile(BuildContext context, ComentarioIncidencia c, bool isMe) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
     
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Column(
-        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-            children: [
-              Text(
-                c.usuarioNombre, 
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: c.isInternal ? appColors.gold : (isMe ? theme.colorScheme.primary : theme.colorScheme.onSurface))
-              ),
-              const SizedBox(width: 4),
-              if (c.usuarioRol == 'ADMIN' || c.usuarioRol == 'MANTENIMIENTO')
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: appColors.gold.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text('STAFF', style: TextStyle(fontSize: 8, color: appColors.gold, fontWeight: FontWeight.bold)),
-                ),
-              if (c.isInternal)
-                Container(
-                  margin: const EdgeInsets.only(left: 4),
-                  child: Icon(Icons.lock, size: 12, color: appColors.gold),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: c.isInternal ? appColors.gold.withValues(alpha: 0.2) : (isMe ? theme.colorScheme.primary.withValues(alpha: 0.1) : appColors.card),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: c.isInternal ? appColors.gold : (isMe ? theme.colorScheme.primary.withValues(alpha: 0.3) : appColors.border)),
+    return Column(
+      crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              c.usuarioNombre, 
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: isMe ? theme.primaryColor : appColors.textLow)
             ),
-            child: Text(c.texto, style: const TextStyle(fontSize: 14)),
+            if (c.isInternal) ...[
+              const SizedBox(width: 6),
+              Icon(Icons.lock, size: 10, color: appColors.gold),
+            ],
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: c.isInternal 
+                ? appColors.gold.withValues(alpha: 0.1) 
+                : (isMe ? theme.primaryColor.withValues(alpha: 0.1) : appColors.card),
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isMe ? 16 : 4),
+              bottomRight: Radius.circular(isMe ? 4 : 16),
+            ),
+            border: Border.all(
+              color: c.isInternal 
+                  ? appColors.gold.withValues(alpha: 0.3) 
+                  : (isMe ? theme.primaryColor.withValues(alpha: 0.3) : appColors.border.withValues(alpha: 0.5)),
+            ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            '${c.fecha.hour.toString().padLeft(2, '0')}:${c.fecha.minute.toString().padLeft(2, '0')}',
-            style: TextStyle(fontSize: 10, color: appColors.textLow),
-          ),
-        ],
-      ),
+          child: Text(c.texto, style: const TextStyle(fontSize: 13, height: 1.4)),
+        ),
+      ],
     );
   }
 
   Widget _buildAISuggestionBox(BuildContext context) {
     final theme = Theme.of(context);
-    final appColors = theme.extension<AppColors>()!;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.colorScheme.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+        boxShadow: [
+           BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))
+        ]
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome, color: theme.colorScheme.primary, size: 18),
-              const SizedBox(width: 8),
-              Text('Sugerencia Técnica IA', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+              Icon(Icons.auto_awesome, color: theme.colorScheme.primary, size: 20),
+              const SizedBox(width: 10),
+              Text('Aedus AI (Análisis)', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: 0.5)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           if (loadingAI)
             const LinearProgressIndicator()
           else if (aiSuggestion != null)
-            Text(aiSuggestion!, style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic))
+            Text(aiSuggestion!, style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic, height: 1.5))
           else
-            Text('No se pudo generar una sugerencia.', style: TextStyle(color: appColors.textLow)),
+            const Text('No hay análisis disponible.'),
         ],
       ),
     );
   }
 
   Widget _buildActionButton(BuildContext context, String label, Color color, int statusId) {
-    return Expanded(
-      child: OutlinedButton(
-        onPressed: () async {
-          final navigator = Navigator.of(context);
-          await context.read<AppProvider>().updateIncidenciaEstado(
-            widget.incidencia.id, 
-            statusId, 
-            widget.incidencia.usuarioId
-          );
-          navigator.pop();
-        },
-        style: OutlinedButton.styleFrom(
-           foregroundColor: color,
-          side: BorderSide(color: color),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-        ),
-        child: Text(label),
+    return OutlinedButton(
+      onPressed: () async {
+        final navigator = Navigator.of(context);
+        await context.read<AppProvider>().updateIncidenciaEstado(
+          widget.incidencia.id, 
+          statusId, 
+          widget.incidencia.usuarioId
+        );
+        navigator.pop();
+      },
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        side: BorderSide(color: color.withValues(alpha: 0.5)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
       ),
+      child: Text(label),
     );
   }
 }

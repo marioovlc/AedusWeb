@@ -35,6 +35,14 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
     _tabController = TabController(length: 2, vsync: this);
   }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _tituloController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -85,21 +93,21 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(100),
+      body: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(24.0),
               child: Row(
                 children: [
-                  Text('Incidencias', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+                  Text('Incidencias', style: theme.textTheme.displayLarge?.copyWith(fontSize: 28)),
                 ],
               ),
             ),
@@ -108,20 +116,24 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
               labelColor: theme.colorScheme.primary,
               unselectedLabelColor: appColors.textLow,
               indicatorColor: theme.colorScheme.primary,
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               tabs: const [
                 Tab(text: 'REPORTAR'),
                 Tab(text: 'MIS TICKETS'),
               ],
             ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildFormTab(context),
+                  _buildListTab(context),
+                ],
+              ),
+            ),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildFormTab(context),
-          _buildListTab(context),
-        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -20,26 +21,75 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
+  int _getSelectedIndex(String route) {
+    if (route.startsWith('/dashboard')) return 0;
+    if (route.startsWith('/incidencias')) return 1;
+    if (route.startsWith('/connect')) return 2;
+    if (route.startsWith('/shop')) return 3;
+    return 0;
+  }
+
+  void _onItemTapped(int index) {
+    String route = '/dashboard';
+    switch (index) {
+      case 0: route = '/dashboard'; break;
+      case 1: route = '/incidencias'; break;
+      case 2: route = '/connect'; break;
+      case 3: route = '/shop'; break;
+    }
+    Navigator.pushReplacementNamed(context, route);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    bool isMobile = MediaQuery.of(context).size.width < 900;
+    final appColors = theme.extension<AppColors>()!;
+    final user = context.watch<AppProvider>().currentUser;
+    bool isMobile = ResponsiveLayout.isMobile(context);
 
     return Scaffold(
       drawer: isMobile ? _buildSidebar(context) : null,
       appBar: isMobile ? AppBar(
-        title: Image.asset('lib/assets/aedus.png', height: 60),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        toolbarHeight: 80,
+        title: Image.asset('lib/assets/aedus.png', height: 40),
+        centerTitle: true,
+        backgroundColor: appColors.surface,
+        elevation: 0,
+        actions: [
+          if (user != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: GestureDetector(
+                onTap: () => Navigator.pushReplacementNamed(context, '/settings'),
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundImage: user.avatarUrl != null ? CachedNetworkImageProvider(user.avatarUrl!) : null,
+                  child: user.avatarUrl == null ? Text(user.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 10)) : null,
+                ),
+              ),
+            ),
+        ],
+      ) : null,
+      bottomNavigationBar: isMobile ? BottomNavigationBar(
+        currentIndex: _getSelectedIndex(widget.currentRoute),
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: appColors.surface,
+        selectedItemColor: theme.colorScheme.primary,
+        unselectedItemColor: appColors.textLow,
+        selectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontSize: 12),
+        items: const [
+          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.gaugeHigh, size: 20), label: 'Dash'),
+          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.triangleExclamation, size: 20), label: 'Tickets'),
+          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.comments, size: 20), label: 'Hub'),
+          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.shop, size: 20), label: 'Tienda'),
+        ],
       ) : null,
       body: Row(
         children: [
           if (!isMobile) _buildSidebar(context),
           Expanded(
-            child: Container(
-              color: theme.scaffoldBackgroundColor,
-              child: widget.child,
-            ),
+            child: widget.child,
           ),
         ],
       ),

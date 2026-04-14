@@ -48,7 +48,9 @@ Tus reglas de comportamiento son:
         final data = jsonDecode(response.body);
         return data['choices'][0]['message']['content'];
       } else {
-        return 'Error de la IA: ${response.statusCode}';
+        final errorData = jsonDecode(response.body);
+        final errorMessage = errorData['error']?['message'] ?? 'Desconocido';
+        return 'Error de la IA (${response.statusCode}): $errorMessage';
       }
     } catch (e) {
       return 'Error conectando con la IA: $e';
