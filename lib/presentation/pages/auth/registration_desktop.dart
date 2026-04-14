@@ -81,16 +81,6 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
           Expanded(
             flex: 3,
             child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    theme.colorScheme.secondary.withValues(alpha: 0.7),
-                    const Color(0xFF060D1C), // Deep Navy
-                  ],
-                ),
-              ),
               child: Stack(
                 children: [
                    // Tech Grid Pattern
@@ -154,22 +144,6 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
           Expanded(
             flex: 2,
             child: Container(
-              decoration: BoxDecoration(
-                color: theme.scaffoldBackgroundColor,
-                border: Border(
-                  left: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    width: 1,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    blurRadius: 40,
-                    offset: const Offset(-10, 0),
-                  ),
-                ],
-              ),
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 80),
