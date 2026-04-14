@@ -1,18 +1,19 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/providers/app_provider.dart';
-import '../../../data/models/user_model.dart';
-import '../../widgets/loading_shimmer.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/providers/app_provider.dart';
+import '../../data/models/user_model.dart';
+import '../../core/utils/responsive_utils.dart';
+import '../widgets/loading_shimmer.dart';
 
-class UsuariosDesktop extends StatefulWidget {
-  const UsuariosDesktop({super.key});
+class UsuariosPage extends StatefulWidget {
+  const UsuariosPage({super.key});
 
   @override
-  State<UsuariosDesktop> createState() => _UsuariosDesktopState();
+  State<UsuariosPage> createState() => _UsuariosPageState();
 }
 
-class _UsuariosDesktopState extends State<UsuariosDesktop> {
+class _UsuariosPageState extends State<UsuariosPage> {
   @override
   void initState() {
     super.initState();
@@ -26,9 +27,10 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
     final provider = context.watch<AppProvider>();
     final users = provider.usuariosAdmin;
     final isLoading = provider.isLoading;
+    final isMobile = ResponsiveLayout.isMobile(context);
 
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -59,7 +61,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Administra roles, permisos y estados de la plataforma (Desktop).',
+              'Administra roles, permisos y estados de la plataforma.',
               style: TextStyle(color: appColors.textLow, fontSize: 16),
             ),
           ],
@@ -90,13 +92,13 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
             child: DataTable(
               headingRowColor: WidgetStateProperty.all(appColors.surface),
               columns: [
-                DataColumn(label: Text('USUARIO', style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('EMAIL', style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('ROL', style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('ESTADO', style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('COINS', style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('VISTO', style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('ACCIONES', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text('USUARIO', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('EMAIL', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('ROL', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('ESTADO', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('COINS', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('VISTO', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('ACCIONES', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
               ],
               rows: users.map((u) => _buildUserRow(context, u)).toList(),
             ),
@@ -120,14 +122,14 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
                 child: Text(user.nombre.substring(0,1).toUpperCase(), style: TextStyle(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(width: 12),
-              Text(user.nombre),
+              Text(user.nombre, style: TextStyle(color: theme.colorScheme.onSurface)),
             ],
           ),
         ),
         DataCell(Text(user.email, style: TextStyle(color: appColors.textLow))),
         DataCell(_buildRoleBadge(context, user.rol)),
         DataCell(_buildStatusBadge(context, user.status)),
-        DataCell(Text('🪙 ${user.aeduCoins}')),
+        DataCell(Text('🪙 ${user.aeduCoins}', style: TextStyle(color: theme.colorScheme.onSurface))),
         DataCell(Text(user.lastSeen != null 
           ? '${user.lastSeen!.day}/${user.lastSeen!.month} ${user.lastSeen!.hour}:${user.lastSeen!.minute.toString().padLeft(2, '0')}' 
           : 'Nunca', style: TextStyle(color: appColors.textLow, fontSize: 13))),
@@ -169,7 +171,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
   Widget _buildRoleBadge(BuildContext context, String rol) {
     final theme = Theme.of(context);
     Color color = theme.colorScheme.primary;
-    if (rol == 'Administrador' || rol.toUpperCase() == 'ADMIN') color = Colors.purple;
+    if (rol == 'Administrador') color = Colors.purple;
     if (rol == 'Mantenimiento') color = theme.colorScheme.secondary;
 
     return Container(
@@ -224,12 +226,12 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
             return AlertDialog(
               backgroundColor: appColors.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('Modificar Rol: ${user.nombre}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text('Modificar Rol: ${user.nombre}', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: ['Administrador', 'Mantenimiento', 'USER'].map((r) {
                   return RadioListTile<String>(
-                    title: Text(r),
+                    title: Text(r, style: TextStyle(color: theme.colorScheme.onSurface)),
                     value: r,
                     groupValue: selectedRole,
                     activeColor: theme.colorScheme.primary,
@@ -247,7 +249,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white),
                   onPressed: () {
-                    ctx.read<AppProvider>().updateUserRole(user.id, selectedRole, user.nombre);
+                    context.read<AppProvider>().updateUserRole(user.id, selectedRole, user.nombre);
                     Navigator.pop(ctx);
                   },
                   child: const Text('Guardar'),
@@ -273,12 +275,12 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
             return AlertDialog(
               backgroundColor: appColors.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('Modificar Estado: ${user.nombre}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text('Modificar Estado: ${user.nombre}', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SwitchListTile(
-                    title: const Text('Cuenta Aprobada (Activa)'),
+                    title: Text('Cuenta Aprobada (Activa)', style: TextStyle(color: theme.colorScheme.onSurface)),
                     subtitle: Text('Permite al usuario acceder al sistema', style: TextStyle(fontSize: 12, color: appColors.textLow)),
                     value: isActive,
                     activeThumbColor: appColors.success,
@@ -286,7 +288,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
                   ),
                   const Divider(),
                   SwitchListTile(
-                    title: const Text('Restringir Acceso (Baneado)'),
+                    title: Text('Restringir Acceso (Baneado)', style: TextStyle(color: theme.colorScheme.onSurface)),
                     subtitle: Text('Deniega permanentemente el acceso', style: TextStyle(fontSize: 12, color: appColors.textLow)),
                     value: isBanned,
                     activeThumbColor: appColors.danger,
@@ -302,7 +304,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white),
                   onPressed: () {
-                    ctx.read<AppProvider>().updateUserStatus(user.id, isActive, isBanned, user.nombre);
+                    context.read<AppProvider>().updateUserStatus(user.id, isActive, isBanned, user.nombre);
                     Navigator.pop(ctx);
                   },
                   child: const Text('Guardar'),

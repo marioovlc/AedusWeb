@@ -1,20 +1,20 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sticky_headers/sticky_headers.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/providers/app_provider.dart';
-import '../../../data/models/log_model.dart';
-import '../../../data/models/incident_model.dart';
-import '../../widgets/incident_detail_dialog.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/providers/app_provider.dart';
+import '../../data/models/log_model.dart';
+import '../../data/models/incident_model.dart';
+import '../widgets/incident_detail_dialog.dart';
 
-class MonitoringDesktop extends StatefulWidget {
-  const MonitoringDesktop({super.key});
+class MonitoringPage extends StatefulWidget {
+  const MonitoringPage({super.key});
 
   @override
-  State<MonitoringDesktop> createState() => _MonitoringDesktopState();
+  State<MonitoringPage> createState() => _MonitoringPageState();
 }
 
-class _MonitoringDesktopState extends State<MonitoringDesktop> {
+class _MonitoringPageState extends State<MonitoringPage> {
   String _selectedLogCategory = 'TODOS';
   final List<String> _categories = ['TODOS', 'SISTEMA', 'ERROR', 'USUARIO'];
 
@@ -73,7 +73,7 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
           style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
         ),
         Text(
-          'Panel administrativo de Aedus (Desktop)',
+          'Panel administrativo de Aedus',
           style: TextStyle(color: appColors.textLow, fontSize: 14),
         ),
       ],
@@ -88,6 +88,7 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
         ? logs 
         : logs.where((l) => l.categoria == _selectedLogCategory).toList();
 
+    // Group logs by date
     Map<String, List<LogEntry>> groupedLogs = {};
     for (var log in filteredLogs) {
       String dateKey = _formatDateKey(log.fecha);

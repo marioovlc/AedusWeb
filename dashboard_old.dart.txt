@@ -1,13 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/providers/app_provider.dart';
-import '../../widgets/loading_shimmer.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/providers/app_provider.dart';
+import '../../core/utils/responsive_utils.dart';
+import '../widgets/loading_shimmer.dart';
 
-class DashboardDesktop extends StatelessWidget {
-  const DashboardDesktop({super.key});
+class DashboardPage extends StatelessWidget {
+  const DashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +17,11 @@ class DashboardDesktop extends StatelessWidget {
     final provider = context.watch<AppProvider>();
     final kpis = provider.kpis;
     final isLoading = provider.isLoading;
+    final isMobile = ResponsiveLayout.isMobile(context);
+    final isTablet = ResponsiveLayout.isTablet(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -27,8 +30,26 @@ class DashboardDesktop extends StatelessWidget {
           
           // KPI Cards
           if (isLoading)
-            const ShimmerKPIRow(isMobile: false)
-          else Row(
+            ShimmerKPIRow(isMobile: isMobile || isTablet)
+          else if (isMobile || isTablet) Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: _buildKPICard(context, 'Total Incidencias', kpis['Total Incidencias'] ?? '0', FontAwesomeIcons.clipboardList, theme.colorScheme.primary)),
+                  SizedBox(width: isMobile ? 10 : 20),
+                  Expanded(child: _buildKPICard(context, 'Pendientes', kpis['Pendientes'] ?? '0', FontAwesomeIcons.clock, Colors.orange)),
+                ],
+              ),
+              SizedBox(height: isMobile ? 10 : 20),
+              Row(
+                children: [
+                  Expanded(child: _buildKPICard(context, 'Resueltas', kpis['Resueltas'] ?? '0', FontAwesomeIcons.circleCheck, appColors.success)),
+                  SizedBox(width: isMobile ? 10 : 20),
+                  Expanded(child: _buildKPICard(context, 'Usuarios Activos', kpis['Usuarios Activos'] ?? '0', FontAwesomeIcons.userGroup, Colors.purple)),
+                ],
+              ),
+            ]
+          ) else Row(
             children: [
               Expanded(child: _buildKPICard(context, 'Total Incidencias', kpis['Total Incidencias'] ?? '0', FontAwesomeIcons.clipboardList, theme.colorScheme.primary)),
               const SizedBox(width: 20),
@@ -44,15 +65,30 @@ class DashboardDesktop extends StatelessWidget {
           
           // Charts Section
           if (isLoading)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 2, child: ShimmerChartCard(height: 370)),
-                const SizedBox(width: 20),
-                Expanded(flex: 1, child: ShimmerChartCard(height: 370)),
-              ],
-            )
-          else Row(
+            isMobile || isTablet
+              ? Column(
+                  children: [
+                    ShimmerChartCard(height: 370),
+                    const SizedBox(height: 20),
+                    ShimmerChartCard(height: 370),
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 2, child: ShimmerChartCard(height: 370)),
+                    const SizedBox(width: 20),
+                    Expanded(flex: 1, child: ShimmerChartCard(height: 370)),
+                  ],
+                )
+          else if (isMobile || isTablet) Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildLineChartCard(context),
+              const SizedBox(height: 20),
+              _buildBarChartCard(context),
+            ],
+          ) else Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(flex: 2, child: _buildLineChartCard(context)),
@@ -64,10 +100,17 @@ class DashboardDesktop extends StatelessWidget {
           const SizedBox(height: 32),
           
           // Bottom Grid
-          Row(
+          isMobile || isTablet ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildGamificationSection(context, isMobile),
+              const SizedBox(height: 20),
+              _buildAIAssistantCard(context),
+            ],
+          ) : Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 2, child: _buildGamificationSection(context)),
+              Expanded(flex: 2, child: _buildGamificationSection(context, false)),
               const SizedBox(width: 20),
               Expanded(flex: 1, child: _buildAIAssistantCard(context)),
             ],
@@ -90,7 +133,7 @@ class DashboardDesktop extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Bienvenido de nuevo, ${user?.nombre ?? "Usuario"}. Aquí tienes el resumen del sistema (Desktop).',
+          'Bienvenido de nuevo, ${user?.nombre ?? "Usuario"}. Aquí tienes el resumen del sistema.',
           style: TextStyle(color: appColors.textLow, fontSize: 16),
         ),
       ],
@@ -221,19 +264,28 @@ class DashboardDesktop extends StatelessWidget {
     );
   }
 
-  Widget _buildGamificationSection(BuildContext context) {
+  Widget _buildGamificationSection(BuildContext context, bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(context, 'Logros y Misiones'),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildAchievementItem(context, 'Primer Reporte', 'Has creado tu primera incidencia.', FontAwesomeIcons.award, Theme.of(context).extension<AppColors>()!.gold)),
-            const SizedBox(width: 16),
-            Expanded(child: _buildAchievementItem(context, 'Soporte Rápido', 'Resuelto en menos de 1 hora.', FontAwesomeIcons.bolt, Colors.cyan)),
-          ],
-        ),
+        if (isMobile)
+          Column(
+            children: [
+              _buildAchievementItem(context, 'Primer Reporte', 'Has creado tu primera incidencia.', FontAwesomeIcons.award, Theme.of(context).extension<AppColors>()!.gold),
+              const SizedBox(height: 16),
+              _buildAchievementItem(context, 'Soporte Rápido', 'Resuelto en menos de 1 hora.', FontAwesomeIcons.bolt, Colors.cyan),
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(child: _buildAchievementItem(context, 'Primer Reporte', 'Has creado tu primera incidencia.', FontAwesomeIcons.award, Theme.of(context).extension<AppColors>()!.gold)),
+              const SizedBox(width: 16),
+              Expanded(child: _buildAchievementItem(context, 'Soporte Rápido', 'Resuelto en menos de 1 hora.', FontAwesomeIcons.bolt, Colors.cyan)),
+            ],
+          ),
       ],
     );
   }

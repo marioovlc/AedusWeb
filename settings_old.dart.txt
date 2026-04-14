@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/services/storage_service.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/providers/app_provider.dart';
+import '../../core/services/storage_service.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/providers/app_provider.dart';
 
-class SettingsDesktop extends StatelessWidget {
-  const SettingsDesktop({super.key});
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class SettingsDesktop extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Personaliza tu experiencia en la plataforma Aedus (Desktop).',
+            'Personaliza tu experiencia en la plataforma Aedus.',
             style: TextStyle(color: appColors.textLow, fontSize: 16),
           ),
           const SizedBox(height: 48),
@@ -145,7 +145,7 @@ class SettingsDesktop extends StatelessWidget {
   Widget _buildBadge(BuildContext context, String rol) {
     final theme = Theme.of(context);
     Color color = theme.colorScheme.primary;
-    if (rol == 'Administrador' || rol.toUpperCase() == 'ADMIN') color = Colors.purple;
+    if (rol == 'Administrador') color = Colors.purple;
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

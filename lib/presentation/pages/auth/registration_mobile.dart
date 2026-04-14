@@ -22,7 +22,6 @@ class _RegistrationMobileState extends State<RegistrationMobile> {
         _nombreController.text,
         _emailController.text,
         _passwordController.text,
-        'Registro desde móvil responsive',
       );
       if (mounted) {
          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Registro enviado para revisión.')));

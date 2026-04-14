@@ -141,7 +141,7 @@ class ShimmerStoreGrid extends StatelessWidget {
         childAspectRatio: 1.2,
       ),
       itemCount: crossAxisCount * 2,
-      itemBuilder: (_, __) => storeCard,
+      itemBuilder: (context, index) => storeCard,
     );
   }
 }
@@ -244,7 +244,7 @@ class ShimmerTicketList extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 5,
-      itemBuilder: (_, __) => ticketCard,
+      itemBuilder: (context, index) => ticketCard,
     );
   }
 }

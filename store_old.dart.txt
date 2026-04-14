@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/providers/app_provider.dart';
-import '../../../data/models/store_item_model.dart';
-import '../../widgets/loading_shimmer.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/providers/app_provider.dart';
+import '../../data/models/store_item_model.dart';
+import '../../core/utils/responsive_utils.dart';
+import '../widgets/loading_shimmer.dart';
 
-class StoreDesktop extends StatelessWidget {
-  const StoreDesktop({super.key});
+class StorePage extends StatelessWidget {
+  const StorePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +17,8 @@ class StoreDesktop extends StatelessWidget {
     final items = provider.storeItems;
     final isLoading = provider.isLoading;
     final theme = Theme.of(context);
-
-    // Desktop: crossAxisCount = 3
-    const crossAxisCount = 3;
+    final crossAxisCount = ResponsiveLayout.isMobile(context) ? 1 
+                         : (ResponsiveLayout.isTablet(context) ? 2 : 3);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -32,7 +32,7 @@ class StoreDesktop extends StatelessWidget {
           ) 
         : null,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(32.0),
+        padding: EdgeInsets.all(ResponsiveLayout.isMobile(context) ? 16.0 : 32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -41,7 +41,7 @@ class StoreDesktop extends StatelessWidget {
             _buildSectionTitle(context, 'Artículos Disponibles'),
             const SizedBox(height: 24),
             if (isLoading)
-              const ShimmerStoreGrid(crossAxisCount: crossAxisCount)
+              ShimmerStoreGrid(crossAxisCount: crossAxisCount)
             else if (items.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(32.0),
@@ -87,7 +87,7 @@ class StoreDesktop extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Canjea tus AeduCoins por ventajas exclusivas (Desktop).',
+                'Canjea tus AeduCoins por ventajas exclusivas.',
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 16),
               ),
             ],
@@ -122,14 +122,17 @@ class StoreDesktop extends StatelessWidget {
   }
 
   Widget _buildItemGrid(BuildContext context, List<StoreItem> items) {
+    int crossAxisCount = ResponsiveLayout.isMobile(context) ? 1 : 
+                         (ResponsiveLayout.isTablet(context) ? 2 : 3);
+    
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
         crossAxisSpacing: 24,
         mainAxisSpacing: 24,
-        childAspectRatio: 1.2,
+        childAspectRatio: ResponsiveLayout.isMobile(context) ? 1.5 : 1.2,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {

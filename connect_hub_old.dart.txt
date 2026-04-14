@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -6,23 +6,23 @@ import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/providers/app_provider.dart';
+import '../../data/models/user_model.dart';
+import '../../data/models/message_model.dart';
+import '../../data/models/incident_model.dart';
+import '../../core/services/storage_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/providers/app_provider.dart';
-import '../../../data/models/user_model.dart';
-import '../../../data/models/message_model.dart';
-import '../../../data/models/incident_model.dart';
-import '../../../core/services/storage_service.dart';
-import '../../widgets/incident_detail_dialog.dart';
+import '../widgets/incident_detail_dialog.dart';
 
-class ConnectHubDesktop extends StatefulWidget {
-  const ConnectHubDesktop({super.key});
+class ConnectHubPage extends StatefulWidget {
+  const ConnectHubPage({super.key});
 
   @override
-  State<ConnectHubDesktop> createState() => _ConnectHubDesktopState();
+  State<ConnectHubPage> createState() => _ConnectHubPageState();
 }
 
-class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
+class _ConnectHubPageState extends State<ConnectHubPage> {
   Usuario? _activeContact;
   
   final _messageController = TextEditingController();
@@ -84,7 +84,6 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
         final bytes = response.bodyBytes;
         
         final url = await StorageService().uploadFile(bytes, 'audio_${DateTime.now().millisecondsSinceEpoch}.m4a', isAudio: true);
-        if (!mounted) return;
         if (url != null) {
           _sendMessage(audioUrl: url);
         }
@@ -99,7 +98,6 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
     if (image != null) {
       final bytes = await image.readAsBytes();
       final url = await StorageService().uploadFile(bytes, image.name);
-      if (!mounted) return;
       if (url != null) {
         _sendMessage(imageUrl: url);
       }
@@ -211,7 +209,7 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
                 final isMe = msg.senderId == context.read<AppProvider>().currentUser?.id;
                 
                 if (_activeContact?.id == 'aedus-ai-system' && index == 0) {
-                  return _buildAIResponse(context, "¡Hola! Soy tu asistente Aedus (Desktop). ¿En qué puedo ayudarte hoy con el sistema?");
+                  return _buildAIResponse(context, "¡Hola! Soy tu asistente Aedus. ¿En qué puedo ayudarte hoy con el sistema?");
                 }
 
                 if (msg.ticketLinkId != null && msg.ticketLinkId! > 0) {
@@ -233,6 +231,8 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
     );
   }
 
+// Ticket related methods removed
+
   Widget _buildSharedTicket(BuildContext context, Mensaje msg, bool isMe) {
     final theme = Theme.of(context);
     
@@ -247,6 +247,8 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
     }
     
     final ticketIdStr = ticketId.toString();
+    
+    // Fallback if ticket is not found locally
     final allIncids = context.watch<AppProvider>().incidencias;
     final Incidencia? ticket = allIncids.where((i) => i.id == ticketId).firstOrNull;
 
@@ -386,7 +388,7 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
                   onTap: () {
                      Future.delayed(const Duration(milliseconds: 100), () {
                        if (!mounted) return;
-                       _showShareTicketDialog(this.context);
+                       _showShareTicketDialog(context);
                      });
                   },
                   child: const Text('Compartir Ticket'),
@@ -433,16 +435,16 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
   }
 
   void _showShareTicketDialog(BuildContext context) {
-    final provider = context.read<AppProvider>();
+    final incidencias = context.read<AppProvider>().incidencias;
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).extension<AppColors>()!.surface,
       builder: (ctx) {
         return ListView.builder(
            padding: const EdgeInsets.all(24),
-           itemCount: provider.incidencias.length,
+           itemCount: incidencias.length,
            itemBuilder: (c, idx) {
-              final inc = provider.incidencias[idx];
+              final inc = incidencias[idx];
               return ListTile(
                  title: Text(inc.titulo),
                  subtitle: Text(inc.estadoNombre),
@@ -476,6 +478,10 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
     if (_activeContact == null) return const SizedBox.shrink();
     return _UserDetailsWidget(contact: _activeContact!);
   }
+
+// Ticket details panel removed
+
+// Info row removed
 }
 
 class _UserDetailsWidget extends StatelessWidget {
@@ -491,7 +497,7 @@ class _UserDetailsWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('Detalles del Usuario', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Text('Detalles del Usuario', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.onSurface)),
           const SizedBox(height: 32),
           CircleAvatar(
             radius: 50,
@@ -499,7 +505,7 @@ class _UserDetailsWidget extends StatelessWidget {
             child: Text(contact.nombre.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
           ),
           const SizedBox(height: 24),
-          Text(contact.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+          Text(contact.nombre, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: theme.colorScheme.onSurface)),
           Text(contact.rol, style: TextStyle(color: appColors.textLow)),
           const SizedBox(height: 32),
           const Divider(),
@@ -513,7 +519,8 @@ class _UserDetailsWidget extends StatelessWidget {
   }
 
   Widget _buildInfoCol(BuildContext context, String label, String value) {
-    final appColors = Theme.of(context).extension<AppColors>()!;
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -521,7 +528,7 @@ class _UserDetailsWidget extends StatelessWidget {
         children: [
           Text(label, style: TextStyle(color: appColors.textLow, fontSize: 12)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: theme.colorScheme.onSurface)),
         ],
       ),
     );
@@ -585,10 +592,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
           Text(
             '${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / ${_duration.inMinutes}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}',
-            style: const TextStyle(fontSize: 10),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 10),
           ),
         ],
       ),
     );
   }
 }
+
+// Tab item removed

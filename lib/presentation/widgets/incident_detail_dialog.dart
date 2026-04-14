@@ -344,12 +344,13 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
     return Expanded(
       child: OutlinedButton(
         onPressed: () async {
+          final navigator = Navigator.of(context);
           await context.read<AppProvider>().updateIncidenciaEstado(
             widget.incidencia.id, 
             statusId, 
             widget.incidencia.usuarioId
           );
-          if (mounted) Navigator.pop(context);
+          navigator.pop();
         },
         style: OutlinedButton.styleFrom(
            foregroundColor: color,

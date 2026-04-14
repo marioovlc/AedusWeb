@@ -13,24 +13,56 @@ class RegistrationDesktop extends StatefulWidget {
 class _RegistrationDesktopState extends State<RegistrationDesktop> {
   final _nombreController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _passController = TextEditingController();
   bool _isLoading = false;
 
   Future<void> _register() async {
+    if (_nombreController.text.isEmpty || _emailController.text.isEmpty || _passController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, completa todos los campos.')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      await context.read<AppProvider>().requestUser(
-        _nombreController.text,
-        _emailController.text,
-        _passwordController.text,
-        'Registro desde web responsive',
-      );
-      if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Registro solicitado. Espera aprobación.')));
-         Navigator.pop(context);
+      final success = await context.read<AppProvider>().requestUser(
+            _nombreController.text,
+            _emailController.text,
+            _passController.text,
+          );
+
+      if (!mounted) return;
+
+      if (success) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Solicitud Enviada'),
+            content: const Text('Tu solicitud de registro ha sido enviada. Un administrador deberá validarla antes de que puedas entrar.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushReplacementNamed(context, '/login');
+                },
+                child: const Text('ENTENDIDO'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al enviar la solicitud. El email podría estar en uso.')),
+        );
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -40,30 +72,202 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
+
     return Scaffold(
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 450),
-          padding: const EdgeInsets.all(40),
-          decoration: BoxDecoration(color: appColors.surface, borderRadius: BorderRadius.circular(24), border: Border.all(color: appColors.border)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Crear Cuenta', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 32),
-              TextField(controller: _nombreController, decoration: const InputDecoration(labelText: 'Nombre Completo')),
-              const SizedBox(height: 16),
-              TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email')),
-              const SizedBox(height: 16),
-              TextField(controller: _passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Contraseña')),
-              const SizedBox(height: 40),
-              SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _isLoading ? null : _register, child: _isLoading ? const CircularProgressIndicator() : const Text('REGISTRARSE'))),
-              const SizedBox(height: 16),
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Volver al Login')),
-            ],
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Row(
+        children: [
+          // Left Side: Branding (reversed to match login style but with different content)
+          Expanded(
+            flex: 3,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomRight,
+                  end: Alignment.topLeft,
+                  colors: [
+                    theme.colorScheme.secondary,
+                    const Color(0xFF000000),
+                    theme.colorScheme.primary,
+                  ],
+                ),
+              ),
+              child: Stack(
+                children: [
+                   // Background Pattern
+                   Positioned.fill(
+                    child: Opacity(
+                      opacity: 0.1,
+                      child: CustomPaint(
+                        painter: _CirclePatternPainter(theme.colorScheme.onPrimary),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.security, size: 120, color: Colors.white),
+                        const SizedBox(height: 40),
+                        const Text(
+                          'ÚNETE A AEDUS',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 4,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 60),
+                          child: Text(
+                            'Genera un entorno de trabajo más eficiente y conectado. Solicita tu cuenta de acceso hoy mismo.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 18,
+                              letterSpacing: 1.2,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
+          
+          // Right Side: Registration Form
+          Expanded(
+            flex: 2,
+            child: Container(
+              color: appColors.surface,
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 80),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Crear Solicitud',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Completa el formulario para que un administrador revise tu perfil.',
+                        style: TextStyle(color: appColors.textLow, fontSize: 16),
+                      ),
+                      const SizedBox(height: 48),
+                      _buildTextField(context, 'Nombre Completo', 'Ej: Mario Valtierra', _nombreController, false),
+                      const SizedBox(height: 20),
+                      _buildTextField(context, 'Email Corporativo', 'usuario@dominio.com', _emailController, false),
+                      const SizedBox(height: 20),
+                      _buildTextField(context, 'Contraseña', 'Crea una contraseña segura', _passController, true),
+                      const SizedBox(height: 48),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _register,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.secondary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 8,
+                            shadowColor: theme.colorScheme.secondary.withValues(alpha: 0.4),
+                          ),
+                          child: _isLoading 
+                              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+                              : const Text('ENVIAR SOLICITUD', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Center(
+                        child: TextButton(
+                          onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+                          child: RichText(
+                            text: TextSpan(
+                              text: '¿Ya tienes una cuenta? ',
+                              style: TextStyle(color: appColors.textLow),
+                              children: [
+                                TextSpan(
+                                  text: 'Inicia sesión',
+                                  style: TextStyle(color: theme.colorScheme.secondary, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  Widget _buildTextField(BuildContext context, String label, String hint, TextEditingController controller, bool isPassword) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        TextField(
+          controller: controller,
+          obscureText: isPassword,
+          style: TextStyle(color: theme.colorScheme.onSurface),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
+            filled: true,
+            fillColor: appColors.card,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.all(20),
+            prefixIcon: Icon(
+              isPassword ? Icons.lock_reset : (label.contains('Nombre') ? Icons.person_outline : Icons.alternate_email),
+              color: theme.colorScheme.secondary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CirclePatternPainter extends CustomPainter {
+  final Color color;
+  _CirclePatternPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 10; i++) {
+       canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.2), 50.0 * i, paint);
+       canvas.drawCircle(Offset(size.width * 0.1, size.height * 0.8), 30.0 * i, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

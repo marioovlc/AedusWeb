@@ -397,7 +397,7 @@ class AppProvider with ChangeNotifier {
     return await _ai.getTicketSuggestion(title, description);
   }
 
-  Future<void> requestUser(String nombre, String email, String password, String motivo) async {
+  Future<bool> requestUser(String nombre, String email, String password) async {
     // Vercel backend will handle the bcrypt hashing securely.
     await _db.query(
       "",
@@ -408,6 +408,7 @@ class AppProvider with ChangeNotifier {
         'pass': password,
       },
     );
+    return true;
   }
 
   Future<void> approveUser(String id) async {

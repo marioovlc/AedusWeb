@@ -1,25 +1,26 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/providers/app_provider.dart';
+import '../../data/models/incident_model.dart';
+import '../../data/models/aula_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
+import '../../core/services/storage_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/providers/app_provider.dart';
-import '../../../data/models/incident_model.dart';
-import '../../../data/models/aula_model.dart';
-import '../../../core/services/storage_service.dart';
-import '../../widgets/incident_detail_dialog.dart';
-import '../../widgets/loading_shimmer.dart';
+import '../widgets/incident_detail_dialog.dart';
+import '../../core/utils/responsive_utils.dart';
+import '../widgets/loading_shimmer.dart';
 
-class IncidenciasDesktop extends StatefulWidget {
-  const IncidenciasDesktop({super.key});
+class IncidenciasPage extends StatefulWidget {
+  const IncidenciasPage({super.key});
 
   @override
-  State<IncidenciasDesktop> createState() => _IncidenciasDesktopState();
+  State<IncidenciasPage> createState() => _IncidenciasPageState();
 }
 
-class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
+class _IncidenciasPageState extends State<IncidenciasPage> {
   final _tituloController = TextEditingController();
   final _descController = TextEditingController();
   Aula? _selectedAula;
@@ -50,8 +51,9 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
       uploadedUrl = await StorageService().uploadFile(_imageBytes!, _imageName ?? 'incident_img.png');
     }
 
-    final aulaId = _selectedAula?.id ?? 1;
+    final aulaId = _selectedAula?.id ?? 1; // Default to 1 if not selected (should not happen)
     
+    // Improved category mapping
     final Map<String, int> categoryIds = {
       'Hardware': 1,
       'Software': 2,
@@ -80,7 +82,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Incidencias reportada con éxito.')),
+        const SnackBar(content: Text('Incidencia reportada con éxito.')),
       );
     }
   }
@@ -99,25 +101,39 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
     final incidencias = provider.incidencias;
+    final isMobile = ResponsiveLayout.isMobile(context);
 
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(context),
           const SizedBox(height: 32),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Left Panel: Form
-                Expanded(flex: 2, child: _buildCreationForm(context)),
-                const SizedBox(width: 32),
-                // Right Panel: My Tickets
-                Expanded(flex: 3, child: _buildTicketList(context, incidencias)),
-              ],
-            ),
+            child: isMobile 
+              ? SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildCreationForm(context),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        height: 500, 
+                        child: _buildTicketList(context, incidencias)
+                      ),
+                    ],
+                  ),
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left Panel: Form
+                    Expanded(flex: 2, child: _buildCreationForm(context)),
+                    const SizedBox(width: 32),
+                    // Right Panel: My Tickets
+                    Expanded(flex: 3, child: _buildTicketList(context, incidencias)),
+                  ],
+                ),
           ),
         ],
       ),
@@ -136,7 +152,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Reporta problemas técnicos y realiza el seguimiento en tiempo real (Desktop).',
+          'Reporta problemas técnicos y realiza el seguimiento en tiempo real.',
           style: TextStyle(color: appColors.textLow, fontSize: 16),
         ),
       ],
@@ -144,6 +160,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
   }
 
   Widget _buildCreationForm(BuildContext context) {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +170,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Nueva Incidencia', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('Nueva Incidencia', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                 const SizedBox(height: 24),
                 _buildTextField(context, 'Título de la incidencia', 'Ej: Proyector no enciende', _tituloController),
                 const SizedBox(height: 16),
@@ -181,13 +198,16 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
                       icon: const Icon(Icons.attach_file),
                       label: Text(_imageBytes == null ? 'ADJUNTAR IMAGEN' : 'CAMBIAR IMAGEN'),
                       style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.primary,
+                        side: BorderSide(color: theme.colorScheme.primary),
+                        padding: const EdgeInsets.all(16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                     const Spacer(),
                     Container(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary]),
+                        gradient: LinearGradient(colors: [theme.colorScheme.primary, theme.colorScheme.secondary]),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ElevatedButton.icon(
@@ -220,7 +240,8 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
                   child: ElevatedButton(
                     onPressed: _isCreating ? null : _submitIncident,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
                     ),
                     child: _isCreating 
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
@@ -236,7 +257,8 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
   }
 
   Widget _buildFormCard(BuildContext context, {required Widget child}) {
-    final appColors = Theme.of(context).extension<AppColors>()!;
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -258,8 +280,10 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
         TextField(
           controller: controller,
           maxLines: maxLines,
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: hint,
+            hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
           ),
         ),
       ],
@@ -267,11 +291,15 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
   }
 
   Widget _buildAulaDropdown(BuildContext context, List<Aula> options, Aula? selected, ValueChanged<Aula?> onChanged) {
-    final appColors = Theme.of(context).extension<AppColors>()!;
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     
+    // Ensure selected is part of options or null
     if (selected != null && !options.any((a) => a.id == selected!.id)) {
       selected = null;
     }
+    
+    // Default to first if null and options exist
     if (selected == null && options.isNotEmpty) {
       selected = options.first;
     }
@@ -293,8 +321,8 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
               isExpanded: true,
               value: selected,
               dropdownColor: appColors.surface,
-              hint: const Text('Seleccionar Aula'),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              hint: Text('Seleccionar Aula', style: TextStyle(color: appColors.textLow)),
+              style: TextStyle(color: theme.colorScheme.onSurface),
               items: options.map((e) => DropdownMenuItem(value: e, child: Text(e.nombre))).toList(),
               onChanged: onChanged,
             ),
@@ -305,7 +333,8 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
   }
 
   Widget _buildCategoryDropdown(BuildContext context, List<String> options, String selected, ValueChanged<String?> onChanged) {
-    final appColors = Theme.of(context).extension<AppColors>()!;
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -323,7 +352,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
               isExpanded: true,
               value: selected,
               dropdownColor: appColors.surface,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              style: TextStyle(color: theme.colorScheme.onSurface),
               items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
               onChanged: onChanged,
             ),
@@ -349,7 +378,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(fontSize: 13),
+              style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 13),
             ),
           ),
         ],
@@ -366,7 +395,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Tickets Recientes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Tickets Recientes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
             IconButton(
               icon: Icon(Icons.refresh, color: theme.colorScheme.primary),
               onPressed: () => context.read<AppProvider>().refreshData(),
@@ -442,7 +471,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
                     children: [
                       Text(
                         incident.titulo,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.onSurface),
                       ),
                       _buildStatusBadge(context, incident.estadoNombre, statusColor),
                     ],
