@@ -33,7 +33,7 @@ class Incidencia {
       categoriaId: map['categoria_id'] as int? ?? 0,
       estadoId: map['estado_id'] as int? ?? 5,
       estadoNombre: map['estado_nombre'] as String? ?? (map['estado_id'] == 1 ? 'LEIDO' : 'NO LEIDO'),
-      imagenUrl: map['imagen_url'] as String?,
+      imagenUrl: map['imagen_url'] as String? ?? map['imagen_ruta'] as String?,
       fecha: map['fecha'] != null ? DateTime.parse(map['fecha'].toString()) : DateTime.now(),
     );
   }

@@ -6,6 +6,9 @@ class Usuario {
   final String status;
   final int aeduCoins;
   final String? avatarUrl;
+  final String? telefono;
+  final String? bio;
+  final DateTime? lastSeen;
 
   Usuario({
     required this.id,
@@ -15,6 +18,9 @@ class Usuario {
     required this.status,
     required this.aeduCoins,
     this.avatarUrl,
+    this.telefono,
+    this.bio,
+    this.lastSeen,
   });
 
   factory Usuario.fromMap(Map<String, dynamic> map) {
@@ -26,6 +32,9 @@ class Usuario {
       status: map['status']?.toString() ?? ((map['banned'] == true) ? 'BANEADO' : (map['emailVerified'] == false ? 'INACTIVO' : 'ACTIVO')),
       aeduCoins: map['aeducoins'] as int? ?? map['aedu_coins'] as int? ?? 0,
       avatarUrl: map['avatar_url'] as String?,
+      telefono: map['telefono'] as String?,
+      bio: map['bio'] as String?,
+      lastSeen: map['last_seen'] != null ? DateTime.parse(map['last_seen'].toString()) : null,
     );
   }
 
@@ -38,6 +47,9 @@ class Usuario {
       'status': status,
       'aeducoins': aeduCoins,
       'avatar_url': avatarUrl,
+      'telefono': telefono,
+      'bio': bio,
+      'last_seen': lastSeen?.toIso8601String(),
     };
   }
 }

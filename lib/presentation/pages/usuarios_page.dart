@@ -97,6 +97,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
                 DataColumn(label: Text('ROL', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
                 DataColumn(label: Text('ESTADO', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
                 DataColumn(label: Text('COINS', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
+                DataColumn(label: Text('VISTO', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
                 DataColumn(label: Text('ACCIONES', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface))),
               ],
               rows: users.map((u) => _buildUserRow(context, u)).toList(),
@@ -129,6 +130,9 @@ class _UsuariosPageState extends State<UsuariosPage> {
         DataCell(_buildRoleBadge(context, user.rol)),
         DataCell(_buildStatusBadge(context, user.status)),
         DataCell(Text('🪙 ${user.aeduCoins}', style: TextStyle(color: theme.colorScheme.onSurface))),
+        DataCell(Text(user.lastSeen != null 
+          ? '${user.lastSeen!.day}/${user.lastSeen!.month} ${user.lastSeen!.hour}:${user.lastSeen!.minute.toString().padLeft(2, '0')}' 
+          : 'Nunca', style: TextStyle(color: appColors.textLow, fontSize: 13))),
         DataCell(
           user.status == 'INACTIVO' 
           ? Row(

@@ -54,14 +54,78 @@ const ACTION_MAP = {
       END IF;
     END $$;
 
-    -- Ensure avatar_url exists in the users table
+    -- Ensure avatar_url and profile columns exist in the users table
     ALTER TABLE neon_auth.user ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+    ALTER TABLE neon_auth.user ADD COLUMN IF NOT EXISTS telefono VARCHAR(20);
+    ALTER TABLE neon_auth.user ADD COLUMN IF NOT EXISTS bio TEXT;
+    ALTER TABLE neon_auth.user ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP;
+
+    -- FIX 1: Unify imagen column (imagen_ruta → imagen_url)
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'incidencias' AND column_name = 'imagen_ruta'
+                 AND table_schema IN ('gestion_incidencias', 'public')) THEN
+        -- Add imagen_url if missing
+        BEGIN
+          ALTER TABLE gestion_incidencias.incidencias ADD COLUMN IF NOT EXISTS imagen_url VARCHAR(500);
+        EXCEPTION WHEN undefined_table THEN
+          NULL;
+        END;
+        -- Copy data from imagen_ruta to imagen_url where null
+        BEGIN
+          UPDATE gestion_incidencias.incidencias SET imagen_url = imagen_ruta WHERE imagen_url IS NULL AND imagen_ruta IS NOT NULL;
+        EXCEPTION WHEN undefined_column THEN
+          NULL;
+        END;
+      ELSE
+        BEGIN
+          ALTER TABLE gestion_incidencias.incidencias ADD COLUMN IF NOT EXISTS imagen_url VARCHAR(500);
+          ALTER TABLE gestion_incidencias.incidencias ADD COLUMN IF NOT EXISTS imagen_ruta VARCHAR(500);
+        EXCEPTION WHEN undefined_table THEN
+          NULL;
+        END;
+      END IF;
+    END $$;
+
+    -- FIX 3: Create transacciones_aeducoins table
+    CREATE TABLE IF NOT EXISTS transacciones_aeducoins (
+      id SERIAL PRIMARY KEY,
+      usuario_id UUID,
+      cantidad INT NOT NULL,
+      motivo TEXT,
+      fecha TIMESTAMP DEFAULT NOW()
+    );
+
+    -- FIX 5: Ensure achievement tables exist
+    CREATE TABLE IF NOT EXISTS neon_auth.achievement (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      title VARCHAR(255) NOT NULL,
+      description TEXT,
+      reward INTEGER DEFAULT 0,
+      icon_path VARCHAR(255)
+    );
+    CREATE TABLE IF NOT EXISTS neon_auth.user_achievement (
+      user_id UUID REFERENCES neon_auth.user(id) ON DELETE CASCADE,
+      achievement_id UUID REFERENCES neon_auth.achievement(id) ON DELETE CASCADE,
+      unlocked_at TIMESTAMP DEFAULT NOW(),
+      PRIMARY KEY (user_id, achievement_id)
+    );
+    -- Insert default achievements if empty
+    INSERT INTO neon_auth.achievement (title, description, reward)
+    SELECT 'Primer Paso', 'Has creado tu primera incidencia.', 50
+    WHERE NOT EXISTS (SELECT 1 FROM neon_auth.achievement WHERE title = 'Primer Paso');
+    INSERT INTO neon_auth.achievement (title, description, reward)
+    SELECT 'Solucionador', 'Has cerrado 5 incidencias.', 200
+    WHERE NOT EXISTS (SELECT 1 FROM neon_auth.achievement WHERE title = 'Solucionador');
+    INSERT INTO neon_auth.achievement (title, description, reward)
+    SELECT 'Colaborador', 'Has escrito tu primer comentario o mensaje.', 30
+    WHERE NOT EXISTS (SELECT 1 FROM neon_auth.achievement WHERE title = 'Colaborador');
   `,
   // Se excluye la contraseña para no fugar datos sensibles
-  get_users: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins, avatar_url FROM neon_auth.user ORDER BY name ASC`,
+  get_users: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins, COALESCE(avatar_url, foto_perfil) as avatar_url, telefono, bio, last_seen FROM neon_auth.user ORDER BY name ASC`,
   get_incidencias: `SELECT i.*, e.nombre as estado_nombre FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id ORDER BY i.fecha DESC`,
   get_kpis: `SELECT e.nombre as estado, count(*) as count FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id GROUP BY e.nombre`,
-  get_contactos: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins, avatar_url FROM neon_auth.user WHERE id != @id`,
+  get_contactos: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins, COALESCE(avatar_url, foto_perfil) as avatar_url, telefono, bio, last_seen FROM neon_auth.user WHERE id != @id`,
   get_aulas: `SELECT * FROM gestion_incidencias.aulas ORDER BY nombre ASC`,
   get_mensajes: `SELECT m.*, u.name as sender_name, u.avatar_url as sender_avatar 
                   FROM gestion_incidencias.mensajes m 
@@ -69,10 +133,10 @@ const ACTION_MAP = {
                   WHERE (m.usuario_id = @me AND m.receptor_id = @other) 
                      OR (m.usuario_id = @other AND m.receptor_id = @me) 
                   ORDER BY m.fecha ASC`,
-  create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img) RETURNING *`,
+  create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url, imagen_ruta) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img, @img) RETURNING *`,
   send_message: `INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, ticket_link_id, fecha, leido) 
                   VALUES (@me, @other, @txt, @img, @aud, @ticket_link_id, NOW(), false) RETURNING *`,
-  request_user: `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", aeducoins) VALUES (@nom, @em, @pass, 'USER', false, 0) RETURNING *`,
+  request_user: `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", banned, aeducoins) VALUES (@nom, @em, @pass, 'USER', false, true, 0) RETURNING *`,
   approve_user: `UPDATE neon_auth.user SET "emailVerified" = true WHERE id = @id RETURNING *`,
   reject_user: `DELETE FROM neon_auth.user WHERE id = @id RETURNING *`,
   update_user_role: `UPDATE neon_auth.user SET role = @rol WHERE id = @id RETURNING *`,
@@ -80,12 +144,37 @@ const ACTION_MAP = {
   get_logs: `SELECT l.*, u.name as usuario_nombre, u.email as usuario_email FROM gestion_incidencias.logs l LEFT JOIN neon_auth.user u ON l.usuario_id::text = u.id::text ORDER BY l.fecha DESC LIMIT 50`,
   create_log: `INSERT INTO gestion_incidencias.logs (usuario_id, accion, detalles, fecha, categoria) VALUES (@uId, @acc, @det, NOW(), @cat) RETURNING *`,
   update_incidencia_estado: `UPDATE gestion_incidencias.incidencias SET estado_id = @eId WHERE id = @id RETURNING *`,
-  update_user_coins: `UPDATE neon_auth.user SET aeducoins = aeducoins + @coins WHERE id = @uId RETURNING *`,
+  update_user_coins: `INSERT INTO transacciones_aeducoins (usuario_id, cantidad, motivo, fecha) VALUES (@uId::uuid, @coins, @motivo, NOW()); UPDATE neon_auth.user SET aeducoins = aeducoins + @coins WHERE id = @uId RETURNING *`,
   get_comentarios_incidencia: `SELECT c.*, u.name as usuario_nombre, u.role as usuario_rol FROM gestion_incidencias.comentarios_incidencia c JOIN neon_auth.user u ON c.usuario_id::text = u.id::text WHERE c.incidencia_id = @iId AND (c.is_internal = false OR @rol IN ('ADMIN', 'MANTENIMIENTO')) ORDER BY c.fecha ASC`,
   add_comentario_incidencia: `INSERT INTO gestion_incidencias.comentarios_incidencia (incidencia_id, usuario_id, texto, fecha, is_internal) VALUES (@iId, @uId, @txt, NOW(), @internal) RETURNING *`,
   get_store_items: `SELECT * FROM gestion_incidencias.store_items ORDER BY price ASC`,
   create_store_item: `INSERT INTO gestion_incidencias.store_items (name, description, price, icon, color) VALUES (@nom, @des, @pri, @ico, @col) RETURNING *`,
-  update_user_profile: `UPDATE neon_auth.user SET name = @nom, email = @em, avatar_url = @img WHERE id = @id RETURNING *`
+  update_user_profile: `UPDATE neon_auth.user SET name = @nom, email = @em, avatar_url = @img, foto_perfil = @img, telefono = @tel, bio = @bio WHERE id = @id RETURNING *`,
+  update_last_seen: `UPDATE neon_auth.user SET last_seen = NOW() WHERE id = @id RETURNING *`,
+  grant_achievement: `
+    WITH ach AS (
+      SELECT id, reward, title FROM neon_auth.achievement WHERE title = @title
+    ),
+    granted AS (
+      INSERT INTO neon_auth.user_achievement (user_id, achievement_id)
+      SELECT @uId::uuid, id FROM ach
+      ON CONFLICT DO NOTHING
+      RETURNING achievement_id
+    ),
+    coins AS (
+      UPDATE neon_auth.user SET aeducoins = aeducoins + (SELECT reward FROM ach)
+      WHERE id = @uId::uuid AND EXISTS (SELECT 1 FROM granted)
+      RETURNING *
+    ),
+    trans AS (
+      INSERT INTO transacciones_aeducoins (usuario_id, cantidad, motivo, fecha)
+      SELECT @uId::uuid, reward, 'Logro: ' || title, NOW() FROM ach
+      WHERE EXISTS (SELECT 1 FROM granted)
+      RETURNING *
+    )
+    SELECT * FROM coins`,
+  get_user_achievements: `SELECT a.id, a.title, a.description, a.reward, a.icon_path, ua.unlocked_at FROM neon_auth.achievement a JOIN neon_auth.user_achievement ua ON a.id = ua.achievement_id WHERE ua.user_id = @uId::uuid ORDER BY ua.unlocked_at DESC`,
+  get_all_achievements: `SELECT a.*, (SELECT COUNT(*) FROM neon_auth.user_achievement ua WHERE ua.achievement_id = a.id AND ua.user_id = @uId::uuid) > 0 as unlocked, (SELECT ua2.unlocked_at FROM neon_auth.user_achievement ua2 WHERE ua2.achievement_id = a.id AND ua2.user_id = @uId::uuid) as unlocked_at FROM neon_auth.achievement a ORDER BY a.title`
 };
 
 export default async function handler(req, res) {

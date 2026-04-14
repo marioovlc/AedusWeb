@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
@@ -10,6 +11,7 @@ import '../../data/models/message_model.dart';
 import '../../data/models/log_model.dart';
 import '../../data/models/comentario_incidencia_model.dart';
 import '../../data/models/store_item_model.dart';
+import '../../data/models/achievement_model.dart';
 import '../services/database_service.dart';
 import '../services/ai_service.dart';
 import '../utils/file_helper.dart';
@@ -29,6 +31,7 @@ class AppProvider with ChangeNotifier {
   List<Usuario> _usuariosAdmin = [];
   List<Aula> _aulas = [];
   List<StoreItem> _storeItems = [];
+  List<Achievement> _achievements = [];
   String _currentTheme = 'Original';
   bool _isCompact = false;
   bool _isAccessibilityMode = false;
@@ -38,6 +41,7 @@ class AppProvider with ChangeNotifier {
     'DB': true,
     'API': true,
   };
+  Timer? _refreshTimer;
 
   Usuario? get currentUser => _currentUser;
   List<Incidencia> get incidencias => _incidencias;
@@ -47,6 +51,7 @@ class AppProvider with ChangeNotifier {
   List<Mensaje> get mensajes => _mensajes;
   List<LogEntry> get logs => _logs;
   List<StoreItem> get storeItems => _storeItems;
+  List<Achievement> get achievements => _achievements;
   Map<String, String> get kpis => _kpis;
   String get currentTheme => _currentTheme;
   bool get isCompact => _isCompact;
@@ -97,6 +102,8 @@ class AppProvider with ChangeNotifier {
 
     if (results.isNotEmpty) {
       _currentUser = Usuario.fromMap(results.first);
+      await updateLastSeen();
+      _startAutoRefresh();
       await refreshData();
       notifyListeners();
       return true;
@@ -109,12 +116,14 @@ class AppProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     await Future.wait([
+      updateLastSeen(),
       _fetchIncidencias(),
       _fetchKPIs(),
       _fetchContactos(),
       _fetchAulas(),
       _fetchStoreItems(),
       fetchLogs(),
+      fetchAchievements(),
     ]);
     _isLoading = false;
     notifyListeners();
@@ -220,6 +229,7 @@ class AppProvider with ChangeNotifier {
       },
     );
     await createLog('CREAR INCIDENCIA', 'El usuario reportó la incidencia: $titulo', categoria: 'USUARIO');
+    await grantAchievement('Primer Paso');
     await refreshData();
   }
 
@@ -235,8 +245,13 @@ class AppProvider with ChangeNotifier {
 
     // Gamification: Award 50 AeduCoins if finished (Estado 4 = ACABADO usually)
     if (estadoId == 4) {
-      await _db.query("", action: "update_user_coins", substitutionValues: {'uId': uId, 'coins': 50});
+      await _db.query("", action: "update_user_coins", substitutionValues: {'uId': uId, 'coins': 50, 'motivo': 'Recompensa por completar incidencia #$id'});
       await createLog('RECOMPENSA', 'Usuario $uId recibió 50 AeduCoins por completar incidencia $id', categoria: 'SISTEMA');
+      // Check for Solucionador achievement (5+ finished incidents)
+      final finished = _incidencias.where((i) => i.usuarioId == uId && (i.estadoNombre == 'ACABADO' || i.estadoNombre == 'RESUELTO')).length;
+      if (finished >= 4) { // 4 + current one = 5
+        await grantAchievement('Solucionador', userId: uId);
+      }
     }
 
     await createLog('ACTUALIZAR INCIDENCIA', 'Estado de incidencia $id cambiado a $estadoId', categoria: 'SISTEMA');
@@ -280,6 +295,28 @@ class AppProvider with ChangeNotifier {
       _storeItems = results.map((m) => StoreItem.fromMap(m)).toList();
     } catch(e) {
       debugPrint('Error fetching store items: $e');
+    }
+  }
+
+  Future<void> fetchAchievements() async {
+    if (_currentUser == null) return;
+    try {
+      final results = await _db.query("", action: "get_all_achievements", substitutionValues: {'uId': _currentUser!.id});
+      _achievements = results.map((m) => Achievement.fromMap(m)).toList();
+    } catch(e) {
+      debugPrint('Error fetching achievements: $e');
+    }
+  }
+
+  Future<void> grantAchievement(String title, {String? userId}) async {
+    if (_currentUser == null) return;
+    try {
+      await _db.query("", action: "grant_achievement", substitutionValues: {
+        'title': title,
+        'uId': userId ?? _currentUser!.id,
+      });
+    } catch(e) {
+      debugPrint('Error granting achievement: $e');
     }
   }
 
@@ -329,6 +366,9 @@ class AppProvider with ChangeNotifier {
           'ticket_link_id': ticketLinkId,
         },
       );
+      
+      // Grant Colaborador achievement on first message
+      await grantAchievement('Colaborador');
       
       // Update local list from DB to get the correct ID/state
       await fetchMessages(receiverId);
@@ -462,7 +502,7 @@ class AppProvider with ChangeNotifier {
     return counts;
   }
 
-  Future<void> updateUserProfile({required String name, required String email, String? avatarUrl}) async {
+  Future<void> updateUserProfile({required String name, required String email, String? avatarUrl, String? telefono, String? bio}) async {
     if (_currentUser == null) return;
     
     final results = await _db.query(
@@ -472,7 +512,9 @@ class AppProvider with ChangeNotifier {
         'id': _currentUser!.id,
         'nom': name,
         'em': email,
-        'img': avatarUrl ?? _currentUser!.avatarUrl
+        'img': avatarUrl ?? _currentUser!.avatarUrl,
+        'tel': telefono ?? _currentUser!.telefono,
+        'bio': bio ?? _currentUser!.bio,
       }
     );
 
@@ -480,6 +522,31 @@ class AppProvider with ChangeNotifier {
       _currentUser = Usuario.fromMap(results.first);
       await createLog('ACTUALIZAR PERFIL', 'Información de perfil actualizada', categoria: 'USUARIO');
       notifyListeners();
+    }
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (_currentUser != null) {
+        refreshData();
+      } else {
+        _stopAutoRefresh();
+      }
+    });
+  }
+
+  void _stopAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+  }
+
+  Future<void> updateLastSeen() async {
+    if (_currentUser == null) return;
+    try {
+      await _db.query("", action: "update_last_seen", substitutionValues: {'id': _currentUser!.id});
+    } catch (e) {
+      debugPrint('Error updating last seen: $e');
     }
   }
 
@@ -565,7 +632,7 @@ class AppProvider with ChangeNotifier {
     if (_currentUser == null || _currentUser!.aeduCoins < cost) return false;
     
     try {
-      await _db.query("", action: "update_user_coins", substitutionValues: {'uId': _currentUser!.id, 'coins': -cost});
+      await _db.query("", action: "update_user_coins", substitutionValues: {'uId': _currentUser!.id, 'coins': -cost, 'motivo': 'Compra: $itemName'});
       await createLog('COMPRA', 'Compra de item: $itemName por $cost coins', categoria: 'USUARIO');
       await refreshData();
       return true;
@@ -600,6 +667,7 @@ class AppProvider with ChangeNotifier {
     _incidencias = [];
     _contactos = [];
     _mensajes = [];
+    _stopAutoRefresh();
     notifyListeners();
   }
 }
