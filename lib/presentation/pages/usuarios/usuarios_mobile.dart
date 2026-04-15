@@ -136,12 +136,14 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
                   Row(
                     children: [
                       IconButton(
+                        tooltip: 'Aprobar usuario',
                         icon: Icon(Icons.check_circle_outline, color: appColors.success, size: 24), 
-                        onPressed: () => context.read<AppProvider>().approveUser(user.id)
+                        onPressed: () => _confirmApprove(context, user)
                       ),
                       IconButton(
+                        tooltip: 'Rechazar usuario',
                         icon: Icon(Icons.cancel_outlined, color: appColors.danger, size: 24), 
-                        onPressed: () => context.read<AppProvider>().rejectUser(user.id)
+                        onPressed: () => _confirmReject(context, user)
                       ),
                     ],
                   )
@@ -149,10 +151,12 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
                   Row(
                     children: [
                       IconButton(
+                        tooltip: 'Editar estado',
                         icon: const Icon(Icons.edit_outlined, size: 20), 
                         onPressed: () => _showStatusEditDialog(context, user)
                       ),
                       IconButton(
+                        tooltip: 'Cambiar rol',
                         icon: const Icon(Icons.shield_outlined, size: 20), 
                         onPressed: () => _showRoleEditDialog(context, user)
                       ),
@@ -164,6 +168,54 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmApprove(BuildContext context, Usuario user) async {
+    final appColors = Theme.of(context).extension<AppColors>()!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Aprobar usuario', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('¿Dar acceso al sistema a ${user.nombre}?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: appColors.success, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Aprobar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      context.read<AppProvider>().approveUser(user.id);
+    }
+  }
+
+  Future<void> _confirmReject(BuildContext context, Usuario user) async {
+    final appColors = Theme.of(context).extension<AppColors>()!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Rechazar solicitud', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('¿Rechazar y eliminar la solicitud de ${user.nombre}? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: appColors.danger, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Rechazar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      context.read<AppProvider>().rejectUser(user.id);
+    }
   }
 
   void _showRoleEditDialog(BuildContext context, Usuario user) {

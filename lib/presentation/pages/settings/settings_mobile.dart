@@ -99,32 +99,59 @@ class SettingsMobile extends StatelessWidget {
   void _showEditProfileDialog(BuildContext context, dynamic user) {
     final nameController = TextEditingController(text: user.nombre);
     final emailController = TextEditingController(text: user.email);
+    final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Editar Perfil'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Nombre')),
-            const SizedBox(height: 16),
-            TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email')),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (ctx, _) => AlertDialog(
+          title: const Text('Editar Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nombre'),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'El nombre no puede estar vacío';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'El email no puede estar vacío';
+                    final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                    if (!regex.hasMatch(v.trim())) return 'Introduce un email válido';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('CANCELAR'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                await context.read<AppProvider>().updateUserProfile(
+                  name: nameController.text.trim(),
+                  email: emailController.text.trim(),
+                );
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+              },
+              child: const Text('GUARDAR'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCELAR')),
-          ElevatedButton(
-            onPressed: () async {
-              await context.read<AppProvider>().updateUserProfile(
-                name: nameController.text,
-                email: emailController.text,
-              );
-              if (context.mounted) Navigator.pop(context);
-            },
-            child: const Text('GUARDAR'),
-          ),
-        ],
       ),
     );
   }

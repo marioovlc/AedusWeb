@@ -180,6 +180,12 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
 
   Widget _buildLineChartCard(BuildContext context) {
     final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    final spots = context.read<AppProvider>().getWorkloadLast7Days().asMap().entries
+        .map((e) => FlSpot(e.key.toDouble(), (e.value['creadas'] as double)))
+        .toList();
+    final hasData = spots.any((s) => s.y > 0);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -190,24 +196,24 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
             const SizedBox(height: 24),
             SizedBox(
               height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: const FlTitlesData(show: false),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: context.read<AppProvider>().getWorkloadLast7Days().asMap().entries.map((e) {
-                         return FlSpot(e.key.toDouble(), e.value['creadas']);
-                      }).toList(),
-                      isCurved: true,
-                      color: theme.colorScheme.primary,
-                      barWidth: 3,
-                      belowBarData: BarAreaData(show: true, color: theme.colorScheme.primary.withValues(alpha: 0.1)),
-                    ),
-                  ],
-                ),
-              ),
+              child: hasData
+                  ? LineChart(
+                      LineChartData(
+                        gridData: const FlGridData(show: false),
+                        titlesData: const FlTitlesData(show: false),
+                        borderData: FlBorderData(show: false),
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: spots,
+                            isCurved: true,
+                            color: theme.colorScheme.primary,
+                            barWidth: 3,
+                            belowBarData: BarAreaData(show: true, color: theme.colorScheme.primary.withValues(alpha: 0.1)),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _buildEmptyChart(appColors, 'Sin actividad en los últimos 7 días'),
             ),
           ],
         ),
@@ -217,6 +223,9 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
 
   Widget _buildBarChartCard(BuildContext context) {
     final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    final categories = context.read<AppProvider>().getIncidenciasPorCategoria();
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -227,19 +236,34 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
             const SizedBox(height: 24),
             SizedBox(
               height: 200,
-              child: BarChart(
-                BarChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: const FlTitlesData(show: false),
-                  borderData: FlBorderData(show: false),
-                  barGroups: context.read<AppProvider>().getIncidenciasPorCategoria().entries.toList().asMap().entries.map((e) {
-                    return BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: e.value.value.toDouble(), color: theme.colorScheme.primary)]);
-                  }).toList(),
-                ),
-              ),
+              child: categories.isEmpty
+                  ? _buildEmptyChart(appColors, 'Sin incidencias categorizadas')
+                  : BarChart(
+                      BarChartData(
+                        gridData: const FlGridData(show: false),
+                        titlesData: const FlTitlesData(show: false),
+                        borderData: FlBorderData(show: false),
+                        barGroups: categories.entries.toList().asMap().entries.map((e) {
+                          return BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: e.value.value.toDouble(), color: theme.colorScheme.primary)]);
+                        }).toList(),
+                      ),
+                    ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyChart(AppColors appColors, String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.bar_chart_outlined, size: 40, color: appColors.textLow.withValues(alpha: 0.3)),
+          const SizedBox(height: 10),
+          Text(message, style: TextStyle(color: appColors.textLow, fontSize: 12), textAlign: TextAlign.center),
+        ],
       ),
     );
   }

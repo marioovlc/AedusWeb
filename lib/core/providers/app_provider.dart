@@ -113,8 +113,12 @@ class AppProvider with ChangeNotifier {
 
   Future<void> refreshData() async {
     if (_currentUser == null) return;
-    _isLoading = true;
-    notifyListeners();
+    // Solo mostrar shimmer en la primera carga (cuando no hay datos aún)
+    final bool isFirstLoad = _incidencias.isEmpty;
+    if (isFirstLoad) {
+      _isLoading = true;
+      notifyListeners();
+    }
     await Future.wait([
       updateLastSeen(),
       _fetchIncidencias(),
@@ -179,7 +183,7 @@ class AppProvider with ChangeNotifier {
       status: 'ACTIVO',
       aeduCoins: 9999,
     ));
-    notifyListeners();
+    // No notifyListeners aquí — refreshData() ya notifica al terminar todo
   }
 
   Future<void> _fetchAulas() async {
@@ -434,7 +438,9 @@ class AppProvider with ChangeNotifier {
   Future<void> fetchLogs() async {
     final results = await _db.query("", action: "get_logs");
     _logs = results.map((m) => LogEntry.fromMap(m)).toList();
-    notifyListeners();
+    // No notifyListeners aquí — refreshData() ya notifica al terminar todo
+    // Si se llama de forma independiente, notificamos
+    if (_isLoading == false) notifyListeners();
   }
 
   Future<void> createLog(String accion, String detalles, {String categoria = 'USUARIO'}) async {

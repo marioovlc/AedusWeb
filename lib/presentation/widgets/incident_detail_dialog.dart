@@ -34,6 +34,14 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
       _fetchAISuggestion();
     }
     _fetchComentarios();
+    // Listener para actualizar el contador de caracteres
+    _commentController.addListener(() { if (mounted) setState(() {}); });
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchAISuggestion() async {
@@ -285,6 +293,8 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                 child: TextField(
                   controller: _commentController,
                   style: const TextStyle(fontSize: 14),
+                  maxLength: 500,
+                  buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
                   decoration: InputDecoration(
                     hintText: _isInternal ? 'Nota interna...' : 'Escribe algo...',
                     border: InputBorder.none,
@@ -296,7 +306,17 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                   onSubmitted: (_) => _enviarComentario(),
                 ),
               ),
-              const SizedBox(width: 8),
+              if (_commentController.text.isNotEmpty) ...[
+                const SizedBox(width: 4),
+                Text(
+                  '${_commentController.text.length}/500',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _commentController.text.length > 450 ? appColors.danger : appColors.textLow,
+                  ),
+                ),
+              ],
+              const SizedBox(width: 4),
               IconButton(
                 icon: Icon(Icons.send_rounded, color: _isInternal ? appColors.gold : theme.colorScheme.primary, size: 20),
                 onPressed: _enviarComentario,
@@ -411,13 +431,36 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
   Widget _buildActionButton(BuildContext context, String label, Color color, int statusId) {
     return OutlinedButton(
       onPressed: () async {
-        final navigator = Navigator.of(context);
-        await context.read<AppProvider>().updateIncidenciaEstado(
-          widget.incidencia.id, 
-          statusId, 
-          widget.incidencia.usuarioId
+        final appColors = Theme.of(context).extension<AppColors>()!;
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: appColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('Confirmar cambio', style: TextStyle(fontWeight: FontWeight.bold)),
+            content: Text('¿Cambiar el estado de la incidencia a "$label"?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(label),
+              ),
+            ],
+          ),
         );
-        navigator.pop();
+        if (confirmed == true && context.mounted) {
+          final navigator = Navigator.of(context);
+          await context.read<AppProvider>().updateIncidenciaEstado(
+            widget.incidencia.id,
+            statusId,
+            widget.incidencia.usuarioId,
+          );
+          navigator.pop();
+        }
       },
       style: OutlinedButton.styleFrom(
         foregroundColor: color,

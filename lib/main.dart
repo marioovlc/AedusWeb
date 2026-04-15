@@ -58,8 +58,19 @@ class AedusApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppProvider>(
-      builder: (context, provider, child) {
+    // Selector en lugar de Consumer: MaterialApp solo se reconstruye cuando
+    // cambian el tema, accesibilidad, estado de sesión, o rol de admin.
+    // Los refreshes de datos (incidencias, KPIs, logs...) NO vuelven a construir
+    // el MaterialApp completo.
+    return Selector<AppProvider, (String, bool, bool, bool)>(
+      selector: (_, p) => (
+        p.currentTheme,
+        p.isAccessibilityMode,
+        p.currentUser != null,
+        p.currentUser?.isAdmin ?? false,
+      ),
+      builder: (context, _, child) {
+        final provider = Provider.of<AppProvider>(context, listen: false);
         return MaterialApp(
           title: 'Aedus App',
           debugShowCheckedModeBanner: false,
@@ -68,9 +79,11 @@ class AedusApp extends StatelessWidget {
           initialRoute: '/login',
           onGenerateRoute: (settings) {
             final routeName = settings.name ?? '/login';
+            // Leer el estado actual al navegar (no depende del ciclo de build)
+            final p = Provider.of<AppProvider>(context, listen: false);
 
             // Auth guard: redirect to login if not authenticated
-            if (_protectedRoutes.contains(routeName) && provider.currentUser == null) {
+            if (_protectedRoutes.contains(routeName) && p.currentUser == null) {
               return MaterialPageRoute(
                 settings: const RouteSettings(name: '/login'),
                 builder: (context) => const LoginPage(),
@@ -78,7 +91,7 @@ class AedusApp extends StatelessWidget {
             }
 
             // Role guard: redirect non-admins away from admin routes
-            if (_adminRoutes.contains(routeName) && provider.currentUser?.isAdmin != true) {
+            if (_adminRoutes.contains(routeName) && p.currentUser?.isAdmin != true) {
               return PageRouteBuilder(
                 settings: const RouteSettings(name: '/dashboard'),
                 pageBuilder: (context, animation, secondaryAnimation) => MainLayout(
@@ -120,11 +133,9 @@ class AedusApp extends StatelessWidget {
                 page = const SettingsPage();
                 break;
               default:
-                // Unknown route: redirect to login if not authenticated, dashboard if yes
-                page = provider.currentUser == null ? const LoginPage() : const DashboardPage();
+                page = p.currentUser == null ? const LoginPage() : const DashboardPage();
             }
 
-            // Public pages (login/register) — no layout wrapper
             if (routeName == '/login' || routeName == '/register') {
               return MaterialPageRoute(
                 settings: settings,
@@ -132,7 +143,6 @@ class AedusApp extends StatelessWidget {
               );
             }
 
-            // Protected pages — wrapped in MainLayout with fade transition
             return PageRouteBuilder(
               settings: settings,
               pageBuilder: (context, animation, secondaryAnimation) => MainLayout(
