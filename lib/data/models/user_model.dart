@@ -52,4 +52,10 @@ class Usuario {
       'last_seen': lastSeen?.toIso8601String(),
     };
   }
+
+  /// True for ADMIN, ADMINISTRADOR, and MANTENIMIENTO roles.
+  bool get isAdmin {
+    final r = rol.trim().toUpperCase();
+    return r == 'ADMIN' || r == 'ADMINISTRADOR' || r == 'MANTENIMIENTO';
+  }
 }

@@ -188,7 +188,7 @@ class _MainLayoutState extends State<MainLayout> {
                   _buildNavItem(context, 'Connect Hub', FontAwesomeIcons.comments, '/connect', isCompact: isCompact),
                   _buildNavItem(context, 'Tienda', FontAwesomeIcons.shop, '/shop', isCompact: isCompact),
                   
-                  if (provider.currentUser?.rol == 'Administrador' || provider.currentUser?.rol.toUpperCase() == 'ADMIN') ...[
+                  if (provider.currentUser?.isAdmin == true) ...[
                     const SizedBox(height: 24),
                     if (!isCompact) _buildSectionTitle(context, 'ADMINISTRACIÓN'),
                     _buildNavItem(context, 'Usuarios', FontAwesomeIcons.users, '/users', isCompact: isCompact),

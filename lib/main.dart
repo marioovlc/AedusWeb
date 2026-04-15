@@ -47,6 +47,12 @@ const _protectedRoutes = {
   '/settings',
 };
 
+// Routes that require admin or mantenimiento role
+const _adminRoutes = {
+  '/users',
+  '/monitoring',
+};
+
 class AedusApp extends StatelessWidget {
   const AedusApp({super.key});
 
@@ -68,6 +74,19 @@ class AedusApp extends StatelessWidget {
               return MaterialPageRoute(
                 settings: const RouteSettings(name: '/login'),
                 builder: (context) => const LoginPage(),
+              );
+            }
+
+            // Role guard: redirect non-admins away from admin routes
+            if (_adminRoutes.contains(routeName) && provider.currentUser?.isAdmin != true) {
+              return PageRouteBuilder(
+                settings: const RouteSettings(name: '/dashboard'),
+                pageBuilder: (context, animation, secondaryAnimation) => MainLayout(
+                  currentRoute: '/dashboard',
+                  child: const DashboardPage(),
+                ),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
               );
             }
 
