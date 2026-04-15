@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/app_provider.dart';
@@ -16,6 +17,10 @@ import 'presentation/pages/settings_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Use clean URLs (/dashboard) instead of hash URLs (/#/dashboard)
+  usePathUrlStrategy();
+
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
@@ -31,6 +36,17 @@ void main() async {
   );
 }
 
+// Routes that require the user to be authenticated
+const _protectedRoutes = {
+  '/dashboard',
+  '/incidencias',
+  '/connect',
+  '/users',
+  '/monitoring',
+  '/shop',
+  '/settings',
+};
+
 class AedusApp extends StatelessWidget {
   const AedusApp({super.key});
 
@@ -43,10 +59,20 @@ class AedusApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           themeMode: ThemeMode.dark,
           darkTheme: AppTheme.getTheme(provider.currentTheme, isAccessibilityMode: provider.isAccessibilityMode),
-          initialRoute: '/login', // Start with Login
+          initialRoute: '/login',
           onGenerateRoute: (settings) {
+            final routeName = settings.name ?? '/login';
+
+            // Auth guard: redirect to login if not authenticated
+            if (_protectedRoutes.contains(routeName) && provider.currentUser == null) {
+              return MaterialPageRoute(
+                settings: const RouteSettings(name: '/login'),
+                builder: (context) => const LoginPage(),
+              );
+            }
+
             Widget page;
-            switch (settings.name) {
+            switch (routeName) {
               case '/login':
                 page = const LoginPage();
                 break;
@@ -75,18 +101,23 @@ class AedusApp extends StatelessWidget {
                 page = const SettingsPage();
                 break;
               default:
-                page = const LoginPage();
+                // Unknown route: redirect to login if not authenticated, dashboard if yes
+                page = provider.currentUser == null ? const LoginPage() : const DashboardPage();
             }
 
-            // Only wrap with MainLayout if it's not the login or register page
-            if (settings.name == '/login' || settings.name == '/register') {
-              return MaterialPageRoute(builder: (context) => page);
+            // Public pages (login/register) — no layout wrapper
+            if (routeName == '/login' || routeName == '/register') {
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) => page,
+              );
             }
 
+            // Protected pages — wrapped in MainLayout with fade transition
             return PageRouteBuilder(
               settings: settings,
               pageBuilder: (context, animation, secondaryAnimation) => MainLayout(
-                currentRoute: settings.name ?? '',
+                currentRoute: routeName,
                 child: page,
               ),
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -99,3 +130,4 @@ class AedusApp extends StatelessWidget {
     );
   }
 }
+
