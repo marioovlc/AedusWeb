@@ -79,10 +79,25 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  child: Text(user.nombre.substring(0,1).toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      child: Text(user.nombre.substring(0,1).toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                    ),
+                    Positioned(
+                      bottom: 0, right: 0,
+                      child: Container(
+                        width: 10, height: 10,
+                        decoration: BoxDecoration(
+                          color: _onlineColor(user.lastSeen, appColors),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: appColors.card, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -106,6 +121,13 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
                   children: [
                     Text('AeduCoins', style: TextStyle(color: appColors.textLow, fontSize: 11)),
                     Text('🪙 ${user.aeduCoins}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(_timeAgo(user.lastSeen), style: TextStyle(color: _onlineColor(user.lastSeen, appColors), fontSize: 11, fontWeight: FontWeight.w600)),
+                    Text('visto', style: TextStyle(color: appColors.textLow, fontSize: 10)),
                   ],
                 ),
                 if (user.status == 'INACTIVO') 
@@ -254,5 +276,22 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
       width: 10, height: 10,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
+  }
+
+  Color _onlineColor(DateTime? lastSeen, AppColors appColors) {
+    if (lastSeen == null) return appColors.textLow;
+    final diff = DateTime.now().difference(lastSeen);
+    if (diff.inMinutes < 5) return appColors.success;
+    if (diff.inMinutes < 30) return Colors.orange;
+    return appColors.textLow;
+  }
+
+  String _timeAgo(DateTime? lastSeen) {
+    if (lastSeen == null) return 'Nunca';
+    final diff = DateTime.now().difference(lastSeen);
+    if (diff.inMinutes < 1) return 'Ahora';
+    if (diff.inMinutes < 60) return 'hace ${diff.inMinutes}m';
+    if (diff.inHours < 24) return 'hace ${diff.inHours}h';
+    return 'hace ${diff.inDays}d';
   }
 }

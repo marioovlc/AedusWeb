@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/app_provider.dart';
+import '../../../core/theme/app_theme.dart';
 
 class RegistrationMobile extends StatefulWidget {
   const RegistrationMobile({super.key});
@@ -36,19 +37,22 @@ class _RegistrationMobileState extends State<RegistrationMobile> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear Cuenta'), backgroundColor: Colors.transparent, elevation: 0),
+      appBar: AppBar(title: const Text('Crear Cuenta'), backgroundColor: appColors.surface, elevation: 0),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.person_add_outlined, size: 80, color: Colors.blue),
+              Image.asset('lib/assets/aedus.png', height: 80, errorBuilder: (context, error, stackTrace) =>
+                Icon(Icons.person_add_outlined, size: 80, color: theme.colorScheme.primary)),
               const SizedBox(height: 32),
               const Text('Crea tu cuenta', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
               const SizedBox(height: 8),
-              const Text('Únete a la plataforma Aedus', style: TextStyle(color: Colors.white70, fontSize: 16)),
+              Text('Únete a la plataforma Aedus', style: TextStyle(color: appColors.textLow, fontSize: 16)),
               const SizedBox(height: 40),
               TextField(
                 controller: _nombreController,

@@ -50,7 +50,7 @@ class _MainLayoutState extends State<MainLayout> {
     return Scaffold(
       drawer: isMobile ? _buildSidebar(context) : null,
       appBar: isMobile ? AppBar(
-        title: Image.asset('lib/assets/aedus.png', height: 40),
+        title: Image.asset('lib/assets/aedus.png', height: 52),
         centerTitle: true,
         backgroundColor: appColors.surface,
         elevation: 0,
@@ -60,10 +60,25 @@ class _MainLayoutState extends State<MainLayout> {
               padding: const EdgeInsets.only(right: 12.0),
               child: GestureDetector(
                 onTap: () => Navigator.pushReplacementNamed(context, '/settings'),
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundImage: user.avatarUrl != null ? CachedNetworkImageProvider(user.avatarUrl!) : null,
-                  child: user.avatarUrl == null ? Text(user.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 10)) : null,
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundImage: user.avatarUrl != null ? CachedNetworkImageProvider(user.avatarUrl!) : null,
+                      child: user.avatarUrl == null ? Text(user.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 10)) : null,
+                    ),
+                    Positioned(
+                      bottom: 0, right: 0,
+                      child: Container(
+                        width: 9, height: 9,
+                        decoration: BoxDecoration(
+                          color: appColors.success,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: appColors.surface, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -118,7 +133,7 @@ class _MainLayoutState extends State<MainLayout> {
             duration: const Duration(milliseconds: 300),
             width: double.infinity,
             padding: EdgeInsets.symmetric(
-              vertical: isCompact ? 30.0 : 60.0, 
+              vertical: isCompact ? 24.0 : 36.0, 
               horizontal: isCompact ? 12.0 : 20.0
             ),
             decoration: BoxDecoration(
@@ -129,10 +144,24 @@ class _MainLayoutState extends State<MainLayout> {
             ),
             child: isCompact 
               ? Center(child: FaIcon(FontAwesomeIcons.solidStar, color: theme.colorScheme.primary, size: 28))
-              : Image.asset(
-                  'lib/assets/aedus.png',
-                  fit: BoxFit.contain,
-                  height: 120,
+              : Column(
+                  children: [
+                    Image.asset(
+                      'lib/assets/aedus.png',
+                      fit: BoxFit.contain,
+                      height: 80,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'AEDUS',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 4,
+                      ),
+                    ),
+                  ],
                 ),
           ),
           const SizedBox(height: 10),
@@ -315,14 +344,29 @@ class _MainLayoutState extends State<MainLayout> {
         padding: const EdgeInsets.symmetric(vertical: 16.0),
         child: Tooltip(
           message: '${user.nombre} (${user.rol})\n🪙 ${user.aeduCoins}',
-          child: CircleAvatar(
-            radius: 20,
-            backgroundColor: theme.colorScheme.primary,
-            backgroundImage: user.avatarUrl != null ? CachedNetworkImageProvider(user.avatarUrl!) : null,
-            child: user.avatarUrl == null ? Text(
-              user.nombre.substring(0, 1).toUpperCase(),
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-            ) : null,
+          child: Stack(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: theme.colorScheme.primary,
+                backgroundImage: user.avatarUrl != null ? CachedNetworkImageProvider(user.avatarUrl!) : null,
+                child: user.avatarUrl == null ? Text(
+                  user.nombre.substring(0, 1).toUpperCase(),
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                ) : null,
+              ),
+              Positioned(
+                bottom: 1, right: 1,
+                child: Container(
+                  width: 11, height: 11,
+                  decoration: BoxDecoration(
+                    color: appColors.success,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: appColors.surface, width: 2),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -338,25 +382,40 @@ class _MainLayoutState extends State<MainLayout> {
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: user.avatarUrl == null ? LinearGradient(
-                colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
-              ) : null,
-              image: user.avatarUrl != null ? DecorationImage(
-                image: CachedNetworkImageProvider(user.avatarUrl!),
-                fit: BoxFit.cover,
-              ) : null,
-            ),
-            child: user.avatarUrl == null ? Center(
-              child: Text(
-                user.nombre.substring(0, 2).toUpperCase(), 
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+          Stack(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: user.avatarUrl == null ? LinearGradient(
+                    colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+                  ) : null,
+                  image: user.avatarUrl != null ? DecorationImage(
+                    image: CachedNetworkImageProvider(user.avatarUrl!),
+                    fit: BoxFit.cover,
+                  ) : null,
+                ),
+                child: user.avatarUrl == null ? Center(
+                  child: Text(
+                    user.nombre.substring(0, 2).toUpperCase(), 
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+                  ),
+                ) : null,
               ),
-            ) : null,
+              Positioned(
+                bottom: 1, right: 1,
+                child: Container(
+                  width: 11, height: 11,
+                  decoration: BoxDecoration(
+                    color: appColors.success,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: appColors.card, width: 2),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: 12),
           Expanded(

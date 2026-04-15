@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/app_provider.dart';
+import '../../../core/theme/app_theme.dart';
 
 class LoginMobile extends StatefulWidget {
   const LoginMobile({super.key});
@@ -28,6 +29,7 @@ class _LoginMobileState extends State<LoginMobile> {
 
   @override
   Widget build(BuildContext context) {
+    final appColors = Theme.of(context).extension<AppColors>()!;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -38,9 +40,9 @@ class _LoginMobileState extends State<LoginMobile> {
               children: [
                 Image.asset('lib/assets/aedus.png', height: 80, errorBuilder: (context, error, stackTrace) => const Icon(Icons.business, size: 80, color: Colors.blue)),
                 const SizedBox(height: 32),
-                const Text('AedusWeb', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                const Text('Aedus', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                 const SizedBox(height: 8),
-                const Text('Bienvenido de nuevo', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                Text('Bienvenido de nuevo', style: TextStyle(color: appColors.textLow, fontSize: 16)),
                 const SizedBox(height: 40),
                 TextField(
                   controller: _emailController,

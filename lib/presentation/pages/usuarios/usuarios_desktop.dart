@@ -95,7 +95,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
                 DataColumn(label: Text('ROL', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13))),
                 DataColumn(label: Text('ESTADO', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13))),
                 DataColumn(label: Text('COINS', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13))),
-                DataColumn(label: Text('VISTO', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13))),
+                DataColumn(label: Text('ACTIVIDAD', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13))),
                 DataColumn(label: Text('ACCIONES', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13))),
               ],
               rows: users.map((u) => _buildUserRow(context, u)).toList(),
@@ -106,6 +106,23 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
     );
   }
 
+  String _timeAgo(DateTime? lastSeen) {
+    if (lastSeen == null) return 'Nunca';
+    final diff = DateTime.now().difference(lastSeen);
+    if (diff.inMinutes < 1) return 'Ahora';
+    if (diff.inMinutes < 60) return 'hace ${diff.inMinutes}m';
+    if (diff.inHours < 24) return 'hace ${diff.inHours}h';
+    return 'hace ${diff.inDays}d';
+  }
+
+  Color _onlineColor(DateTime? lastSeen, AppColors appColors) {
+    if (lastSeen == null) return appColors.textLow;
+    final diff = DateTime.now().difference(lastSeen);
+    if (diff.inMinutes < 5) return appColors.success;
+    if (diff.inMinutes < 30) return Colors.orange;
+    return appColors.textLow;
+  }
+
   DataRow _buildUserRow(BuildContext context, Usuario user) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
@@ -114,10 +131,25 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
         DataCell(
           Row(
             children: [
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                child: Text(user.nombre.substring(0,1).toUpperCase(), style: TextStyle(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    child: Text(user.nombre.substring(0,1).toUpperCase(), style: TextStyle(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                  ),
+                  Positioned(
+                    bottom: 0, right: 0,
+                    child: Container(
+                      width: 7, height: 7,
+                      decoration: BoxDecoration(
+                        color: _onlineColor(user.lastSeen, appColors),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: appColors.card, width: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(width: 12),
               Text(user.nombre),
@@ -128,9 +160,25 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
         DataCell(_buildRoleBadge(context, user.rol)),
         DataCell(_buildStatusBadge(context, user.status)),
         DataCell(Text('🪙 ${user.aeduCoins}')),
-        DataCell(Text(user.lastSeen != null 
-          ? '${user.lastSeen!.day}/${user.lastSeen!.month} ${user.lastSeen!.hour}:${user.lastSeen!.minute.toString().padLeft(2, '0')}' 
-          : 'Nunca', style: TextStyle(color: appColors.textLow, fontSize: 13))),
+        DataCell(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8, height: 8,
+                decoration: BoxDecoration(
+                  color: _onlineColor(user.lastSeen, appColors),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _timeAgo(user.lastSeen),
+                style: TextStyle(color: appColors.textLow, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
         DataCell(
           user.status == 'INACTIVO' 
           ? Row(
