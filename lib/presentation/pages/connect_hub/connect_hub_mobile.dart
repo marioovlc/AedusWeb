@@ -206,15 +206,7 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: Stack(
                     children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        backgroundImage: contact.avatarUrl != null ? CachedNetworkImageProvider(contact.avatarUrl!) : null,
-                        child: contact.avatarUrl == null
-                            ? Text(contact.nombre.substring(0, 1).toUpperCase(),
-                                style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold))
-                            : null,
-                      ),
+                      _buildAvatar(contact, theme, 24),
                       Positioned(
                         bottom: 0, right: 0,
                         child: Container(
@@ -255,16 +247,7 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
         ),
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: _activeContact!.avatarUrl != null
-                  ? CachedNetworkImageProvider(_activeContact!.avatarUrl!)
-                  : null,
-              child: _activeContact!.avatarUrl == null
-                  ? Text(_activeContact!.nombre.substring(0, 1).toUpperCase(),
-                      style: const TextStyle(fontSize: 10))
-                  : null,
-            ),
+            _buildAvatar(_activeContact!, theme, 16),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,5 +476,46 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
         ],
       ),
     );
+  }
+
+  Widget _buildAvatar(Usuario usuario, ThemeData theme, double radius) {
+    final initial = usuario.nombre.isNotEmpty
+        ? usuario.nombre.substring(0, 1).toUpperCase()
+        : '?';
+    final fallback = CircleAvatar(
+      radius: radius,
+      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+      child: Text(
+        initial,
+        style: TextStyle(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.bold,
+          fontSize: radius * 0.8,
+        ),
+      ),
+    );
+
+    if (usuario.avatarUrl == null || usuario.avatarUrl!.isEmpty) {
+      return fallback;
+    }
+
+    return ClipOval(
+      child: CachedNetworkImage(
+        imageUrl: usuario.avatarUrl!,
+        width: radius * 2,
+        height: radius * 2,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => fallback,
+        errorWidget: (context, url, error) => fallback,
+      ),
+    );
+  }
+
+  Color _onlineColor(DateTime? lastSeen, AppColors appColors) {
+    if (lastSeen == null) return appColors.textLow;
+    final diff = DateTime.now().difference(lastSeen);
+    if (diff.inMinutes < 5) return appColors.success;
+    if (diff.inMinutes < 30) return Colors.orange;
+    return appColors.textLow;
   }
 }

@@ -6,8 +6,31 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_provider.dart';
 import '../../widgets/loading_shimmer.dart';
 
-class DashboardMobile extends StatelessWidget {
+class DashboardMobile extends StatefulWidget {
   const DashboardMobile({super.key});
+
+  @override
+  State<DashboardMobile> createState() => _DashboardMobileState();
+}
+
+class _DashboardMobileState extends State<DashboardMobile> with TickerProviderStateMixin {
+  late AnimationController _achievementController;
+  bool _achievementsAnimated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _achievementController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+  }
+
+  @override
+  void dispose() {
+    _achievementController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -227,10 +250,30 @@ class DashboardMobile extends StatelessWidget {
     final achievements = provider.achievements;
     final appColors = theme.extension<AppColors>()!;
 
+    // Trigger animation once when achievements load
+    if (achievements.isNotEmpty && !_achievementsAnimated) {
+      _achievementsAnimated = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _achievementController.forward();
+      });
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Logros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        Row(
+          children: [
+            FaIcon(FontAwesomeIcons.trophy, size: 16, color: appColors.gold),
+            const SizedBox(width: 8),
+            Text('Logros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.onSurface)),
+            const Spacer(),
+            if (achievements.isNotEmpty)
+              Text(
+                '${achievements.where((a) => a.unlocked).length}/${achievements.length}',
+                style: TextStyle(color: appColors.textLow, fontSize: 13),
+              ),
+          ],
+        ),
         const SizedBox(height: 12),
         if (achievements.isEmpty)
           Card(
@@ -238,39 +281,106 @@ class DashboardMobile extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Center(
-                child: Text('Completa acciones para desbloquear logros', style: TextStyle(color: appColors.textLow, fontSize: 13)),
+                child: Column(
+                  children: [
+                    FaIcon(FontAwesomeIcons.lock, size: 28, color: appColors.textLow),
+                    const SizedBox(height: 8),
+                    Text('Completa acciones para desbloquear logros', style: TextStyle(color: appColors.textLow, fontSize: 13), textAlign: TextAlign.center),
+                  ],
+                ),
               ),
             ),
           )
         else
-          ...achievements.map((a) => _buildAchievementItem(
-            context,
-            a.title,
-            a.unlocked ? FontAwesomeIcons.award : FontAwesomeIcons.lock,
-            a.unlocked ? appColors.gold : appColors.textLow,
-            a.unlocked,
-          )).toList(),
+          ...achievements.asMap().entries.map((entry) {
+            final i = entry.key;
+            final a = entry.value;
+            return AnimatedBuilder(
+              animation: _achievementController,
+              builder: (context, child) {
+                final delay = (i * 0.12).clamp(0.0, 0.88);
+                final start = delay;
+                final end = (delay + 0.4).clamp(0.0, 1.0);
+                final curve = CurvedAnimation(
+                  parent: _achievementController,
+                  curve: Interval(start, end, curve: Curves.easeOut),
+                );
+                return FadeTransition(
+                  opacity: curve,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.3, 0),
+                      end: Offset.zero,
+                    ).animate(curve),
+                    child: child,
+                  ),
+                );
+              },
+              child: _buildAchievementItem(
+                context,
+                a.title,
+                a.description,
+                a.unlocked ? FontAwesomeIcons.award : FontAwesomeIcons.lock,
+                a.unlocked ? appColors.gold : appColors.textLow,
+                a.unlocked,
+              ),
+            );
+          }),
       ],
     );
   }
 
-  Widget _buildAchievementItem(BuildContext context, String title, FaIconData icon, Color color, [bool unlocked = true]) {
+  Widget _buildAchievementItem(BuildContext context, String title, String description, FaIconData icon, Color color, [bool unlocked = true]) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
     return Opacity(
-      opacity: unlocked ? 1.0 : 0.45,
+      opacity: unlocked ? 1.0 : 0.5,
       child: Card(
         color: unlocked ? appColors.surface : appColors.card,
         margin: const EdgeInsets.only(bottom: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: unlocked ? color.withValues(alpha: 0.3) : appColors.border),
+          side: BorderSide(color: unlocked ? color.withValues(alpha: 0.35) : appColors.border),
         ),
-        child: ListTile(
-          dense: true,
-          leading: FaIcon(icon, color: color, size: 18),
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          trailing: unlocked ? FaIcon(FontAwesomeIcons.check, size: 11, color: appColors.success) : null,
+        child: Container(
+          decoration: unlocked
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                )
+              : null,
+          child: ListTile(
+            dense: false,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: FaIcon(icon, color: color, size: 18),
+            ),
+            title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface)),
+            subtitle: description.isNotEmpty
+                ? Text(description, style: TextStyle(color: appColors.textLow, fontSize: 11))
+                : null,
+            trailing: unlocked
+                ? Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: appColors.success.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: FaIcon(FontAwesomeIcons.check, size: 10, color: appColors.success),
+                  )
+                : null,
+          ),
         ),
       ),
     );
