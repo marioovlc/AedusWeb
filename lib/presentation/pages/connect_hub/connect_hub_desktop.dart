@@ -164,9 +164,12 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
       selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.05),
       leading: CircleAvatar(
         backgroundColor: isAI ? theme.colorScheme.primary.withValues(alpha: 0.1) : appColors.card,
-        child: isAI 
+        backgroundImage: (!isAI && contact.avatarUrl != null) ? CachedNetworkImageProvider(contact.avatarUrl!) : null,
+        child: isAI
           ? FaIcon(FontAwesomeIcons.robot, size: 14, color: theme.colorScheme.primary)
-          : Text(contact.nombre.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface)),
+          : (contact.avatarUrl == null
+              ? Text(contact.nombre.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface))
+              : null),
       ),
       title: Text(contact.nombre, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface)),
       subtitle: Text(contact.rol, style: TextStyle(color: appColors.textLow, fontSize: 12)),
@@ -496,7 +499,10 @@ class _UserDetailsWidget extends StatelessWidget {
           CircleAvatar(
             radius: 50,
             backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-            child: Text(contact.nombre.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+            backgroundImage: contact.avatarUrl != null ? CachedNetworkImageProvider(contact.avatarUrl!) : null,
+            child: contact.avatarUrl == null
+                ? Text(contact.nombre.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: theme.colorScheme.primary))
+                : null,
           ),
           const SizedBox(height: 24),
           Text(contact.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),

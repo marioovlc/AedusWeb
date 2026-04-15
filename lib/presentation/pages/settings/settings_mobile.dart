@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/providers/app_provider.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -51,7 +52,7 @@ class SettingsMobile extends StatelessWidget {
                 children: [
                    CircleAvatar(
                      radius: 40, 
-                     backgroundImage: user.avatarUrl != null ? NetworkImage(user.avatarUrl) : null,
+                     backgroundImage: user.avatarUrl != null ? CachedNetworkImageProvider(user.avatarUrl!) : null,
                      child: user.avatarUrl == null ? Text(user.nombre.substring(0,2).toUpperCase()) : null,
                    ),
                    Positioned(

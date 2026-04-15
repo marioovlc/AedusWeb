@@ -222,18 +222,45 @@ class DashboardDesktop extends StatelessWidget {
   }
 
   Widget _buildGamificationSection(BuildContext context) {
+    final provider = context.watch<AppProvider>();
+    final achievements = provider.achievements;
+    final appColors = Theme.of(context).extension<AppColors>()!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(context, 'Logros y Misiones'),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildAchievementItem(context, 'Primer Reporte', 'Has creado tu primera incidencia.', FontAwesomeIcons.award, Theme.of(context).extension<AppColors>()!.gold)),
-            const SizedBox(width: 16),
-            Expanded(child: _buildAchievementItem(context, 'Soporte Rápido', 'Resuelto en menos de 1 hora.', FontAwesomeIcons.bolt, Colors.cyan)),
-          ],
-        ),
+        if (achievements.isEmpty)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Text('Completa acciones para desbloquear logros', style: TextStyle(color: appColors.textLow)),
+              ),
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 2.8,
+            ),
+            itemCount: achievements.length,
+            itemBuilder: (context, i) {
+              final a = achievements[i];
+              return _buildAchievementItem(
+                context, a.title, a.description,
+                a.unlocked ? FontAwesomeIcons.award : FontAwesomeIcons.lock,
+                a.unlocked ? appColors.gold : appColors.textLow,
+                a.unlocked,
+              );
+            },
+          ),
       ],
     );
   }
@@ -245,20 +272,28 @@ class DashboardDesktop extends StatelessWidget {
     );
   }
 
-  Widget _buildAchievementItem(BuildContext context, String title, String desc, FaIconData icon, Color color) {
+  Widget _buildAchievementItem(BuildContext context, String title, String desc, FaIconData icon, Color color, [bool unlocked = true]) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    return Card(
-      color: appColors.surface,
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
-          child: FaIcon(icon, color: color, size: 24),
+    return Opacity(
+      opacity: unlocked ? 1.0 : 0.45,
+      child: Card(
+        color: unlocked ? appColors.surface : appColors.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: unlocked ? color.withValues(alpha: 0.3) : appColors.border),
         ),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
-        subtitle: Text(desc, style: TextStyle(color: appColors.textLow, fontSize: 12)),
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(16),
+          leading: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: FaIcon(icon, color: color, size: 24),
+          ),
+          title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+          subtitle: Text(desc, style: TextStyle(color: appColors.textLow, fontSize: 12)),
+          trailing: unlocked ? FaIcon(FontAwesomeIcons.check, size: 12, color: appColors.success) : null,
+        ),
       ),
     );
   }

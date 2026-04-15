@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_provider.dart';
 import '../../../data/models/user_model.dart';
@@ -84,7 +85,8 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      child: Text(user.nombre.substring(0,1).toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                      backgroundImage: user.avatarUrl != null ? CachedNetworkImageProvider(user.avatarUrl!) : null,
+                      child: user.avatarUrl == null ? Text(user.nombre.substring(0,1).toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)) : null,
                     ),
                     Positioned(
                       bottom: 0, right: 0,

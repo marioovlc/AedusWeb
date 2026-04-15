@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_provider.dart';
 import '../../../data/models/user_model.dart';
@@ -59,7 +60,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Administra roles, permisos y estados de la plataforma (Desktop).',
+              'Administra roles, permisos y estados de la plataforma.',
               style: TextStyle(color: appColors.textLow, fontSize: 16),
             ),
           ],
@@ -136,7 +137,8 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
                   CircleAvatar(
                     radius: 14,
                     backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    child: Text(user.nombre.substring(0,1).toUpperCase(), style: TextStyle(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                    backgroundImage: user.avatarUrl != null ? CachedNetworkImageProvider(user.avatarUrl!) : null,
+                    child: user.avatarUrl == null ? Text(user.nombre.substring(0,1).toUpperCase(), style: TextStyle(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold)) : null,
                   ),
                   Positioned(
                     bottom: 0, right: 0,

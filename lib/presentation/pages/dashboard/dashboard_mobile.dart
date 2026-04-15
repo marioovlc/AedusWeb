@@ -223,27 +223,55 @@ class DashboardMobile extends StatelessWidget {
 
   Widget _buildGamificationSection(BuildContext context) {
     final theme = Theme.of(context);
+    final provider = context.watch<AppProvider>();
+    final achievements = provider.achievements;
+    final appColors = theme.extension<AppColors>()!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Logros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         const SizedBox(height: 12),
-        _buildAchievementItem(context, 'Primer Reporte', FontAwesomeIcons.award, theme.extension<AppColors>()!.gold),
-        const SizedBox(height: 8),
-        _buildAchievementItem(context, 'Soporte Rápido', FontAwesomeIcons.bolt, Colors.cyan),
+        if (achievements.isEmpty)
+          Card(
+            color: appColors.surface,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Center(
+                child: Text('Completa acciones para desbloquear logros', style: TextStyle(color: appColors.textLow, fontSize: 13)),
+              ),
+            ),
+          )
+        else
+          ...achievements.map((a) => _buildAchievementItem(
+            context,
+            a.title,
+            a.unlocked ? FontAwesomeIcons.award : FontAwesomeIcons.lock,
+            a.unlocked ? appColors.gold : appColors.textLow,
+            a.unlocked,
+          )).toList(),
       ],
     );
   }
 
-  Widget _buildAchievementItem(BuildContext context, String title, FaIconData icon, Color color) {
+  Widget _buildAchievementItem(BuildContext context, String title, FaIconData icon, Color color, [bool unlocked = true]) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    return Card(
-      color: appColors.surface,
-      child: ListTile(
-        leading: FaIcon(icon, color: color, size: 20),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        dense: true,
+    return Opacity(
+      opacity: unlocked ? 1.0 : 0.45,
+      child: Card(
+        color: unlocked ? appColors.surface : appColors.card,
+        margin: const EdgeInsets.only(bottom: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: unlocked ? color.withValues(alpha: 0.3) : appColors.border),
+        ),
+        child: ListTile(
+          dense: true,
+          leading: FaIcon(icon, color: color, size: 18),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          trailing: unlocked ? FaIcon(FontAwesomeIcons.check, size: 11, color: appColors.success) : null,
+        ),
       ),
     );
   }

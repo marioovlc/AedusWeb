@@ -6,6 +6,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/message_model.dart';
+import '../../../data/models/incident_model.dart';
+import '../../widgets/incident_detail_dialog.dart';
 
 class ConnectHubMobile extends StatefulWidget {
   const ConnectHubMobile({super.key});
@@ -17,6 +19,7 @@ class ConnectHubMobile extends StatefulWidget {
 class _ConnectHubMobileState extends State<ConnectHubMobile> {
   Usuario? _activeContact;
   final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
   Timer? _refreshTimer;
 
   void _startRefreshTimer() {
@@ -33,6 +36,7 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
   void dispose() {
     _refreshTimer?.cancel();
     _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -47,23 +51,134 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
     _refreshTimer?.cancel();
   }
 
+  void _sendMessage({int? ticketLinkId}) {
+    if (_activeContact == null) return;
+    final text = _messageController.text.trim();
+    if (text.isEmpty && ticketLinkId == null) return;
+
+    context.read<AppProvider>().sendMessage(
+      _activeContact!.id,
+      text,
+      ticketLinkId: ticketLinkId,
+    );
+    _messageController.clear();
+
+    // Scroll to bottom after sending
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _showShareTicketDialog() {
+    final provider = context.read<AppProvider>();
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: appColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        final incidencias = provider.incidencias;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: appColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.confirmation_number, color: theme.colorScheme.primary, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Compartir Ticket',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.onSurface),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            if (incidencias.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text('No tienes tickets disponibles.', style: TextStyle(color: appColors.textLow)),
+              )
+            else
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: incidencias.length,
+                  itemBuilder: (c, idx) {
+                    final inc = incidencias[idx];
+                    return ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.confirmation_number_outlined, color: theme.colorScheme.primary, size: 16),
+                      ),
+                      title: Text(inc.titulo, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: Text('#${inc.id} · ${inc.estadoNombre}', style: TextStyle(color: appColors.textLow, fontSize: 12)),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _sendMessage(ticketLinkId: inc.id);
+                      },
+                    );
+                  },
+                ),
+              ),
+            const SizedBox(height: 16),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
-        child: _activeContact != null ? _buildChatView() : _buildContactsView(),
+        transitionBuilder: (child, animation) => SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        ),
+        child: _activeContact != null
+            ? _buildChatView(key: const ValueKey('chat'))
+            : _buildContactsView(key: const ValueKey('contacts')),
       ),
     );
   }
 
-  Widget _buildContactsView() {
+  Widget _buildContactsView({Key? key}) {
     final provider = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
     final contactos = provider.contactos;
 
     return Column(
+      key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
@@ -89,11 +204,29 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
                 child: ListTile(
                   onTap: () => _selectContact(contact),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: CircleAvatar(
-                    radius: 24,
-                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    backgroundImage: contact.avatarUrl != null ? CachedNetworkImageProvider(contact.avatarUrl!) : null,
-                    child: contact.avatarUrl == null ? Text(contact.nombre.substring(0, 1).toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)) : null,
+                  leading: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        backgroundImage: contact.avatarUrl != null ? CachedNetworkImageProvider(contact.avatarUrl!) : null,
+                        child: contact.avatarUrl == null
+                            ? Text(contact.nombre.substring(0, 1).toUpperCase(),
+                                style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold))
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0, right: 0,
+                        child: Container(
+                          width: 12, height: 12,
+                          decoration: BoxDecoration(
+                            color: _onlineColor(contact.lastSeen, appColors),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: appColors.card, width: 2),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   title: Text(contact.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(contact.rol, style: TextStyle(color: appColors.textLow, fontSize: 12)),
@@ -107,28 +240,39 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
     );
   }
 
-  Widget _buildChatView() {
+  Widget _buildChatView({Key? key}) {
     final provider = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    
+
     return Scaffold(
+      key: key,
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 20), onPressed: _closeChat),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          onPressed: _closeChat,
+        ),
         title: Row(
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundImage: _activeContact!.avatarUrl != null ? CachedNetworkImageProvider(_activeContact!.avatarUrl!) : null,
-              child: _activeContact!.avatarUrl == null ? Text(_activeContact!.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 10)) : null,
+              backgroundImage: _activeContact!.avatarUrl != null
+                  ? CachedNetworkImageProvider(_activeContact!.avatarUrl!)
+                  : null,
+              child: _activeContact!.avatarUrl == null
+                  ? Text(_activeContact!.nombre.substring(0, 1).toUpperCase(),
+                      style: const TextStyle(fontSize: 10))
+                  : null,
             ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_activeContact!.nombre, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                Text(_activeContact!.rol, style: TextStyle(fontSize: 11, color: appColors.textLow)),
+                Text(_activeContact!.nombre,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                Text(_activeContact!.rol,
+                    style: TextStyle(fontSize: 11, color: appColors.textLow)),
               ],
             ),
           ],
@@ -140,9 +284,21 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
         children: [
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.all(20),
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
               itemCount: provider.mensajes.length,
-              itemBuilder: (ctx, i) => _buildMessage(provider.mensajes[i]),
+              itemBuilder: (ctx, i) {
+                final msg = provider.mensajes[i];
+                final isMe = msg.senderId == provider.currentUser?.id;
+
+                // Detect ticket messages
+                if ((msg.ticketLinkId != null && msg.ticketLinkId! > 0) ||
+                    msg.contenido.startsWith('[TICKET_LINK]:')) {
+                  return _buildSharedTicket(msg, isMe);
+                }
+
+                return _buildMessage(msg, isMe);
+              },
             ),
           ),
           _buildMessageInput(context),
@@ -151,62 +307,99 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
     );
   }
 
-  Widget _buildMessageInput(BuildContext context) {
+  Widget _buildSharedTicket(Mensaje msg, bool isMe) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: appColors.surface,
-        border: Border(top: BorderSide(color: appColors.border.withValues(alpha: 0.5))),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              style: TextStyle(color: theme.colorScheme.onSurface),
-              decoration: InputDecoration(
-                hintText: 'Escribe un mensaje...',
-                hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
-                fillColor: appColors.card,
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+
+    // Parse ticket ID
+    int ticketId = 0;
+    if (msg.ticketLinkId != null && msg.ticketLinkId! > 0) {
+      ticketId = msg.ticketLinkId!;
+    } else {
+      final parts = msg.contenido.split(':');
+      if (parts.length > 1) {
+        ticketId = int.tryParse(parts.last.trim()) ?? 0;
+      }
+    }
+
+    final allIncidencias = context.watch<AppProvider>().incidencias;
+    final Incidencia? ticket = allIncidencias.where((i) => i.id == ticketId).firstOrNull;
+
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: GestureDetector(
+        onTap: () {
+          if (ticket != null) {
+            showDialog(
+              context: context,
+              builder: (ctx) => IncidentDetailDialog(
+                incidencia: ticket,
+                showAdminActions: false,
               ),
-            ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('No tienes acceso al ticket #$ticketId'),
+                backgroundColor: appColors.danger,
+              ),
+            );
+          }
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.4)),
           ),
-          const SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-              onPressed: () {
-                if (_messageController.text.isNotEmpty) {
-                  context.read<AppProvider>().sendMessage(_activeContact!.id, _messageController.text);
-                  _messageController.clear();
-                }
-              },
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.confirmation_number, color: theme.colorScheme.primary, size: 28),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ticket Compartido',
+                      style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      ticket != null ? ticket.titulo : 'Ticket #$ticketId',
+                      style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13),
+                    ),
+                    if (ticket != null)
+                      Text(
+                        ticket.estadoNombre,
+                        style: TextStyle(color: appColors.textLow, fontSize: 11),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.open_in_new, color: theme.colorScheme.primary, size: 16),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildMessage(Mensaje msg) {
+  Widget _buildMessage(Mensaje msg, bool isMe) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    final isMe = msg.senderId == context.read<AppProvider>().currentUser?.id;
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -215,7 +408,7 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isMe ? theme.primaryColor : appColors.card,
+          color: isMe ? theme.colorScheme.primary : appColors.card,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -238,6 +431,66 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
             height: 1.4,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMessageInput(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: appColors.surface,
+        border: Border(top: BorderSide(color: appColors.border.withValues(alpha: 0.5))),
+      ),
+      child: Row(
+        children: [
+          // Attach / Share ticket button
+          IconButton(
+            icon: Icon(Icons.add_circle_outline, color: appColors.textLow, size: 26),
+            tooltip: 'Compartir ticket',
+            onPressed: _showShareTicketDialog,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Escribe un mensaje...',
+                hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
+                fillColor: appColors.card,
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              onSubmitted: (_) => _sendMessage(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              onPressed: _sendMessage,
+            ),
+          ),
+        ],
       ),
     );
   }

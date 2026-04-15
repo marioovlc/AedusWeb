@@ -351,7 +351,7 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
               const Divider(height: 32),
               _buildInfoTile('Tiempo de Actividad', '99.98%', Icons.history),
               const Divider(height: 32),
-              _buildInfoTile('Versión del Sistema', 'v2.4.0', Icons.info_outline),
+              _buildInfoTile('Versión del Sistema', 'BETA', Icons.info_outline),
             ],
           ),
         ),
@@ -377,10 +377,10 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: (online ? Colors.green : Colors.red).withValues(alpha: 0.1),
+                color: (online ? appColors.success : appColors.danger).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: online ? Colors.green : Colors.red, size: 20),
+              child: Icon(icon, color: online ? appColors.success : appColors.danger, size: 20),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -395,13 +395,13 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: (online ? Colors.green : Colors.red).withValues(alpha: 0.1),
+                color: (online ? appColors.success : appColors.danger).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 online ? 'ONLINE' : 'OFFLINE', 
                 style: TextStyle(
-                  color: online ? Colors.green : Colors.red, 
+                  color: online ? appColors.success : appColors.danger, 
                   fontSize: 10, 
                   fontWeight: FontWeight.bold, 
                   letterSpacing: 1

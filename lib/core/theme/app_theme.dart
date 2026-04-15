@@ -79,6 +79,7 @@ class AppTheme {
         seedColor: prim,
         brightness: brightness,
         primary: prim,
+        onPrimary: Colors.white,
         secondary: sec,
         surface: surf,
         onSurface: txtHigh,
