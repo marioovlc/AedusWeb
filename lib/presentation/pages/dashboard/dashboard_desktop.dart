@@ -237,11 +237,46 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
                   : BarChart(
                       BarChartData(
                         gridData: const FlGridData(show: false),
-                        titlesData: const FlTitlesData(show: false),
                         borderData: FlBorderData(show: false),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 42,
+                              getTitlesWidget: (value, meta) {
+                                final keys = categories.keys.toList();
+                                final i = value.toInt();
+                                if (i < 0 || i >= keys.length) return const SizedBox.shrink();
+                                final name = keys[i];
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    name.length > 10 ? '${name.substring(0, 10)}…' : name,
+                                    style: TextStyle(fontSize: 10, color: appColors.textLow, fontWeight: FontWeight.w500),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        ),
                         barGroups: categories.entries.toList().asMap().entries.map((e) {
                           final color = [theme.colorScheme.primary, theme.colorScheme.secondary, appColors.success, Colors.orange][e.key % 4];
-                          return BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: e.value.value.toDouble(), color: color)]);
+                          return BarChartGroupData(
+                            x: e.key,
+                            barRods: [
+                              BarChartRodData(
+                                toY: e.value.value.toDouble(),
+                                color: color,
+                                width: 28,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ],
+                          );
                         }).toList(),
                       ),
                     ),

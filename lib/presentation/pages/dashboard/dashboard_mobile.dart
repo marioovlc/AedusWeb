@@ -241,10 +241,45 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
                   : BarChart(
                       BarChartData(
                         gridData: const FlGridData(show: false),
-                        titlesData: const FlTitlesData(show: false),
                         borderData: FlBorderData(show: false),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 38,
+                              getTitlesWidget: (value, meta) {
+                                final keys = categories.keys.toList();
+                                final i = value.toInt();
+                                if (i < 0 || i >= keys.length) return const SizedBox.shrink();
+                                final name = keys[i];
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Text(
+                                    name.length > 8 ? '${name.substring(0, 8)}…' : name,
+                                    style: TextStyle(fontSize: 9, color: appColors.textLow, fontWeight: FontWeight.w500),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        ),
                         barGroups: categories.entries.toList().asMap().entries.map((e) {
-                          return BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: e.value.value.toDouble(), color: theme.colorScheme.primary)]);
+                          return BarChartGroupData(
+                            x: e.key,
+                            barRods: [
+                              BarChartRodData(
+                                toY: e.value.value.toDouble(),
+                                color: theme.colorScheme.primary,
+                                width: 22,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                            ],
+                          );
                         }).toList(),
                       ),
                     ),

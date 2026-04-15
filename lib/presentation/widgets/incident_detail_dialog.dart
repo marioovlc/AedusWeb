@@ -438,7 +438,20 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
             backgroundColor: appColors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Text('Confirmar cambio', style: TextStyle(fontWeight: FontWeight.bold)),
-            content: Text('¿Cambiar el estado de la incidencia a "$label"?'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '#${widget.incidencia.id} — ${widget.incidencia.titulo}',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: appColors.textHigh),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 10),
+                Text('¿Cambiar el estado a "$label"?'),
+              ],
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
