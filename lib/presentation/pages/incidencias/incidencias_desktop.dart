@@ -29,6 +29,9 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
   Uint8List? _imageBytes;
   String? _imageName;
   final _picker = ImagePicker();
+  String _searchQuery = '';
+  String _statusFilter = 'TODOS';
+  final List<String> _statusOptions = ['TODOS', 'NO LEIDO', 'EN REVISIÓN', 'ACABADO'];
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
@@ -357,9 +360,27 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
     );
   }
 
-  Widget _buildTicketList(BuildContext context, List<Incidencia> incidencias) {
+  Widget _buildTicketList(BuildContext context, List<Incidencia> allIncidencias) {
     final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     final isLoading = context.watch<AppProvider>().isLoading;
+
+    // Apply filters
+    var incidencias = allIncidencias;
+    if (_statusFilter != 'TODOS') {
+      incidencias = incidencias
+          .where((i) => i.estadoNombre.toUpperCase() == _statusFilter)
+          .toList();
+    }
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      incidencias = incidencias
+          .where((i) =>
+              i.titulo.toLowerCase().contains(q) ||
+              i.descripcion.toLowerCase().contains(q))
+          .toList();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -373,16 +394,62 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
             ),
           ],
         ),
-        const SizedBox(height: 24),
-        Expanded(
-          child: isLoading 
-            ? const ShimmerTicketList()
-            : ListView.builder(
-                itemCount: incidencias.length,
-                itemBuilder: (context, index) {
-                  return _buildTicketCard(context, incidencias[index]);
-                },
+        const SizedBox(height: 12),
+        // Search field
+        TextField(
+          onChanged: (v) => setState(() => _searchQuery = v),
+          decoration: InputDecoration(
+            hintText: 'Buscar por título o descripción...',
+            hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
+            prefixIcon: Icon(Icons.search, size: 20, color: appColors.textLow),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: Icon(Icons.clear, size: 18, color: appColors.textLow),
+                    onPressed: () => setState(() => _searchQuery = ''),
+                  )
+                : null,
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Status filter chips
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _statusOptions.map((opt) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(opt, style: const TextStyle(fontSize: 11)),
+                selected: _statusFilter == opt,
+                onSelected: (_) => setState(() => _statusFilter = opt),
               ),
+            )).toList(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: isLoading
+              ? const ShimmerTicketList()
+              : incidencias.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 48, color: appColors.textLow),
+                          const SizedBox(height: 12),
+                          Text(
+                            _searchQuery.isNotEmpty
+                                ? 'Sin resultados para "$_searchQuery"'
+                                : 'No hay tickets con estado "$_statusFilter"',
+                            style: TextStyle(color: appColors.textLow),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: incidencias.length,
+                      itemBuilder: (context, index) =>
+                          _buildTicketCard(context, incidencias[index]),
+                    ),
         ),
       ],
     );

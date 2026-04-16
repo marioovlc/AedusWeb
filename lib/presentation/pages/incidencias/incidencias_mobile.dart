@@ -25,9 +25,13 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
   String _selectedCategory = 'Hardware';
   bool _isCreating = false;
   String? _aiSuggestion;
+  bool _isLoadingAI = false;
+  String? _submitError;
+  String _statusFilter = 'TODOS';
   Uint8List? _imageBytes;
   String? _imageName;
   final _picker = ImagePicker();
+  final List<String> _statusOptions = ['TODOS', 'NO LEIDO', 'EN REVISIÓN', 'ACABADO'];
 
   @override
   void initState() {
@@ -54,10 +58,24 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
     }
   }
 
-  Future<void> _submitIncident() async {
+  Future<void> _getAIHelp() async {
     if (_tituloController.text.isEmpty) return;
-    setState(() => _isCreating = true);
-    
+    setState(() { _isLoadingAI = true; _aiSuggestion = null; });
+    final suggestion = await context.read<AppProvider>().getAISuggestion(
+      _tituloController.text,
+      _descController.text,
+    );
+    if (mounted) setState(() { _aiSuggestion = suggestion; _isLoadingAI = false; });
+  }
+
+  Future<void> _submitIncident() async {
+    final title = _tituloController.text.trim();
+    if (title.isEmpty) {
+      setState(() => _submitError = 'El título es obligatorio.');
+      return;
+    }
+    setState(() { _isCreating = true; _submitError = null; });
+
     String? uploadedUrl;
     if (_imageBytes != null) {
       uploadedUrl = await StorageService().uploadFile(_imageBytes!, _imageName ?? 'incident_img.png');
@@ -70,13 +88,13 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
     if (!mounted) return;
 
     await context.read<AppProvider>().createIncidencia(
-      _tituloController.text,
+      title,
       _descController.text,
       aulaId,
       catId,
       imagenUrl: uploadedUrl,
     );
-    
+
     _tituloController.clear();
     _descController.clear();
     setState(() {
@@ -85,14 +103,15 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
       _imageBytes = null;
     });
 
-    _tabController.animateTo(1); // Switch to Tickets tab
+    _tabController.animateTo(1);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reportado con éxito.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reportado con éxito.')),
+      );
     }
   }
 
-  @override
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -159,13 +178,39 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
             ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.memory(_imageBytes!, height: 120, width: double.infinity, fit: BoxFit.cover)),
             const SizedBox(height: 8),
           ],
+          const SizedBox(height: 16),
+          if (_submitError != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).extension<AppColors>()!.danger.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Theme.of(context).extension<AppColors>()!.danger.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Theme.of(context).extension<AppColors>()!.danger, size: 16),
+                  const SizedBox(width: 8),
+                  Text(_submitError!, style: TextStyle(color: Theme.of(context).extension<AppColors>()!.danger, fontSize: 13)),
+                ],
+              ),
+            ),
           Row(
             children: [
               IconButton(onPressed: _pickImage, icon: const Icon(Icons.add_a_photo)),
               const Spacer(),
+              OutlinedButton.icon(
+                onPressed: _isLoadingAI ? null : _getAIHelp,
+                icon: _isLoadingAI
+                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.auto_awesome, size: 14),
+                label: Text(_isLoadingAI ? 'Analizando...' : '✨ Sugerencia IA'),
+              ),
+              const SizedBox(width: 8),
               ElevatedButton(
                 onPressed: _isCreating ? null : _submitIncident,
-                child: _isCreating ? const CircularProgressIndicator() : const Text('ENVIAR'),
+                child: _isCreating ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('ENVIAR'),
               ),
             ],
           ),
@@ -180,16 +225,64 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
 
   Widget _buildListTab(BuildContext context) {
     final provider = context.watch<AppProvider>();
-    final incidencias = provider.incidencias;
+    final allIncidencias = provider.incidencias;
+    final incidencias = _statusFilter == 'TODOS'
+        ? allIncidencias
+        : allIncidencias.where((i) =>
+            i.estadoNombre.toUpperCase() == _statusFilter).toList();
     if (provider.isLoading) return const ShimmerTicketList();
 
-    return RefreshIndicator(
-      onRefresh: () => provider.refreshData(),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: incidencias.length,
-        itemBuilder: (ctx, i) => _buildTicketCard(context, incidencias[i]),
-      ),
+    return Column(
+      children: [
+        // Filter chips
+        SizedBox(
+          height: 44,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _statusOptions.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            itemBuilder: (ctx, i) {
+              final opt = _statusOptions[i];
+              final selected = _statusFilter == opt;
+              return FilterChip(
+                label: Text(opt, style: const TextStyle(fontSize: 11)),
+                selected: selected,
+                onSelected: (_) => setState(() => _statusFilter = opt),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 4),
+        Expanded(
+          child: incidencias.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.inbox_outlined, size: 48, color: Theme.of(context).extension<AppColors>()!.textLow),
+                      const SizedBox(height: 12),
+                      Text(
+                        _statusFilter == 'TODOS'
+                            ? 'No tienes tickets registrados'
+                            : 'No hay tickets con estado "$_statusFilter"',
+                        style: TextStyle(color: Theme.of(context).extension<AppColors>()!.textLow),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: () => provider.refreshData(),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: incidencias.length,
+                    itemBuilder: (ctx, i) => _buildTicketCard(context, incidencias[i]),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 

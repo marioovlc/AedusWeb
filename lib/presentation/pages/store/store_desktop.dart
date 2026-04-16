@@ -22,14 +22,14 @@ class StoreDesktop extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: (user.rol == 'ADMIN' || user.rol == 'Administrador' || user.rol == 'MANTENIMIENTO') 
+      floatingActionButton: user.isAdmin
         ? FloatingActionButton.extended(
             onPressed: () => _showCreateItemDialog(context),
             label: const Text('Nuevo Objeto'),
             icon: const Icon(Icons.add),
             backgroundColor: theme.colorScheme.primary,
             foregroundColor: Colors.white,
-          ) 
+          )
         : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(32.0),

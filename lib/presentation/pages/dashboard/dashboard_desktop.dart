@@ -16,6 +16,7 @@ class DashboardDesktop extends StatefulWidget {
 class _DashboardDesktopState extends State<DashboardDesktop> with TickerProviderStateMixin {
   late AnimationController _kpiController;
   bool _kpisAnimated = false;
+  bool _wasLoading = true;
 
   @override
   void initState() {
@@ -24,6 +25,18 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isLoading = context.read<AppProvider>().isLoading;
+    // If loading just finished, reset animation so it plays again
+    if (_wasLoading && !isLoading) {
+      _kpisAnimated = false;
+      _kpiController.reset();
+    }
+    _wasLoading = isLoading;
   }
 
   @override
@@ -166,7 +179,7 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
   Widget _buildLineChartCard(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    final spots = context.read<AppProvider>().getWorkloadLast7Days().asMap().entries
+    final spots = context.watch<AppProvider>().getWorkloadLast7Days().asMap().entries
         .map((e) => FlSpot(e.key.toDouble(), (e.value['creadas'] as double)))
         .toList();
     final hasData = spots.any((s) => s.y > 0);
@@ -217,7 +230,7 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
   Widget _buildBarChartCard(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    final categories = context.read<AppProvider>().getIncidenciasPorCategoria();
+    final categories = context.watch<AppProvider>().getIncidenciasPorCategoria();
 
     return Card(
       child: Padding(
@@ -378,43 +391,8 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
   }
 
   Widget _buildAIAssistantCard(BuildContext context) {
-    final theme = Theme.of(context);
     final kpis = context.watch<AppProvider>().kpis;
-    return Card(
-      color: theme.colorScheme.primary.withValues(alpha: 0.05),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: theme.colorScheme.primary, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                FaIcon(FontAwesomeIcons.wandMagicSparkles, color: theme.colorScheme.primary, size: 18),
-                const SizedBox(width: 12),
-                Text(
-                  'Asistente AI',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.primary),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Resumen del sistema:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Actualmente hay ${kpis['Pendientes']} incidencias pendientes. El tiempo promedio de resolución ha bajado un 5% respecto a la semana pasada.',
-              style: TextStyle(color: theme.colorScheme.onSurface, height: 1.5, fontSize: 13),
-            ),
-          ],
-        ),
-      ),
-    );
+    return _AIAssistantCard(kpis: kpis);
   }
 }
 
@@ -496,6 +474,121 @@ class _HoverKPICardState extends State<_HoverKPICard> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// AI Assistant Card — llama a la IA real con contexto de KPIs
+// ---------------------------------------------------------------------------
+class _AIAssistantCard extends StatefulWidget {
+  final Map<String, String> kpis;
+  const _AIAssistantCard({required this.kpis});
+
+  @override
+  State<_AIAssistantCard> createState() => _AIAssistantCardState();
+}
+
+class _AIAssistantCardState extends State<_AIAssistantCard> {
+  String? _summary;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSummary();
+  }
+
+  @override
+  void didUpdateWidget(_AIAssistantCard old) {
+    super.didUpdateWidget(old);
+    // Refresh when KPIs change meaningfully (e.g. after data reload)
+    if (old.kpis['Total Incidencias'] != widget.kpis['Total Incidencias']) {
+      _fetchSummary();
+    }
+  }
+
+  Future<void> _fetchSummary() async {
+    if (_loading) return;
+    setState(() { _loading = true; _summary = null; });
+    final kpis = widget.kpis;
+    final context = '''
+Total incidencias: ${kpis['Total Incidencias'] ?? 0}
+Pendientes: ${kpis['Pendientes'] ?? 0}
+Resueltas: ${kpis['Resueltas'] ?? 0}
+Usuarios activos: ${kpis['Usuarios Activos'] ?? 0}
+''';
+    final result = await this.context.read<AppProvider>().getAISuggestion(
+      'Dame un resumen ejecutivo breve del estado del sistema con estos datos.',
+      context,
+    );
+    if (mounted) setState(() { _summary = result; _loading = false; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    return Card(
+      color: theme.colorScheme.primary.withValues(alpha: 0.05),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: theme.colorScheme.primary, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                FaIcon(FontAwesomeIcons.wandMagicSparkles, color: theme.colorScheme.primary, size: 18),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Asistente AI',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.primary),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Regenerar análisis',
+                  icon: Icon(Icons.refresh, color: appColors.textLow, size: 18),
+                  onPressed: _loading ? null : _fetchSummary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_loading)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _shimmerLine(context, 1.0),
+                  const SizedBox(height: 8),
+                  _shimmerLine(context, 0.75),
+                  const SizedBox(height: 8),
+                  _shimmerLine(context, 0.55),
+                ],
+              )
+            else
+              Text(
+                _summary ?? 'No se pudo obtener el resumen.',
+                style: TextStyle(color: theme.colorScheme.onSurface, height: 1.6, fontSize: 13),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _shimmerLine(BuildContext context, double widthFactor) {
+    final theme = Theme.of(context);
+    return Container(
+      height: 12,
+      width: double.infinity * widthFactor,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
       ),
     );
   }

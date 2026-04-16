@@ -147,41 +147,14 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
   }
 
   Widget _buildAIAssistantCard(BuildContext context) {
-    final theme = Theme.of(context);
     final kpis = context.watch<AppProvider>().kpis;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [theme.colorScheme.primary.withValues(alpha: 0.1), theme.colorScheme.primary.withValues(alpha: 0.05)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              FaIcon(FontAwesomeIcons.wandMagicSparkles, color: theme.colorScheme.primary, size: 16),
-              const SizedBox(width: 8),
-              Text('Asistente AI', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Tienes ${kpis['Pendientes']} incidencias por resolver hoy. ¡Buen trabajo!',
-            style: TextStyle(fontSize: 13, height: 1.4, color: theme.colorScheme.onSurface),
-          ),
-        ],
-      ),
-    );
+    return _AIAssistantCard(kpis: kpis);
   }
 
   Widget _buildLineChartCard(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    final spots = context.read<AppProvider>().getWorkloadLast7Days().asMap().entries
+    final spots = context.watch<AppProvider>().getWorkloadLast7Days().asMap().entries
         .map((e) => FlSpot(e.key.toDouble(), (e.value['creadas'] as double)))
         .toList();
     final hasData = spots.any((s) => s.y > 0);
@@ -224,7 +197,7 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
   Widget _buildBarChartCard(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    final categories = context.read<AppProvider>().getIncidenciasPorCategoria();
+    final categories = context.watch<AppProvider>().getIncidenciasPorCategoria();
 
     return Card(
       child: Padding(
@@ -440,6 +413,127 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
                   )
                 : null,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// AI Assistant Card — comparte lógica con dashboard_desktop
+// ---------------------------------------------------------------------------
+class _AIAssistantCard extends StatefulWidget {
+  final Map<String, String> kpis;
+  const _AIAssistantCard({required this.kpis});
+
+  @override
+  State<_AIAssistantCard> createState() => _AIAssistantCardState();
+}
+
+class _AIAssistantCardState extends State<_AIAssistantCard> {
+  String? _summary;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSummary();
+  }
+
+  @override
+  void didUpdateWidget(_AIAssistantCard old) {
+    super.didUpdateWidget(old);
+    if (old.kpis['Total Incidencias'] != widget.kpis['Total Incidencias']) {
+      _fetchSummary();
+    }
+  }
+
+  Future<void> _fetchSummary() async {
+    if (_loading) return;
+    setState(() { _loading = true; _summary = null; });
+    final kpis = widget.kpis;
+    final ctx = '''
+Total incidencias: ${kpis['Total Incidencias'] ?? 0}
+Pendientes: ${kpis['Pendientes'] ?? 0}
+Resueltas: ${kpis['Resueltas'] ?? 0}
+Usuarios activos: ${kpis['Usuarios Activos'] ?? 0}
+''';
+    final result = await context.read<AppProvider>().getAISuggestion(
+      'Dame un resumen ejecutivo muy corto (2-3 líneas) del estado del sistema.',
+      ctx,
+    );
+    if (mounted) setState(() { _summary = result; _loading = false; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.12),
+            theme.colorScheme.primary.withValues(alpha: 0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              FaIcon(FontAwesomeIcons.wandMagicSparkles, color: theme.colorScheme.primary, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Asistente AI',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                ),
+              ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Regenerar',
+                icon: Icon(Icons.refresh, size: 16, color: appColors.textLow),
+                onPressed: _loading ? null : _fetchSummary,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_loading)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _bar(context, 1.0),
+                const SizedBox(height: 6),
+                _bar(context, 0.8),
+                const SizedBox(height: 6),
+                _bar(context, 0.6),
+              ],
+            )
+          else
+            Text(
+              _summary ?? 'No se pudo obtener el resumen.',
+              style: TextStyle(fontSize: 13, height: 1.5, color: theme.colorScheme.onSurface),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bar(BuildContext context, double factor) {
+    final theme = Theme.of(context);
+    return FractionallySizedBox(
+      widthFactor: factor,
+      child: Container(
+        height: 10,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(5),
         ),
       ),
     );

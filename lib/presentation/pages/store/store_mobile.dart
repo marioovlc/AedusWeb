@@ -19,13 +19,13 @@ class StoreMobile extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: (user.rol == 'ADMIN' || user.rol == 'Administrador' || user.rol == 'MANTENIMIENTO') 
+      floatingActionButton: user.isAdmin
         ? FloatingActionButton(
             onPressed: () => _showCreateItemDialog(context),
             backgroundColor: theme.colorScheme.primary,
             foregroundColor: Colors.white,
             child: const Icon(Icons.add),
-          ) 
+          )
         : null,
       body: SafeArea(
         child: RefreshIndicator(
