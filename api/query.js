@@ -157,7 +157,7 @@ const ACTION_MAP = {
   create_log: `INSERT INTO gestion_incidencias.logs (usuario_id, accion, detalles, fecha, categoria) VALUES (@uId, @acc, @det, NOW(), @cat) RETURNING *`,
   update_incidencia_estado: `UPDATE gestion_incidencias.incidencias SET estado_id = @eId WHERE id = @id RETURNING *`,
   update_user_coins: `INSERT INTO transacciones_aeducoins (usuario_id, cantidad, motivo, fecha) VALUES (@uId::uuid, @coins, @motivo, NOW()); UPDATE neon_auth.user SET aeducoins = aeducoins + @coins WHERE id = @uId RETURNING *`,
-  get_comentarios_incidencia: `SELECT c.*, u.name as usuario_nombre, u.role as usuario_rol FROM gestion_incidencias.comentarios_incidencia c JOIN neon_auth.user u ON c.usuario_id::text = u.id::text WHERE c.incidencia_id = @iId AND (c.is_internal = false OR @rol IN ('ADMIN', 'MANTENIMIENTO')) ORDER BY c.fecha ASC`,
+  get_comentarios_incidencia: `SELECT c.*, u.name as usuario_nombre, u.role as usuario_rol FROM gestion_incidencias.comentarios_incidencia c JOIN neon_auth.user u ON c.usuario_id::text = u.id::text WHERE c.incidencia_id = @iId AND (c.is_internal = false OR UPPER(@rol) IN ('ADMIN', 'MANTENIMIENTO', 'ADMINISTRADOR')) ORDER BY c.fecha ASC`,
   add_comentario_incidencia: `INSERT INTO gestion_incidencias.comentarios_incidencia (incidencia_id, usuario_id, texto, fecha, is_internal) VALUES (@iId, @uId, @txt, NOW(), @internal) RETURNING *`,
   get_store_items: `SELECT * FROM gestion_incidencias.store_items ORDER BY price ASC`,
   create_store_item: `INSERT INTO gestion_incidencias.store_items (name, description, price, icon, color) VALUES (@nom, @des, @pri, @ico, @col) RETURNING *`,
