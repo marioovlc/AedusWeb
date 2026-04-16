@@ -22,7 +22,17 @@ class EnvConfig {
   static String get apiUrl => _get('API_URL');
 
   static String _get(String key) {
-    // 1. Dotenv (desarrollo local)
+    // 1. Build-time constant (Vercel injects via --dart-define=INTERNAL_API_KEY)
+    //    Solo se usa para INTERNAL_API_KEY — no se pasan secretos de BD ni de terceros.
+    if (key == 'INTERNAL_API_KEY') {
+      const v = String.fromEnvironment('INTERNAL_API_KEY');
+      if (v.isNotEmpty) {
+        if (kDebugMode) debugPrint('EnvConfig: $key loaded from build-time constant');
+        return v;
+      }
+    }
+
+    // 2. Dotenv (desarrollo local)
     try {
       final fromDotEnv = dotenv.maybeGet(key);
       if (fromDotEnv != null && fromDotEnv.isNotEmpty) {
@@ -31,10 +41,9 @@ class EnvConfig {
       }
     } catch (_) {}
 
-    // 2. Fallbacks seguros (sin secretos)
+    // 3. Fallbacks seguros (sin secretos)
     switch (key) {
       case 'API_URL':
-        // En web los proxies son rutas relativas, no se necesita URL base.
         if (kIsWeb) return '';
         return 'https://aedus-web.vercel.app';
     }
