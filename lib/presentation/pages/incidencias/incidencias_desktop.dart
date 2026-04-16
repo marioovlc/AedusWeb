@@ -368,9 +368,14 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
     // Apply filters
     var incidencias = allIncidencias;
     if (_statusFilter != 'TODOS') {
-      incidencias = incidencias
-          .where((i) => i.estadoNombre.toUpperCase() == _statusFilter)
-          .toList();
+      incidencias = incidencias.where((i) {
+        final st = i.estadoNombre.toUpperCase();
+        if (_statusFilter == 'ACABADO') return st == 'ACABADO' || st == 'RESUELTO';
+        if (_statusFilter == 'PENDIENTE') return st == 'PENDIENTE' || st == 'NO LEIDO' || st == 'NO LEÍDO';
+        if (_statusFilter == 'REVISIÓN') return st == 'REVISIÓN' || st == 'EN REVISIÓN' || st == 'REVISION' || st == 'EN REVISION';
+        if (_statusFilter == 'LEIDO') return st == 'LEIDO' || st == 'LEÍDO';
+        return st == _statusFilter;
+      }).toList();
     }
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();

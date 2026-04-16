@@ -133,6 +133,10 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                     ],
                   ),
                 ),
+                if (widget.showAdminActions) ...[
+                  _buildAssignButton(context, theme, appColors),
+                  const SizedBox(width: 8),
+                ],
                 IconButton(
                   onPressed: () { if (mounted) Navigator.pop(context); }, 
                   icon: const Icon(Icons.close),
@@ -341,8 +345,6 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                 _buildActionButton(context, 'REVISIÓN', Colors.orange, 2), 
                 const SizedBox(width: 8),
                 _buildActionButton(context, 'ACABADO', appColors.success, 4), 
-                const SizedBox(width: 8),
-                _buildAssignButton(context, theme, appColors),
               ],
             ),
           ),
@@ -439,7 +441,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
           builder: (ctx) => AlertDialog(
             backgroundColor: appColors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('Confirmar cambio', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text('Confirmar cambio', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -518,7 +520,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
           builder: (ctx) => AlertDialog(
             backgroundColor: appColors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('Asignar Técnico', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            title: const Text('Asignar Técnico', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
             content: SizedBox(
               width: 350,
               child: techUsers.isEmpty 

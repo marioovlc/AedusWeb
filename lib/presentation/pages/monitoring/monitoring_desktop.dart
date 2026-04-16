@@ -221,9 +221,14 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
     // Apply filters
     var incidencias = allIncidencias;
     if (_incidentStatusFilter != 'TODOS') {
-      incidencias = incidencias
-          .where((i) => i.estadoNombre.toUpperCase() == _incidentStatusFilter)
-          .toList();
+      incidencias = incidencias.where((i) {
+        final st = i.estadoNombre.toUpperCase();
+        if (_incidentStatusFilter == 'ACABADO') return st == 'ACABADO' || st == 'RESUELTO';
+        if (_incidentStatusFilter == 'PENDIENTE') return st == 'PENDIENTE' || st == 'NO LEIDO' || st == 'NO LEÍDO';
+        if (_incidentStatusFilter == 'REVISIÓN') return st == 'REVISIÓN' || st == 'EN REVISIÓN' || st == 'REVISION' || st == 'EN REVISION';
+        if (_incidentStatusFilter == 'LEIDO') return st == 'LEIDO' || st == 'LEÍDO';
+        return st == _incidentStatusFilter;
+      }).toList();
     }
     if (_incidentSearchQuery.isNotEmpty) {
       final q = _incidentSearchQuery.toLowerCase();
