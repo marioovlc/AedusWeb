@@ -18,7 +18,7 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
   // Incident filters
   String _incidentStatusFilter = 'TODOS';
   String _incidentSearchQuery = '';
-  final List<String> _incidentStatuses = ['TODOS', 'NO LEIDO', 'EN REVISIÓN', 'ACABADO'];
+  final List<String> _incidentStatuses = ['TODOS', 'PENDIENTE', 'LEIDO', 'REVISIÓN', 'ACABADO'];
 
   @override
   Widget build(BuildContext context) {

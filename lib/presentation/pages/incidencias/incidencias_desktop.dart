@@ -31,7 +31,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
   final _picker = ImagePicker();
   String _searchQuery = '';
   String _statusFilter = 'TODOS';
-  final List<String> _statusOptions = ['TODOS', 'NO LEIDO', 'EN REVISIÓN', 'ACABADO'];
+  final List<String> _statusOptions = ['TODOS', 'PENDIENTE', 'LEIDO', 'REVISIÓN', 'ACABADO'];
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);

@@ -341,6 +341,8 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                 _buildActionButton(context, 'REVISIÓN', Colors.orange, 2), 
                 const SizedBox(width: 8),
                 _buildActionButton(context, 'ACABADO', appColors.success, 4), 
+                const SizedBox(width: 8),
+                _buildAssignButton(context, theme, appColors),
               ],
             ),
           ),
@@ -466,13 +468,16 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
           ),
         );
         if (confirmed == true && context.mounted) {
-          final navigator = Navigator.of(context);
-          await context.read<AppProvider>().updateIncidenciaEstado(
-            widget.incidencia.id,
+          final provider = context.read<AppProvider>();
+          final incidenciaId = widget.incidencia.id;
+          final usuarioId = widget.incidencia.usuarioId;
+          Navigator.of(context).pop();
+          
+          await provider.updateIncidenciaEstado(
+            incidenciaId,
             statusId,
-            widget.incidencia.usuarioId,
+            usuarioId,
           );
-          navigator.pop();
         }
       },
       style: OutlinedButton.styleFrom(
@@ -483,6 +488,100 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
         textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
       ),
       child: Text(label),
+    );
+  }
+
+  Widget _buildAssignButton(BuildContext context, ThemeData theme, AppColors appColors) {
+    return OutlinedButton(
+      onPressed: () async {
+        final provider = context.read<AppProvider>();
+        // Check if users are loaded
+        if (provider.usuariosAdmin.isEmpty) {
+          showDialog(
+            context: context, 
+            barrierDismissible: false,
+            builder: (_) => const Center(child: CircularProgressIndicator())
+          );
+          await provider.fetchAllUsers();
+          if (context.mounted) Navigator.pop(context); // hide loading
+        }
+        
+        final techUsers = provider.usuariosAdmin.where((u) => 
+            u.rol.toUpperCase() == 'ADMIN' || 
+            u.rol.toUpperCase() == 'MANTENIMIENTO' || 
+            u.rol.toUpperCase() == 'ADMINISTRADOR').toList();
+
+        if (!context.mounted) return;
+
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: appColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('Asignar Técnico', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            content: SizedBox(
+              width: 350,
+              child: techUsers.isEmpty 
+                ? const Text('No hay técnicos disponibles.')
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: techUsers.length,
+                    itemBuilder: (context, i) {
+                      final u = techUsers[i];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          child: Text(u.nombre[0].toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                        ),
+                        title: Text(u.nombre, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                        subtitle: Text(u.rol, style: TextStyle(fontSize: 11, color: appColors.textLow)),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          final incidenciaId = widget.incidencia.id;
+                          final titulo = widget.incidencia.titulo;
+                          
+                          // Add internal comment
+                          await provider.addComentarioIncidencia(
+                            incidenciaId, 
+                            'Ticket asignado a: ${u.nombre}', 
+                            isInternal: true
+                          );
+                          
+                          // Send message to notify the technician
+                          await provider.sendMessage(
+                            u.id, 
+                            'Has sido asignado a la incidencia: #$incidenciaId - $titulo', 
+                            ticketLinkId: incidenciaId
+                          );
+                          
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Ticket asignado a ${u.nombre} correctamente')),
+                            );
+                            _fetchComentarios(); // Refresh comments
+                          }
+                        },
+                      );
+                    },
+                  ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx), 
+                child: const Text('CANCELAR', style: TextStyle(fontWeight: FontWeight.bold))
+              ),
+            ],
+          )
+        );
+      },
+      style: OutlinedButton.styleFrom(
+        foregroundColor: theme.colorScheme.primary,
+        side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+      ),
+      child: const Text('ASIGNAR', style: TextStyle(letterSpacing: 0.5)),
     );
   }
 }

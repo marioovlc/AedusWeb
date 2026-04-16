@@ -31,7 +31,7 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
   Uint8List? _imageBytes;
   String? _imageName;
   final _picker = ImagePicker();
-  final List<String> _statusOptions = ['TODOS', 'NO LEIDO', 'EN REVISIÓN', 'ACABADO'];
+  final List<String> _statusOptions = ['TODOS', 'PENDIENTE', 'LEIDO', 'REVISIÓN', 'ACABADO'];
 
   @override
   void initState() {
