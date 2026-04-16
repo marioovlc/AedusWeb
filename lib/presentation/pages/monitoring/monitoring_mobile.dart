@@ -310,23 +310,44 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
   Widget _buildSystemStatusTab(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
+    final provider = context.watch<AppProvider>();
+    final health = provider.systemHealth;
+    final latencyMs = provider.dbLatencyMs;
     
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text(
-          'INFRAESTRUCTURA', 
-          style: TextStyle(
-            fontSize: 11, 
-            fontWeight: FontWeight.bold, 
-            color: appColors.textLow, 
-            letterSpacing: 1.5
-          )
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'INFRAESTRUCTURA', 
+              style: TextStyle(
+                fontSize: 11, 
+                fontWeight: FontWeight.bold, 
+                color: appColors.textLow, 
+                letterSpacing: 1.5
+              )
+            ),
+            IconButton(
+              icon: Icon(Icons.refresh, color: theme.colorScheme.primary, size: 20),
+              tooltip: 'Actualizar estado',
+              onPressed: () => context.read<AppProvider>().checkSystemHealth(),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
-        _buildStatusCard('Groq AI Engine', 'Operativo', true, Icons.auto_awesome),
-        _buildStatusCard('Neon Database', 'En línea', true, Icons.storage),
-        _buildStatusCard('Vercel Edge', 'Conectado', true, Icons.cloud_done),
+        _buildStatusCard('Groq AI Engine', 
+          (health['AI'] ?? true) ? 'Operativo' : 'Error', 
+          health['AI'] ?? true, Icons.auto_awesome),
+        _buildStatusCard('Neon Database', 
+          (health['DB'] ?? true) 
+            ? (latencyMs > 0 ? 'Latencia: ${latencyMs}ms' : 'En línea') 
+            : 'Sin conexión', 
+          health['DB'] ?? true, Icons.storage),
+        _buildStatusCard('Vercel Edge', 
+          (health['API'] ?? true) ? 'Conectado' : 'Sin conexión', 
+          health['API'] ?? true, Icons.cloud_done),
         const SizedBox(height: 32),
         Text(
           'MÉTRICAS DE RED', 
@@ -347,7 +368,8 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
           ),
           child: Column(
             children: [
-              _buildInfoTile('Latencia de API', '42ms', Icons.speed),
+              _buildInfoTile('Latencia de DB', 
+                latencyMs > 0 ? '${latencyMs}ms' : 'Calculando...', Icons.speed),
               const Divider(height: 32),
               _buildInfoTile('Tiempo de Actividad', '99.98%', Icons.history),
               const Divider(height: 32),

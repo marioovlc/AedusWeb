@@ -14,14 +14,44 @@ class _LoginMobileState extends State<LoginMobile> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  String? _errorMessage;
+
+  String _friendlyError(dynamic e) {
+    final msg = e.toString().toLowerCase();
+    if (msg.contains('credential') || msg.contains('password') || msg.contains('incorrect') || msg.contains('invalid')) {
+      return 'Email o contraseña incorrectos. Inténtalo de nuevo.';
+    }
+    if (msg.contains('connection') || msg.contains('socket') || msg.contains('timeout') || msg.contains('network')) {
+      return 'Sin conexión. Verifica tu red e inténtalo de nuevo.';
+    }
+    if (msg.contains('not found') || msg.contains('no rows')) {
+      return 'No se encontró ninguna cuenta con ese email.';
+    }
+    return 'Algo salió mal. Por favor, inténtalo más tarde.';
+  }
 
   Future<void> _login() async {
-    setState(() => _isLoading = true);
+    // Basic client-side validation
+    final email = _emailController.text.trim();
+    final pass = _passwordController.text;
+    if (email.isEmpty || pass.isEmpty) {
+      setState(() => _errorMessage = 'Por favor, completa todos los campos.');
+      return;
+    }
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+    if (!emailRegex.hasMatch(email)) {
+      setState(() => _errorMessage = 'Introduce un email válido.');
+      return;
+    }
+
+    setState(() { _isLoading = true; _errorMessage = null; });
     try {
-      final success = await context.read<AppProvider>().login(_emailController.text, _passwordController.text);
+      final success = await context.read<AppProvider>().login(email, pass);
       if (success && mounted) Navigator.pushReplacementNamed(context, '/dashboard');
+      if (!success && mounted) setState(() => _errorMessage = 'Email o contraseña incorrectos.');
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) setState(() => _errorMessage = _friendlyError(e));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -56,14 +86,38 @@ class _LoginMobileState extends State<LoginMobile> {
                 const SizedBox(height: 20),
                 TextField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
                     prefixIcon: const Icon(Icons.lock_outline),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 40),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: appColors.danger.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: appColors.danger.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: appColors.danger, size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(_errorMessage!, style: TextStyle(color: appColors.danger, fontSize: 13, fontWeight: FontWeight.w500)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

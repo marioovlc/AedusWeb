@@ -342,12 +342,29 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
   // --- SYSTEM STATUS TAB ---
 
   Widget _buildSystemStatusTab(BuildContext context) {
+    final provider = context.watch<AppProvider>();
+    final health = provider.systemHealth;
+    final latencyMs = provider.dbLatencyMs;
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Componentes Críticos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Componentes Críticos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              ElevatedButton.icon(
+                onPressed: () => context.read<AppProvider>().checkSystemHealth(),
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Actualizar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).extension<AppColors>()!.surface,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
           GridView.count(
             shrinkWrap: true,
@@ -357,10 +374,14 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
             childAspectRatio: 1.5,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              _buildServiceStatus(context, 'Groq AI (IA)', true, 'Latencia: 120ms', Icons.auto_awesome),
-              _buildServiceStatus(context, 'Neon DB (PostgreSQL)', true, 'Latencia: 24ms', Icons.storage),
-              _buildServiceStatus(context, 'Vercel API (Backend)', true, 'Uptime: 99.9%', Icons.cloud_queue),
-              _buildServiceStatus(context, 'Auth Service (Neon)', true, 'Activo', Icons.shield_outlined),
+              _buildServiceStatus(context, 'Groq AI (IA)', health['AI'] ?? true, 
+                (health['AI'] ?? true) ? 'Operativo' : 'Error de conexión', Icons.auto_awesome),
+              _buildServiceStatus(context, 'Neon DB (PostgreSQL)', health['DB'] ?? true,
+                latencyMs > 0 ? 'Latencia: ${latencyMs}ms' : 'Calculando...', Icons.storage),
+              _buildServiceStatus(context, 'Vercel API (Backend)', health['API'] ?? true, 
+                (health['API'] ?? true) ? 'Conectado' : 'Sin conexión', Icons.cloud_queue),
+              _buildServiceStatus(context, 'Auth Service (Neon)', health['DB'] ?? true, 
+                (health['DB'] ?? true) ? 'Activo' : 'No disponible', Icons.shield_outlined),
             ],
           ),
           const SizedBox(height: 48),

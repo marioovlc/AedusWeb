@@ -44,7 +44,8 @@ class _MainLayoutState extends State<MainLayout> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    final user = context.watch<AppProvider>().currentUser;
+    final provider = context.watch<AppProvider>();
+    final user = provider.currentUser;
     bool isMobile = ResponsiveLayout.isMobile(context);
 
     return Scaffold(
@@ -93,11 +94,18 @@ class _MainLayoutState extends State<MainLayout> {
         unselectedItemColor: appColors.textLow,
         selectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
         unselectedLabelStyle: const TextStyle(fontSize: 12),
-        items: const [
-          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.gaugeHigh, size: 20), label: 'Dash'),
-          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.triangleExclamation, size: 20), label: 'Tickets'),
-          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.comments, size: 20), label: 'Hub'),
-          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.shop, size: 20), label: 'Tienda'),
+        items: [
+          const BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.gaugeHigh, size: 20), label: 'Dash'),
+          const BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.triangleExclamation, size: 20), label: 'Tickets'),
+          BottomNavigationBarItem(
+            icon: Badge(
+              isLabelVisible: provider.unreadMessagesCount > 0,
+              label: Text(provider.unreadMessagesCount.toString()),
+              child: const FaIcon(FontAwesomeIcons.comments, size: 20),
+            ),
+            label: 'Hub',
+          ),
+          const BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.shop, size: 20), label: 'Tienda'),
         ],
       ) : null,
       body: Row(
@@ -185,7 +193,10 @@ class _MainLayoutState extends State<MainLayout> {
                         ? provider.pendingIncidentsCount 
                         : null,
                   ),
-                  _buildNavItem(context, 'Connect Hub', FontAwesomeIcons.comments, '/connect', isCompact: isCompact),
+                  _buildNavItem(context, 'Connect Hub', FontAwesomeIcons.comments, '/connect',
+                    isCompact: isCompact,
+                    badgeCount: provider.unreadMessagesCount > 0 ? provider.unreadMessagesCount : null,
+                  ),
                   _buildNavItem(context, 'Tienda', FontAwesomeIcons.shop, '/shop', isCompact: isCompact),
                   
                   if (provider.currentUser?.isAdmin == true) ...[
@@ -212,9 +223,29 @@ class _MainLayoutState extends State<MainLayout> {
                   isCompact: isCompact,
                   hoverColor: Colors.red.withValues(alpha: 0.1),
                   iconColor: appColors.textLow,
-                  onTap: () {
-                    context.read<AppProvider>().logout();
-                    Navigator.pushReplacementNamed(context, '/login');
+                  onTap: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Cerrar Sesión', style: TextStyle(fontWeight: FontWeight.bold)),
+                        content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('CANCELAR'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                            child: const Text('CERRAR SESIÓN', style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true && context.mounted) {
+                      context.read<AppProvider>().logout();
+                      Navigator.pushReplacementNamed(context, '/login');
+                    }
                   },
                 ),
               ],

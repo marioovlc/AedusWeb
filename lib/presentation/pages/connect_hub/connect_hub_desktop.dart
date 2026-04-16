@@ -26,10 +26,13 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
   Usuario? _activeContact;
   
   final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
   final _audioRecorder = AudioRecorder();
   final _audioPlayer = AudioPlayer();
   final _imagePicker = ImagePicker();
   bool _isRecording = false;
+  bool _isAITyping = false;
+  String _searchQuery = '';
   Timer? _refreshTimer;
 
   @override
@@ -53,6 +56,7 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
     _audioRecorder.dispose();
     _audioPlayer.dispose();
     _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -61,6 +65,19 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
       _activeContact = contact;
     });
     context.read<AppProvider>().fetchMessages(contact.id);
+    _scrollToBottom();
+  }
+
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Future<void> _startRecording() async {
@@ -125,7 +142,12 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
   Widget _buildContactsPanel(BuildContext context, AppProvider provider) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    final contactos = provider.contactos;
+    final allContactos = provider.contactos;
+    final contactos = _searchQuery.isEmpty
+        ? allContactos
+        : allContactos.where((c) =>
+            c.nombre.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            c.rol.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
 
     return Column(
       children: [
@@ -133,20 +155,38 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
           padding: const EdgeInsets.all(24.0),
           child: TextField(
             style: TextStyle(color: theme.colorScheme.onSurface),
+            onChanged: (v) => setState(() => _searchQuery = v),
             decoration: InputDecoration(
-              hintText: 'Buscar...',
+              hintText: 'Buscar contacto...',
               hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
               prefixIcon: Icon(Icons.search, size: 20, color: appColors.textLow),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear, size: 18, color: appColors.textLow),
+                      onPressed: () => setState(() => _searchQuery = ''),
+                    )
+                  : null,
               fillColor: appColors.surface,
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 4),
         Expanded(
-          child: ListView.builder(
-            itemCount: contactos.length,
-            itemBuilder: (context, index) => _buildContactItem(context, contactos[index], _activeContact?.id == contactos[index].id),
-          ),
+          child: contactos.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.search_off, size: 40, color: appColors.textLow),
+                      const SizedBox(height: 8),
+                      Text('Sin resultados', style: TextStyle(color: appColors.textLow)),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: contactos.length,
+                  itemBuilder: (context, index) => _buildContactItem(context, contactos[index], _activeContact?.id == contactos[index].id),
+                ),
         ),
       ],
     );
@@ -208,13 +248,18 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
           child: Container(
             padding: const EdgeInsets.all(24),
             child: ListView.builder(
-              itemCount: mensajes.length,
+              controller: _scrollController,
+              itemCount: mensajes.length + (_isAITyping ? 1 : 0),
               itemBuilder: (context, index) {
+                // Show typing indicator as last item
+                if (_isAITyping && index == mensajes.length) {
+                  return _buildTypingIndicator(context);
+                }
                 final msg = mensajes[index];
                 final isMe = msg.senderId == context.read<AppProvider>().currentUser?.id;
                 
                 if (_activeContact?.id == 'aedus-ai-system' && index == 0) {
-                  return _buildAIResponse(context, "¡Hola! Soy tu asistente Aedus (Desktop). ¿En qué puedo ayudarte hoy con el sistema?");
+                  return _buildAIResponse(context, "¡Hola! Soy tu asistente Aedus. ¿En qué puedo ayudarte hoy con el sistema?");
                 }
 
                 if (msg.ticketLinkId != null && msg.ticketLinkId! > 0) {
@@ -318,6 +363,29 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
             ),
             const SizedBox(height: 12),
             Text(text, style: TextStyle(color: theme.colorScheme.onSurface, height: 1.5)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTypingIndicator(BuildContext context) {
+    final theme = Theme.of(context);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FaIcon(FontAwesomeIcons.robot, size: 12, color: theme.colorScheme.primary),
+            const SizedBox(width: 10),
+            _AnimatedDots(color: theme.colorScheme.primary),
           ],
         ),
       ),
@@ -464,15 +532,22 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
     if (_activeContact == null) return;
     final text = _messageController.text.trim();
     if (text.isEmpty && imageUrl == null && audioUrl == null && ticketLinkId == null) return;
-    
+
+    final isAI = _activeContact!.id == 'aedus-ai-system';
+    if (isAI) setState(() => _isAITyping = true);
+
     context.read<AppProvider>().sendMessage(
-      _activeContact!.id, 
+      _activeContact!.id,
       text,
       imageUrl: imageUrl,
       audioUrl: audioUrl,
       ticketLinkId: ticketLinkId,
-    );
+    ).then((_) {
+      if (mounted && isAI) setState(() => _isAITyping = false);
+      _scrollToBottom();
+    });
     _messageController.clear();
+    _scrollToBottom();
   }
 
   Widget _buildDetailsPanel(BuildContext context) {
@@ -595,6 +670,56 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AnimatedDots extends StatefulWidget {
+  final Color color;
+  const _AnimatedDots({required this.color});
+
+  @override
+  State<_AnimatedDots> createState() => _AnimatedDotsState();
+}
+
+class _AnimatedDotsState extends State<_AnimatedDots> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (i) {
+        return AnimatedBuilder(
+          animation: _ctrl,
+          builder: (context, child) {
+            final offset = ((_ctrl.value * 3) - i).clamp(0.0, 1.0);
+            final bounce = offset < 0.5 ? offset * 2 : (1 - offset) * 2;
+            return Transform.translate(
+              offset: Offset(0, -4 * bounce),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Container(
+                  width: 6, height: 6,
+                  decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+                ),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 }

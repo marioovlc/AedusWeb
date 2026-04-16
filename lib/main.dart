@@ -74,7 +74,8 @@ class AedusApp extends StatelessWidget {
         return MaterialApp(
           title: 'Aedus App',
           debugShowCheckedModeBanner: false,
-          themeMode: ThemeMode.dark,
+          themeMode: provider.currentTheme == 'Blanco' ? ThemeMode.light : ThemeMode.dark,
+          theme: AppTheme.getTheme('Blanco', isAccessibilityMode: provider.isAccessibilityMode),
           darkTheme: AppTheme.getTheme(provider.currentTheme, isAccessibilityMode: provider.isAccessibilityMode),
           initialRoute: '/login',
           onGenerateRoute: (settings) {

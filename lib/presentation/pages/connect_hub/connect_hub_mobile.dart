@@ -20,6 +20,8 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
   Usuario? _activeContact;
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
   Timer? _refreshTimer;
 
   void _startRefreshTimer() {
@@ -37,6 +39,7 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
     _refreshTimer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -175,58 +178,96 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
     final provider = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    final contactos = provider.contactos;
+    final allContactos = provider.contactos;
+    final contactos = _searchQuery.isEmpty
+        ? allContactos
+        : allContactos.where((c) =>
+            c.nombre.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            c.rol.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
 
     return Column(
       key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Connect Hub', style: theme.textTheme.displayLarge?.copyWith(fontSize: 28)),
               const SizedBox(height: 4),
               Text('Conversaciones activas', style: TextStyle(color: appColors.textLow)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _searchController,
+                style: TextStyle(color: theme.colorScheme.onSurface),
+                onChanged: (v) => setState(() => _searchQuery = v),
+                decoration: InputDecoration(
+                  hintText: 'Buscar contacto...',
+                  hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
+                  prefixIcon: Icon(Icons.search, size: 20, color: appColors.textLow),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear, size: 18, color: appColors.textLow),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  fillColor: appColors.card,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
             ],
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: contactos.length,
-            itemBuilder: (ctx, i) {
-              final contact = contactos[i];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: ListTile(
-                  onTap: () => _selectContact(contact),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: Stack(
+          child: contactos.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildAvatar(contact, theme, 24),
-                      Positioned(
-                        bottom: 0, right: 0,
-                        child: Container(
-                          width: 12, height: 12,
-                          decoration: BoxDecoration(
-                            color: _onlineColor(contact.lastSeen, appColors),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: appColors.card, width: 2),
-                          ),
-                        ),
-                      ),
+                      Icon(Icons.search_off, size: 40, color: appColors.textLow),
+                      const SizedBox(height: 8),
+                      Text('Sin resultados', style: TextStyle(color: appColors.textLow)),
                     ],
                   ),
-                  title: Text(contact.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(contact.rol, style: TextStyle(color: appColors.textLow, fontSize: 12)),
-                  trailing: Icon(Icons.chevron_right, color: appColors.textLow, size: 20),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: contactos.length,
+                  itemBuilder: (ctx, i) {
+                    final contact = contactos[i];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: ListTile(
+                        onTap: () => _selectContact(contact),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        leading: Stack(
+                          children: [
+                            _buildAvatar(contact, theme, 24),
+                            Positioned(
+                              bottom: 0, right: 0,
+                              child: Container(
+                                width: 12, height: 12,
+                                decoration: BoxDecoration(
+                                  color: _onlineColor(contact.lastSeen, appColors),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: appColors.card, width: 2),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        title: Text(contact.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(contact.rol, style: TextStyle(color: appColors.textLow, fontSize: 12)),
+                        trailing: Icon(Icons.chevron_right, color: appColors.textLow, size: 20),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );

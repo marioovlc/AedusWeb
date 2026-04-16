@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../data/models/user_model.dart';
@@ -42,6 +43,7 @@ class AppProvider with ChangeNotifier {
     'API': true,
   };
   Timer? _refreshTimer;
+  int _dbLatencyMs = 0;
 
   Usuario? get currentUser => _currentUser;
   List<Incidencia> get incidencias => _incidencias;
@@ -58,14 +60,18 @@ class AppProvider with ChangeNotifier {
   bool get isAccessibilityMode => _isAccessibilityMode;
   bool get isLoading => _isLoading;
   Map<String, bool> get systemHealth => _systemHealth;
+  int get dbLatencyMs => _dbLatencyMs;
+  int get unreadMessagesCount => _mensajes.where((m) => !m.isRead && m.receiverId == _currentUser?.id).length;
 
   void setCompact(bool compact) {
     _isCompact = compact;
+    SharedPreferences.getInstance().then((p) => p.setBool('compact', compact));
     notifyListeners();
   }
 
   void setAccessibilityMode(bool mode) {
     _isAccessibilityMode = mode;
+    SharedPreferences.getInstance().then((p) => p.setBool('accessibility', mode));
     notifyListeners();
   }
 
@@ -73,7 +79,16 @@ class AppProvider with ChangeNotifier {
 
   AppProvider() {
     _initDatabaseTable();
+    _loadPreferences();
     refreshData();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    _currentTheme = prefs.getString('theme') ?? 'Original';
+    _isCompact = prefs.getBool('compact') ?? false;
+    _isAccessibilityMode = prefs.getBool('accessibility') ?? false;
+    notifyListeners();
   }
 
   Future<void> _initDatabaseTable() async {
@@ -632,6 +647,7 @@ class AppProvider with ChangeNotifier {
 
   void setTheme(String themeName) {
     _currentTheme = themeName;
+    SharedPreferences.getInstance().then((p) => p.setString('theme', themeName));
     notifyListeners();
   }
 
@@ -650,22 +666,24 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> checkSystemHealth() async {
-    // Basic ping simulation
     try {
       final startTime = DateTime.now();
       await _db.query("SELECT 1", action: "raw"); // Simple ping to DB
       final dbPing = DateTime.now().difference(startTime).inMilliseconds;
-      
+
+      _dbLatencyMs = dbPing;
       _systemHealth['DB'] = dbPing < 500;
       _systemHealth['API'] = true;
-      
+
       // AI Ping
       final aiRes = await _ai.getSummary("ping");
       _systemHealth['AI'] = !aiRes.contains("Error");
-      
+
       notifyListeners();
     } catch (e) {
       debugPrint('Health check failed: $e');
+      _systemHealth['DB'] = false;
+      notifyListeners();
     }
   }
 
