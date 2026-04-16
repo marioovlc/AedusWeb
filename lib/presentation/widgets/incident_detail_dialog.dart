@@ -579,25 +579,33 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                           final incidenciaId = widget.incidencia.id;
                           final titulo = widget.incidencia.titulo;
                           
-                          // Add internal comment
-                          await provider.addComentarioIncidencia(
-                            incidenciaId, 
-                            'Ticket asignado a: ${u.nombre}', 
-                            isInternal: true
-                          );
-                          
-                          // Send message to notify the technician
-                          await provider.sendMessage(
-                            u.id, 
-                            'Has sido asignado a la incidencia: #$incidenciaId - $titulo', 
-                            ticketLinkId: incidenciaId
-                          );
+                          try {
+                            // 1. Add internal comment
+                            await provider.addComentarioIncidencia(
+                              incidenciaId, 
+                              'Ticket asignado a: ${u.nombre}', 
+                              isInternal: true
+                            );
+                          } catch (e) {
+                            debugPrint('Error inserting comment: $e');
+                          }
+
+                          try {
+                            // 2. Send message to notify the technician
+                            await provider.sendMessage(
+                              u.id, 
+                              'Has sido asignado a la incidencia: #$incidenciaId - $titulo', 
+                              ticketLinkId: incidenciaId
+                            );
+                          } catch (e) {
+                            debugPrint('Error sending tech message: $e');
+                          }
                           
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Ticket asignado a ${u.nombre} correctamente')),
                             );
-                            _fetchComentarios(); // Refresh comments
+                            _fetchComentarios(); // Refresh comments so assignment shows up
                           }
                         },
                       );

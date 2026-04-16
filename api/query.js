@@ -24,6 +24,18 @@ const ACTION_MAP = {
     );
     ALTER TABLE gestion_incidencias.comentarios_incidencia ADD COLUMN IF NOT EXISTS is_internal BOOLEAN DEFAULT false;
 
+    CREATE TABLE IF NOT EXISTS gestion_incidencias.mensajes (
+      id SERIAL PRIMARY KEY,
+      usuario_id VARCHAR(255) NOT NULL,
+      receptor_id VARCHAR(255) NOT NULL,
+      texto TEXT,
+      imagen_url TEXT,
+      audio_url TEXT,
+      fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      leido BOOLEAN DEFAULT false
+    );
+    ALTER TABLE gestion_incidencias.mensajes ADD COLUMN IF NOT EXISTS ticket_link_id INT;
+
     CREATE TABLE IF NOT EXISTS gestion_incidencias.store_items (
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
