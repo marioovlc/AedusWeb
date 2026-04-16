@@ -2,10 +2,11 @@
   "name": "aedus-web",
   "version": "1.0.0",
   "scripts": {
-    "build": "touch .env && git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter && $HOME/flutter/bin/flutter build web --release --no-tree-shake-icons --dart-define=\"DB_URL=$DB_URL\" --dart-define=\"DB_USER=$DB_USER\" --dart-define=\"DB_PASS=$DB_PASS\" --dart-define=\"DB_SCHEMA=$DB_SCHEMA\" --dart-define=\"CLOUDINARY_CLOUD_NAME=$CLOUDINARY_CLOUD_NAME\" --dart-define=\"CLOUDINARY_API_KEY=$CLOUDINARY_API_KEY\" --dart-define=\"CLOUDINARY_API_SECRET=$CLOUDINARY_API_SECRET\" --dart-define=\"INTERNAL_API_KEY=$INTERNAL_API_KEY\" --dart-define=\"AI_API_KEY=$AI_API_KEY\" --dart-define=\"AI_MODEL=$AI_MODEL\" --dart-define=\"AI_API_URL=$AI_API_URL\""
+    "build": "touch .env && git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter && $HOME/flutter/bin/flutter build web --release --no-tree-shake-icons"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "form-data": "^4.0.0",
     "pg": "^8.20.0"
   }
 }

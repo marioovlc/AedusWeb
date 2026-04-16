@@ -449,7 +449,7 @@ class _HoverKPICardState extends State<_HoverKPICard> {
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        transform: Matrix4.identity()..translate(0.0, _hovered ? -6.0 : 0.0),
+        transform: Matrix4.translationValues(0.0, _hovered ? -6.0 : 0.0, 0.0),
         transformAlignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),

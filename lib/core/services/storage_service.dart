@@ -1,75 +1,67 @@
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/env_config.dart';
 
+/// Servicio de almacenamiento que delega las subidas a Cloudinary
+/// al proxy serverless `/api/upload`.
+///
+/// El CLOUDINARY_API_SECRET **nunca se envía al cliente**; solo existe
+/// en las variables de entorno del servidor (Vercel).
 class StorageService {
   static final StorageService _instance = StorageService._internal();
   factory StorageService() => _instance;
   StorageService._internal();
 
-  final String _cloudName = EnvConfig.cloudinaryCloudName;
-  final String _apiKey = EnvConfig.cloudinaryApiKey;
-  final String _apiSecret = EnvConfig.cloudinaryApiSecret;
+  /// URL del proxy en el servidor. En web usa ruta relativa;
+  /// en móvil apunta al dominio de producción.
+  String get _proxyUrl {
+    final base = EnvConfig.apiUrl;
+    return kIsWeb ? '/api/upload' : '$base/api/upload';
+  }
 
-  Future<String?> uploadFile(Uint8List fileBytes, String fileName, {bool isAudio = false}) async {
+  /// Sube [fileBytes] a Cloudinary a través del proxy serverless y devuelve
+  /// la URL pública del archivo, o `null` si falla.
+  Future<String?> uploadFile(
+    Uint8List fileBytes,
+    String fileName, {
+    bool isAudio = false,
+  }) async {
     try {
-      final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      // For audio, we'll use 'auto' or 'video'. Actually Cloudinary recommends 'video' for audio.
-      
-      final params = <String, String>{
-        'timestamp': timestamp.toString(),
-      };
-      
-      if (isAudio) {
-        params['resource_type'] = 'video'; // Audio as video
-      }
+      // Convertir bytes a base64 para enviar al proxy mediante JSON
+      final fileBase64 = base64Encode(fileBytes);
 
-      final signature = _generateSignature(params, _apiSecret);
-      final uri = Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/${isAudio ? 'video' : 'image'}/upload');
-      
-      final request = http.MultipartRequest('POST', uri)
-        ..fields['api_key'] = _apiKey
-        ..fields['timestamp'] = timestamp.toString()
-        ..fields['signature'] = signature
-        ..files.add(http.MultipartFile.fromBytes(
-          'file',
-          fileBytes,
-          filename: fileName,
-        ));
+      final response = await http
+          .post(
+            Uri.parse(_proxyUrl),
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-KEY': EnvConfig.internalApiKey,
+            },
+            body: jsonEncode({
+              'fileBase64': fileBase64,
+              'fileName': fileName,
+              'isAudio': isAudio,
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
 
-      if (isAudio) {
-        request.fields['resource_type'] = 'video';
-      }
-
-      final response = await request.send();
-      final responseData = await response.stream.bytesToString();
-      
       if (response.statusCode == 200) {
-        final jsonResponse = json.decode(responseData);
-        return jsonResponse['secure_url'];
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final url = data['url'] as String?;
+        if (url != null && url.isNotEmpty) return url;
+        debugPrint('StorageService: respuesta OK pero sin URL: ${response.body}');
+        return null;
       } else {
-        debugPrint('Cloudinary upload failed: ${response.statusCode} - $responseData');
+        final errorData = jsonDecode(response.body);
+        debugPrint(
+          'StorageService: upload failed ${response.statusCode} — ${errorData['error']}',
+        );
         return null;
       }
     } catch (e) {
-      debugPrint('Error uploading to Cloudinary: $e');
+      debugPrint('StorageService error: $e');
       return null;
     }
-  }
-
-  String _generateSignature(Map<String, String> params, String secret) {
-    // Sort keys alphabetically
-    final sortedKeys = params.keys.toList()..sort();
-    
-    // Create query string: param1=value1&param2=value2
-    final queryString = sortedKeys
-        .map((key) => '$key=${params[key]}')
-        .join('&');
-    
-    // Append API Secret and hash with SHA1
-    final signatureString = '$queryString$secret';
-    return sha1.convert(utf8.encode(signatureString)).toString();
   }
 }
