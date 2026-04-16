@@ -67,6 +67,16 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
     }
   }
 
+  String? _getAssignedUser() {
+    if (_comentarios == null) return null;
+    for (var c in _comentarios!.reversed) {
+      if (c.isInternal && c.texto.startsWith('Ticket asignado a: ')) {
+        return c.texto.substring('Ticket asignado a: '.length).trim();
+      }
+    }
+    return null;
+  }
+
   Future<void> _enviarComentario() async {
     final texto = _commentController.text.trim();
     if (texto.isEmpty) return;
@@ -181,16 +191,43 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            widget.incidencia.categoriaNombre, 
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                widget.incidencia.categoriaNombre, 
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)
+              ),
+            ),
+            if (_getAssignedUser() != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: appColors.gold.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: appColors.gold.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.engineering, size: 12, color: appColors.gold),
+                    const SizedBox(width: 4),
+                    Text(
+                      _getAssignedUser()!, 
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: appColors.gold)
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
         const SizedBox(height: 16),
         Text(widget.incidencia.titulo, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
