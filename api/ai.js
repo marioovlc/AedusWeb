@@ -40,12 +40,12 @@ export default async function handler(req, res) {
   }
 
   // ── Validar variables de entorno del servidor ─────────────────────────────
-  const groqApiKey = process.env.GROQ_API_KEY;
-  const groqApiUrl = process.env.GROQ_API_URL || 'https://api.groq.com/openai/v1/chat/completions';
-  const defaultModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  const groqApiKey = process.env.AI_API_KEY || process.env.GROQ_API_KEY;
+  const groqApiUrl = process.env.AI_API_URL || process.env.GROQ_API_URL || 'https://api.groq.com/openai/v1/chat/completions';
+  const defaultModel = process.env.AI_MODEL || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
   if (!groqApiKey) {
-    console.error('SERVER MISCONFIGURATION: GROQ_API_KEY not set');
+    console.error('SERVER MISCONFIGURATION: AI_API_KEY not set');
     return res.status(500).json({ error: 'AI service not configured' });
   }
 

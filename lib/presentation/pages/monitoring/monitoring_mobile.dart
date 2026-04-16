@@ -15,6 +15,10 @@ class MonitoringMobile extends StatefulWidget {
 
 class _MonitoringMobileState extends State<MonitoringMobile> {
   String _selectedLogCategory = 'TODOS';
+  // Incident filters
+  String _incidentStatusFilter = 'TODOS';
+  String _incidentSearchQuery = '';
+  final List<String> _incidentStatuses = ['TODOS', 'NO LEIDO', 'EN REVISIÓN', 'ACABADO'];
 
   @override
   Widget build(BuildContext context) {
@@ -224,75 +228,182 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
 
   Widget _buildIncidentsTab(BuildContext context) {
     final provider = context.watch<AppProvider>();
-    final incidencias = provider.incidencias;
-    
-    if (provider.isLoading && incidencias.isEmpty) {
+    final allIncidencias = provider.incidencias;
+
+    // Apply filters
+    var incidencias = allIncidencias;
+    if (_incidentStatusFilter != 'TODOS') {
+      incidencias = incidencias
+          .where((i) => i.estadoNombre.toUpperCase() == _incidentStatusFilter)
+          .toList();
+    }
+    if (_incidentSearchQuery.isNotEmpty) {
+      final q = _incidentSearchQuery.toLowerCase();
+      incidencias = incidencias
+          .where((i) =>
+              i.titulo.toLowerCase().contains(q) ||
+              i.descripcion.toLowerCase().contains(q))
+          .toList();
+    }
+
+    if (provider.isLoading && allIncidencias.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16.0),
         child: ShimmerTicketList(),
       );
     }
 
+    final appColors = Theme.of(context).extension<AppColors>()!;
+
     return RefreshIndicator(
       onRefresh: () => provider.refreshData(),
-      child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: incidencias.length,
-          itemBuilder: (ctx, i) {
-            final inc = incidencias[i];
-            final appColors = Theme.of(context).extension<AppColors>()!;
-            
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: appColors.border.withValues(alpha: 0.5))
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(16),
-                onTap: () {
-                  debugPrint('Opening dialog for incident: ${inc.id}');
-                  showDialog(
-                    context: context, 
-                    useRootNavigator: true, 
-                    builder: (context) => IncidentDetailDialog(incidencia: inc, showAdminActions: true)
-                  );
-                },
-                leading: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+      child: Column(
+        children: [
+          // Search & Filters
+          _buildIncidentFilters(context),
+          // List
+          Expanded(
+            child: incidencias.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.search_off, size: 48, color: appColors.textLow.withValues(alpha: 0.4)),
+                        const SizedBox(height: 12),
+                        Text(
+                          _incidentSearchQuery.isNotEmpty
+                              ? 'Sin resultados para "$_incidentSearchQuery"'
+                              : 'No hay incidencias con estado "$_incidentStatusFilter"',
+                          style: TextStyle(color: appColors.textLow, fontSize: 13),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    itemCount: incidencias.length,
+                    itemBuilder: (ctx, i) {
+                      final inc = incidencias[i];
+                      final colors = Theme.of(context).extension<AppColors>()!;
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              useRootNavigator: true,
+                              builder: (context) => IncidentDetailDialog(
+                                incidencia: inc,
+                                showAdminActions: true,
+                              ),
+                            );
+                          },
+                          leading: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.confirmation_number_outlined,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          title: Text(
+                            inc.titulo,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Row(
+                              children: [
+                                Icon(Icons.circle, size: 8, color: _getStatusColor(inc.estadoNombre, colors)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  inc.estadoNombre,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _getStatusColor(inc.estadoNombre, colors),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          trailing: Icon(Icons.chevron_right, color: colors.textLow.withValues(alpha: 0.5)),
+                        ),
+                      );
+                    },
                   ),
-                  child: Icon(Icons.confirmation_number_outlined, color: Theme.of(context).colorScheme.primary),
-                ),
-                title: Text(
-                  inc.titulo, 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)
-                ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: Row(
-                    children: [
-                      Icon(Icons.circle, size: 8, color: _getStatusColor(inc.estadoNombre, appColors)),
-                      const SizedBox(width: 6),
-                      Text(
-                        inc.estadoNombre, 
-                        style: TextStyle(
-                          fontSize: 12, 
-                          fontWeight: FontWeight.bold,
-                          color: _getStatusColor(inc.estadoNombre, appColors)
-                        )
-                      ),
-                    ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIncidentFilters(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Search bar
+          TextField(
+            onChanged: (v) => setState(() => _incidentSearchQuery = v),
+            style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Buscar incidencia...',
+              hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5), fontSize: 13),
+              prefixIcon: Icon(Icons.search, size: 18, color: appColors.textLow),
+              suffixIcon: _incidentSearchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear, size: 16, color: appColors.textLow),
+                      onPressed: () => setState(() => _incidentSearchQuery = ''),
+                    )
+                  : null,
+              fillColor: appColors.card,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Status filter chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _incidentStatuses.map((opt) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(opt, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  selected: _incidentStatusFilter == opt,
+                  onSelected: (v) => setState(() => _incidentStatusFilter = opt),
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                  checkmarkColor: theme.colorScheme.primary,
+                  side: BorderSide(
+                    color: _incidentStatusFilter == opt
+                        ? theme.colorScheme.primary
+                        : appColors.border.withValues(alpha: 0.5),
+                  ),
+                  labelStyle: TextStyle(
+                    color: _incidentStatusFilter == opt
+                        ? theme.colorScheme.primary
+                        : appColors.textLow,
                   ),
                 ),
-                trailing: Icon(Icons.chevron_right, color: appColors.textLow.withValues(alpha: 0.5)),
-              ),
-            );
-          }
+              )).toList(),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }

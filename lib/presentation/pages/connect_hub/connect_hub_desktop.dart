@@ -24,7 +24,7 @@ class ConnectHubDesktop extends StatefulWidget {
 
 class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
   Usuario? _activeContact;
-  
+
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final _audioRecorder = AudioRecorder();
@@ -83,7 +83,7 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
   Future<void> _startRecording() async {
     try {
       if (await _audioRecorder.hasPermission()) {
-        await _audioRecorder.start(const RecordConfig(), path: ''); 
+        await _audioRecorder.start(const RecordConfig(), path: '');
         setState(() => _isRecording = true);
       }
     } catch (e) {
@@ -99,7 +99,6 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
         final uri = Uri.parse(path);
         final response = await http.get(uri);
         final bytes = response.bodyBytes;
-        
         final url = await StorageService().uploadFile(bytes, 'audio_${DateTime.now().millisecondsSinceEpoch}.m4a', isAudio: true);
         if (!mounted) return;
         if (url != null) {
@@ -130,15 +129,18 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
 
     return Row(
       children: [
-        Expanded(flex: 2, child: _buildContactsPanel(context, provider)),
+        SizedBox(width: 300, child: _buildContactsPanel(context, provider)),
         VerticalDivider(width: 1, color: appColors.border),
-        Expanded(flex: 4, child: _buildChatPanel(context, provider.mensajes)),
-        VerticalDivider(width: 1, color: appColors.border),
-        Expanded(flex: 2, child: _buildDetailsPanel(context)),
+        Expanded(child: _buildChatPanel(context, provider.mensajes)),
+        if (_activeContact != null) ...[
+          VerticalDivider(width: 1, color: appColors.border),
+          SizedBox(width: 260, child: _buildDetailsPanel(context)),
+        ],
       ],
     );
   }
 
+  // ─── CONTACTS PANEL ────────────────────────────────────────────────────────
   Widget _buildContactsPanel(BuildContext context, AppProvider provider) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
@@ -151,41 +153,80 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: TextField(
-            style: TextStyle(color: theme.colorScheme.onSurface),
-            onChanged: (v) => setState(() => _searchQuery = v),
-            decoration: InputDecoration(
-              hintText: 'Buscar contacto...',
-              hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
-              prefixIcon: Icon(Icons.search, size: 20, color: appColors.textLow),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear, size: 18, color: appColors.textLow),
-                      onPressed: () => setState(() => _searchQuery = ''),
-                    )
-                  : null,
-              fillColor: appColors.surface,
-            ),
+        // Header
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+          decoration: BoxDecoration(
+            color: appColors.surface,
+            border: Border(bottom: BorderSide(color: appColors.border.withValues(alpha: 0.5))),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.secondary,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const FaIcon(FontAwesomeIcons.comments, size: 14, color: Colors.white),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Connect Hub', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.onSurface)),
+                      Text('${allContactos.length} contactos', style: TextStyle(fontSize: 11, color: appColors.textLow)),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+                onChanged: (v) => setState(() => _searchQuery = v),
+                decoration: InputDecoration(
+                  hintText: 'Buscar contacto...',
+                  hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5), fontSize: 13),
+                  prefixIcon: Icon(Icons.search, size: 18, color: appColors.textLow),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear, size: 16, color: appColors.textLow),
+                          onPressed: () => setState(() => _searchQuery = ''),
+                        )
+                      : null,
+                  fillColor: appColors.card,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
+        // Contacts list
         Expanded(
           child: contactos.isEmpty
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.search_off, size: 40, color: appColors.textLow),
+                      Icon(Icons.search_off, size: 40, color: appColors.textLow.withValues(alpha: 0.4)),
                       const SizedBox(height: 8),
-                      Text('Sin resultados', style: TextStyle(color: appColors.textLow)),
+                      Text('Sin resultados', style: TextStyle(color: appColors.textLow, fontSize: 13)),
                     ],
                   ),
                 )
               : ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: contactos.length,
-                  itemBuilder: (context, index) => _buildContactItem(context, contactos[index], _activeContact?.id == contactos[index].id),
+                  itemBuilder: (context, index) => _buildContactItem(
+                      context, contactos[index], _activeContact?.id == contactos[index].id),
                 ),
         ),
       ],
@@ -195,79 +236,212 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
   Widget _buildContactItem(BuildContext context, Usuario contact, bool isActive) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    bool isAI = contact.id == 'aedus-ai-system';
-    
-    return ListTile(
-      onTap: () => _selectContact(contact),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      selected: isActive,
-      selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.05),
-      leading: CircleAvatar(
-        backgroundColor: isAI ? theme.colorScheme.primary.withValues(alpha: 0.1) : appColors.card,
-        backgroundImage: (!isAI && contact.avatarUrl != null) ? CachedNetworkImageProvider(contact.avatarUrl!) : null,
-        child: isAI
-          ? FaIcon(FontAwesomeIcons.robot, size: 14, color: theme.colorScheme.primary)
-          : (contact.avatarUrl == null
-              ? Text(contact.nombre.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface))
-              : null),
+    final bool isAI = contact.id == 'aedus-ai-system';
+
+    // Online status color
+    Color onlineColor = appColors.textLow.withValues(alpha: 0.4);
+    if (contact.lastSeen != null) {
+      final diff = DateTime.now().difference(contact.lastSeen!);
+      if (diff.inMinutes < 5) { onlineColor = appColors.success; }
+      else if (diff.inMinutes < 30) { onlineColor = Colors.orange; }
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: isActive ? theme.colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent,
+        border: isActive
+            ? Border(left: BorderSide(color: theme.colorScheme.primary, width: 3))
+            : const Border(left: BorderSide(color: Colors.transparent, width: 3)),
       ),
-      title: Text(contact.nombre, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface)),
-      subtitle: Text(contact.rol, style: TextStyle(color: appColors.textLow, fontSize: 12)),
-      trailing: isActive ? CircleAvatar(radius: 4, backgroundColor: theme.colorScheme.primary) : null,
+      child: ListTile(
+        onTap: () => _selectContact(contact),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        leading: Stack(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: isAI
+                  ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                  : appColors.card,
+              backgroundImage: (!isAI && contact.avatarUrl != null)
+                  ? CachedNetworkImageProvider(contact.avatarUrl!)
+                  : null,
+              child: isAI
+                  ? FaIcon(FontAwesomeIcons.robot, size: 14, color: theme.colorScheme.primary)
+                  : (contact.avatarUrl == null
+                      ? Text(
+                          contact.nombre.substring(0, 1).toUpperCase(),
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary),
+                        )
+                      : null),
+            ),
+            if (!isAI)
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 11,
+                  height: 11,
+                  decoration: BoxDecoration(
+                    color: onlineColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: appColors.surface, width: 2),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        title: Text(
+          contact.nombre,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+          ),
+        ),
+        subtitle: Text(
+          isAI ? '🤖 Asistente IA' : contact.rol,
+          style: TextStyle(color: appColors.textLow, fontSize: 11),
+        ),
+      ),
     );
   }
 
+  // ─── CHAT PANEL ────────────────────────────────────────────────────────────
   Widget _buildChatPanel(BuildContext context, List<Mensaje> mensajes) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
+
     if (_activeContact == null) {
-      return Center(child: Text('Selecciona un contacto para chatear', style: TextStyle(color: appColors.textLow)));
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary.withValues(alpha: 0.08),
+                    theme.colorScheme.secondary.withValues(alpha: 0.05),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: FaIcon(FontAwesomeIcons.comments, size: 48, color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+            ),
+            const SizedBox(height: 24),
+            Text('Selecciona un contacto', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.onSurface)),
+            const SizedBox(height: 8),
+            Text('Elige una conversación para empezar a chatear', style: TextStyle(color: appColors.textLow, fontSize: 14)),
+          ],
+        ),
+      );
     }
+
+    final bool isAI = _activeContact!.id == 'aedus-ai-system';
 
     return Column(
       children: [
         // Chat Header
         Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(color: theme.scaffoldBackgroundColor),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: BoxDecoration(
+            color: appColors.surface,
+            border: Border(bottom: BorderSide(color: appColors.border.withValues(alpha: 0.5))),
+          ),
           child: Row(
             children: [
-              Text(_activeContact!.nombre, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.onSurface)),
-              const Spacer(),
-              Icon(Icons.videocam_outlined, color: appColors.textLow),
-              const SizedBox(width: 16),
-              Icon(Icons.phone_outlined, color: appColors.textLow),
-              const SizedBox(width: 16),
-              Icon(Icons.more_vert, color: appColors.textLow),
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: isAI
+                        ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                        : appColors.card,
+                    backgroundImage: (!isAI && _activeContact!.avatarUrl != null)
+                        ? CachedNetworkImageProvider(_activeContact!.avatarUrl!)
+                        : null,
+                    child: isAI
+                        ? FaIcon(FontAwesomeIcons.robot, size: 14, color: theme.colorScheme.primary)
+                        : (_activeContact!.avatarUrl == null
+                            ? Text(
+                                _activeContact!.nombre.substring(0, 1).toUpperCase(),
+                                style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                              )
+                            : null),
+                  ),
+                  if (!isAI)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: appColors.success,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: appColors.surface, width: 2),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _activeContact!.nombre,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.onSurface),
+                    ),
+                    Text(
+                      isAI ? 'Asistente inteligente · siempre activo' : _activeContact!.rol,
+                      style: TextStyle(color: appColors.textLow, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              if (!isAI) ...[
+                _buildHeaderAction(context, Icons.videocam_outlined, appColors),
+                const SizedBox(width: 4),
+                _buildHeaderAction(context, Icons.phone_outlined, appColors),
+                const SizedBox(width: 4),
+              ],
+              _buildHeaderAction(context, Icons.more_vert, appColors),
             ],
           ),
         ),
-        Divider(height: 1, color: appColors.border),
-        // Chat Messages
+        // Messages
         Expanded(
           child: Container(
-            padding: const EdgeInsets.all(24),
+            color: appColors.surface.withValues(alpha: 0.3),
             child: ListView.builder(
               controller: _scrollController,
+              padding: const EdgeInsets.all(24),
               itemCount: mensajes.length + (_isAITyping ? 1 : 0),
               itemBuilder: (context, index) {
-                // Show typing indicator as last item
                 if (_isAITyping && index == mensajes.length) {
                   return _buildTypingIndicator(context);
                 }
                 final msg = mensajes[index];
                 final isMe = msg.senderId == context.read<AppProvider>().currentUser?.id;
-                
+
                 if (_activeContact?.id == 'aedus-ai-system' && index == 0) {
-                  return _buildAIResponse(context, "¡Hola! Soy tu asistente Aedus. ¿En qué puedo ayudarte hoy con el sistema?");
+                  return _buildAIResponse(context,
+                      '¡Hola! Soy tu asistente Aedus. ¿En qué puedo ayudarte hoy con el sistema?');
                 }
 
                 if (msg.ticketLinkId != null && msg.ticketLinkId! > 0) {
-                   return _buildSharedTicket(context, msg, isMe);
+                  return _buildSharedTicket(context, msg, isMe);
                 }
-
                 if (msg.contenido.startsWith('[TICKET_LINK]:')) {
-                   return _buildSharedTicket(context, msg, isMe);
+                  return _buildSharedTicket(context, msg, isMe);
                 }
 
                 return _buildMessage(context, msg, isMe);
@@ -275,15 +449,28 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
             ),
           ),
         ),
-        // Chat Input
         _buildChatInput(context),
       ],
     );
   }
 
+  Widget _buildHeaderAction(BuildContext context, IconData icon, AppColors appColors) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () {},
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Icon(icon, color: appColors.textLow, size: 20),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSharedTicket(BuildContext context, Mensaje msg, bool isMe) {
     final theme = Theme.of(context);
-    
+
     int ticketId = 0;
     if (msg.ticketLinkId != null && msg.ticketLinkId! > 0) {
       ticketId = msg.ticketLinkId!;
@@ -293,7 +480,7 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
         ticketId = int.tryParse(parts[1].replaceAll(']', '').trim()) ?? 0;
       }
     }
-    
+
     final ticketIdStr = ticketId.toString();
     final allIncids = context.watch<AppProvider>().incidencias;
     final Incidencia? ticket = allIncids.where((i) => i.id == ticketId).firstOrNull;
@@ -302,36 +489,54 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: GestureDetector(
         onTap: () {
-           if (ticket != null) {
-              showDialog(
-                context: context,
-                builder: (ctx) => IncidentDetailDialog(incidencia: ticket, showAdminActions: false),
-              );
-           }
+          if (ticket != null) {
+            showDialog(
+              context: context,
+              builder: (ctx) => IncidentDetailDialog(incidencia: ticket, showAdminActions: false),
+            );
+          }
         },
         child: Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           constraints: const BoxConstraints(maxWidth: 300),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+            boxShadow: [
+              BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 4)),
+            ],
           ),
           child: Row(
             children: [
-              Icon(Icons.confirmation_number, color: theme.colorScheme.primary, size: 32),
-              const SizedBox(width: 16),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.confirmation_number, color: theme.colorScheme.primary, size: 20),
+              ),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Ticket Compartido', style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text('Ticket Compartido',
+                        style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                     const SizedBox(height: 4),
-                    Text(ticket != null ? ticket.titulo : 'Ticket #$ticketIdStr', style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                    Text(
+                      ticket != null ? ticket.titulo : 'Ticket #$ticketIdStr',
+                      style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    if (ticket != null)
+                      Text(ticket.estadoNombre,
+                          style: TextStyle(color: theme.colorScheme.primary.withValues(alpha: 0.7), fontSize: 11)),
                   ],
                 ),
               ),
+              Icon(Icons.open_in_new, color: theme.colorScheme.primary.withValues(alpha: 0.6), size: 14),
             ],
           ),
         ),
@@ -346,23 +551,35 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 24),
         padding: const EdgeInsets.all(20),
+        constraints: const BoxConstraints(maxWidth: 480),
         decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withValues(alpha: 0.08),
+              theme.colorScheme.secondary.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(4),
+            topRight: Radius.circular(20),
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          ),
+          border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                FaIcon(FontAwesomeIcons.wandMagicSparkles, size: 14, color: theme.colorScheme.primary),
+                FaIcon(FontAwesomeIcons.wandMagicSparkles, size: 12, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                Text('Sugerencia IA', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 13)),
+                Text('Asistente Aedus',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 11, letterSpacing: 0.5)),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(text, style: TextStyle(color: theme.colorScheme.onSurface, height: 1.5)),
+            const SizedBox(height: 10),
+            Text(text, style: TextStyle(color: theme.colorScheme.onSurface, height: 1.6, fontSize: 14)),
           ],
         ),
       ),
@@ -371,14 +588,20 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
 
   Widget _buildTypingIndicator(BuildContext context) {
     final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
+          color: appColors.card,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(4),
+            topRight: Radius.circular(16),
+            bottomLeft: Radius.circular(16),
+            bottomRight: Radius.circular(16),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -395,20 +618,33 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
   Widget _buildMessage(BuildContext context, Mensaje msg, bool isMe) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        constraints: const BoxConstraints(maxWidth: 400),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: const BoxConstraints(maxWidth: 440),
         decoration: BoxDecoration(
-          color: isMe ? theme.colorScheme.primary : appColors.card,
+          gradient: isMe
+              ? LinearGradient(colors: [theme.colorScheme.primary, theme.colorScheme.secondary])
+              : null,
+          color: isMe ? null : appColors.card,
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 0),
-            bottomRight: Radius.circular(isMe ? 0 : 16),
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(isMe ? 18 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 18),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isMe
+                  ? theme.colorScheme.primary.withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,7 +654,8 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
                 borderRadius: BorderRadius.circular(12),
                 child: CachedNetworkImage(
                   imageUrl: msg.imagenUrl!,
-                  placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                  placeholder: (context, url) =>
+                      const SizedBox(height: 80, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
                   errorWidget: (context, url, error) => const Icon(Icons.broken_image),
                 ),
               ),
@@ -429,7 +666,14 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
               if (msg.contenido.isNotEmpty) const SizedBox(height: 8),
             ],
             if (msg.contenido.isNotEmpty)
-              Text(msg.contenido, style: TextStyle(color: isMe ? Colors.white : theme.colorScheme.onSurface, height: 1.4)),
+              Text(
+                msg.contenido,
+                style: TextStyle(
+                  color: isMe ? Colors.white : theme.colorScheme.onSurface,
+                  height: 1.5,
+                  fontSize: 14,
+                ),
+              ),
           ],
         ),
       ),
@@ -440,48 +684,62 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      decoration: BoxDecoration(
+        color: appColors.surface,
+        border: Border(top: BorderSide(color: appColors.border.withValues(alpha: 0.5))),
+      ),
       child: Row(
         children: [
           PopupMenuButton(
-            icon: Icon(Icons.add, color: appColors.textLow),
-            color: appColors.surface,
+            icon: Icon(Icons.add_circle_outline, color: appColors.textLow, size: 24),
+            color: appColors.card,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             itemBuilder: (context) => [
-               PopupMenuItem(
-                  value: 'img',
-                  onTap: _pickImage,
-                  child: const Text('Adjuntar Imagen'),
-               ),
-               PopupMenuItem(
-                  value: 'ticket',
-                  onTap: () {
-                     Future.delayed(const Duration(milliseconds: 100), () {
-                       if (!mounted) return;
-                       _showShareTicketDialog(this.context);
-                     });
-                  },
-                  child: const Text('Compartir Ticket'),
-               )
+              PopupMenuItem(
+                value: 'img',
+                onTap: _pickImage,
+                child: Row(children: [
+                  Icon(Icons.image_outlined, size: 18, color: theme.colorScheme.primary),
+                  const SizedBox(width: 10),
+                  const Text('Adjuntar Imagen'),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'ticket',
+                onTap: () {
+                  Future.delayed(const Duration(milliseconds: 100), () {
+                    if (!mounted) return;
+                    _showShareTicketDialog(this.context);
+                  });
+                },
+                child: Row(children: [
+                  Icon(Icons.confirmation_number_outlined, size: 18, color: theme.colorScheme.primary),
+                  const SizedBox(width: 10),
+                  const Text('Compartir Ticket'),
+                ]),
+              ),
             ],
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: _messageController,
-              style: TextStyle(color: theme.colorScheme.onSurface),
+              style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
               decoration: InputDecoration(
-                hintText: _isRecording ? 'Grabando audio...' : 'Escribe un mensaje...',
-                hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5)),
+                hintText: _isRecording ? '🎙 Grabando audio...' : 'Escribe un mensaje...',
+                hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5), fontSize: 13),
                 fillColor: appColors.card,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 suffixIcon: GestureDetector(
                   onLongPress: _startRecording,
                   onLongPressUp: _stopRecording,
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: FaIcon(
-                      FontAwesomeIcons.microphone, 
-                      size: 16, 
-                      color: _isRecording ? appColors.danger : appColors.textLow
+                      FontAwesomeIcons.microphone,
+                      size: 15,
+                      color: _isRecording ? appColors.danger : appColors.textLow,
                     ),
                   ),
                 ),
@@ -489,12 +747,21 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
               onSubmitted: (_) => _sendMessage(),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [theme.colorScheme.primary, theme.colorScheme.secondary]),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white, size: 20),
+              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
               onPressed: _sendMessage,
             ),
           ),
@@ -505,26 +772,62 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
 
   void _showShareTicketDialog(BuildContext context) {
     final provider = context.read<AppProvider>();
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).extension<AppColors>()!.surface,
+      backgroundColor: appColors.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) {
-        return ListView.builder(
-           padding: const EdgeInsets.all(24),
-           itemCount: provider.incidencias.length,
-           itemBuilder: (c, idx) {
-              final inc = provider.incidencias[idx];
-              return ListTile(
-                 title: Text(inc.titulo),
-                 subtitle: Text(inc.estadoNombre),
-                 onTap: () {
-                    _sendMessage(ticketLinkId: inc.id);
-                    Navigator.pop(ctx);
-                 },
-              );
-           }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: appColors.border, borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.confirmation_number, color: theme.colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Text('Compartir Ticket', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.onSurface)),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: provider.incidencias.length,
+                itemBuilder: (c, idx) {
+                  final inc = provider.incidencias[idx];
+                  return ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.confirmation_number_outlined, color: theme.colorScheme.primary, size: 16),
+                    ),
+                    title: Text(inc.titulo, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    subtitle: Text('#${inc.id} · ${inc.estadoNombre}', style: TextStyle(color: appColors.textLow, fontSize: 12)),
+                    onTap: () {
+                      _sendMessage(ticketLinkId: inc.id);
+                      Navigator.pop(ctx);
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
         );
-      }
+      },
     );
   }
 
@@ -550,12 +853,14 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
     _scrollToBottom();
   }
 
+  // ─── DETAILS PANEL ─────────────────────────────────────────────────────────
   Widget _buildDetailsPanel(BuildContext context) {
     if (_activeContact == null) return const SizedBox.shrink();
     return _UserDetailsWidget(contact: _activeContact!);
   }
 }
 
+// ─── USER DETAILS WIDGET ────────────────────────────────────────────────────
 class _UserDetailsWidget extends StatelessWidget {
   final Usuario contact;
   const _UserDetailsWidget({required this.contact});
@@ -564,51 +869,131 @@ class _UserDetailsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
-    return Padding(
-      padding: const EdgeInsets.all(32),
+    final bool isAI = contact.id == 'aedus-ai-system';
+
+    return SingleChildScrollView(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Detalles del Usuario', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-          const SizedBox(height: 32),
-          CircleAvatar(
-            radius: 50,
-            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-            backgroundImage: contact.avatarUrl != null ? CachedNetworkImageProvider(contact.avatarUrl!) : null,
-            child: contact.avatarUrl == null
-                ? Text(contact.nombre.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: theme.colorScheme.primary))
-                : null,
+          // Profile header gradient
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.colorScheme.primary.withValues(alpha: 0.12),
+                  theme.colorScheme.secondary.withValues(alpha: 0.06),
+                ],
+              ),
+              border: Border(bottom: BorderSide(color: appColors.border.withValues(alpha: 0.5))),
+            ),
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: isAI
+                          ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                          : appColors.card,
+                      backgroundImage: (!isAI && contact.avatarUrl != null)
+                          ? CachedNetworkImageProvider(contact.avatarUrl!)
+                          : null,
+                      child: isAI
+                          ? FaIcon(FontAwesomeIcons.robot, size: 28, color: theme.colorScheme.primary)
+                          : (contact.avatarUrl == null
+                              ? Text(contact.nombre.substring(0, 1).toUpperCase(),
+                                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.colorScheme.primary))
+                              : null),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isAI ? theme.colorScheme.primary : appColors.success,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: appColors.surface, width: 2),
+                      ),
+                      child: Icon(
+                        isAI ? Icons.auto_awesome : Icons.circle,
+                        size: 8,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(contact.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.center),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    isAI ? 'IA · Siempre activo' : contact.rol,
+                    style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
-          Text(contact.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-          Text(contact.rol, style: TextStyle(color: appColors.textLow)),
-          const SizedBox(height: 32),
-          const Divider(),
-          const SizedBox(height: 32),
-          _buildInfoCol(context, 'Email', contact.email),
-          _buildInfoCol(context, 'Estado', contact.status),
-          _buildInfoCol(context, 'Coins', contact.aeduCoins.toString()),
+          // Info fields
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('INFORMACIÓN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: appColors.textLow, letterSpacing: 1.5)),
+                const SizedBox(height: 16),
+                _buildInfoRow(context, Icons.email_outlined, 'Email', contact.email),
+                const SizedBox(height: 12),
+                _buildInfoRow(context, Icons.circle, 'Estado', contact.status),
+                const SizedBox(height: 12),
+                if (!isAI)
+                  _buildInfoRow(context, Icons.monetization_on_outlined, 'AeduCoins', '${contact.aeduCoins}'),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoCol(BuildContext context, String label, String value) {
+  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value) {
     final appColors = Theme.of(context).extension<AppColors>()!;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: appColors.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: appColors.border.withValues(alpha: 0.5)),
+      ),
+      child: Row(
         children: [
-          Text(label, style: TextStyle(color: appColors.textLow, fontSize: 12)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          Icon(icon, size: 16, color: theme.colorScheme.primary.withValues(alpha: 0.7)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(color: appColors.textLow, fontSize: 10, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
+// ─── AUDIO PLAYER ───────────────────────────────────────────────────────────
 class AudioPlayerWidget extends StatefulWidget {
   final String url;
   const AudioPlayerWidget({super.key, required this.url});
@@ -655,7 +1040,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, size: 20, color: Theme.of(context).colorScheme.primary),
+            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
+                size: 20, color: Theme.of(context).colorScheme.primary),
             onPressed: () async {
               if (_isPlaying) {
                 await _audioPlayer.pause();
@@ -665,7 +1051,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             },
           ),
           Text(
-            '${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / ${_duration.inMinutes}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}',
+            '${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / '
+            '${_duration.inMinutes}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}',
             style: const TextStyle(fontSize: 10),
           ),
         ],
@@ -674,6 +1061,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   }
 }
 
+// ─── ANIMATED DOTS ──────────────────────────────────────────────────────────
 class _AnimatedDots extends StatefulWidget {
   final Color color;
   const _AnimatedDots({required this.color});

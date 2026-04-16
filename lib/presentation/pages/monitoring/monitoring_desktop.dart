@@ -18,6 +18,11 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
   String _selectedLogCategory = 'TODOS';
   final List<String> _categories = ['TODOS', 'SISTEMA', 'ERROR', 'USUARIO'];
 
+  // Incidents tab filters
+  String _incidentStatusFilter = 'TODOS';
+  String _incidentSearchQuery = '';
+  final List<String> _incidentStatuses = ['TODOS', 'NO LEIDO', 'EN REVISIÓN', 'ACABADO'];
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -211,16 +216,38 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
   // --- INCIDENTS TAB ---
 
   Widget _buildIncidentsTab(BuildContext context) {
-    final incidencias = context.watch<AppProvider>().incidencias;
-    
+    final allIncidencias = context.watch<AppProvider>().incidencias;
+
+    // Apply filters
+    var incidencias = allIncidencias;
+    if (_incidentStatusFilter != 'TODOS') {
+      incidencias = incidencias
+          .where((i) => i.estadoNombre.toUpperCase() == _incidentStatusFilter)
+          .toList();
+    }
+    if (_incidentSearchQuery.isNotEmpty) {
+      final q = _incidentSearchQuery.toLowerCase();
+      incidencias = incidencias
+          .where((i) =>
+              i.titulo.toLowerCase().contains(q) ||
+              i.descripcion.toLowerCase().contains(q))
+          .toList();
+    }
+
     return Column(
       children: [
         _buildIncidentsHeader(context),
+        _buildIncidentFilters(context),
         Expanded(
           child: incidencias.isEmpty
-            ? _buildEmptyState(context, 'No hay incidencias registradas.')
+            ? _buildEmptyState(
+                context,
+                _incidentSearchQuery.isNotEmpty
+                    ? 'Sin resultados para "$_incidentSearchQuery"'
+                    : 'No hay incidencias con estado "$_incidentStatusFilter"',
+              )
             : GridView.builder(
-                padding: const EdgeInsets.all(32),
+                padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   crossAxisSpacing: 16,
@@ -235,6 +262,48 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
               ),
         ),
       ],
+    );
+  }
+
+  Widget _buildIncidentFilters(BuildContext context) {
+    final appColors = Theme.of(context).extension<AppColors>()!;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Search bar
+          TextField(
+            onChanged: (v) => setState(() => _incidentSearchQuery = v),
+            decoration: InputDecoration(
+              hintText: 'Buscar por título o descripción...',
+              hintStyle: TextStyle(color: appColors.textLow.withValues(alpha: 0.5), fontSize: 13),
+              prefixIcon: Icon(Icons.search, size: 18, color: appColors.textLow),
+              suffixIcon: _incidentSearchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear, size: 16, color: appColors.textLow),
+                      onPressed: () => setState(() => _incidentSearchQuery = ''),
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Status filter chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _incidentStatuses.map((opt) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(opt, style: const TextStyle(fontSize: 11)),
+                  selected: _incidentStatusFilter == opt,
+                  onSelected: (_) => setState(() => _incidentStatusFilter = opt),
+                ),
+              )).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
