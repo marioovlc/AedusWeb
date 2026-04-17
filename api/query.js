@@ -148,8 +148,8 @@ const ACTION_MAP = {
   create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url, imagen_ruta) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img, @img) RETURNING *`,
   send_message: `INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, ticket_link_id, fecha, leido) 
                   VALUES (@me, @other, @txt, @img, @aud, @ticket_link_id, NOW(), false) RETURNING *`,
-  request_user: `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", banned, aeducoins) VALUES (@nom, @em, @pass, 'USER', false, true, 0) RETURNING *`,
-  approve_user: `UPDATE neon_auth.user SET "emailVerified" = true WHERE id = @id RETURNING *`,
+  request_user: `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", banned, aeducoins) VALUES (@nom, @em, @pass, 'USER', false, false, 0) RETURNING *`,
+  approve_user: `UPDATE neon_auth.user SET "emailVerified" = true, banned = false WHERE id = @id RETURNING *`,
   reject_user: `DELETE FROM neon_auth.user WHERE id = @id RETURNING *`,
   update_user_role: `UPDATE neon_auth.user SET role = @rol WHERE id = @id RETURNING *`,
   update_user_status: `UPDATE neon_auth.user SET banned = @ban, "emailVerified" = @ev WHERE id = @id RETURNING *`,

@@ -188,12 +188,12 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
                 IconButton(
                   icon: Icon(Icons.check_circle_outline, color: appColors.success, size: 22), 
                   tooltip: 'Aprobar Solicitud',
-                  onPressed: () => context.read<AppProvider>().approveUser(user.id)
+                  onPressed: () => _confirmApprove(context, user)
                 ),
                 IconButton(
                   icon: Icon(Icons.cancel_outlined, color: appColors.danger, size: 22), 
                   tooltip: 'Rechazar',
-                  onPressed: () => context.read<AppProvider>().rejectUser(user.id)
+                  onPressed: () => _confirmReject(context, user)
                 ),
               ],
             )
@@ -214,6 +214,56 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
         ),
       ],
     );
+  }
+
+  Future<void> _confirmApprove(BuildContext context, Usuario user) async {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Aprobar usuario', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('¿Confirmas que deseas dar acceso al sistema a ${user.nombre}?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCELAR', style: TextStyle(color: appColors.textLow))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: appColors.success, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('APROBAR'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      context.read<AppProvider>().approveUser(user.id);
+    }
+  }
+
+  Future<void> _confirmReject(BuildContext context, Usuario user) async {
+    final theme = Theme.of(context);
+    final appColors = theme.extension<AppColors>()!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Rechazar solicitud', style: TextStyle(fontWeight: FontWeight.bold, color: appColors.danger)),
+        content: Text('¿Estás seguro de que deseas rechazar y eliminar definitivamente la solicitud de ${user.nombre}?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCELAR', style: TextStyle(color: appColors.textLow))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: appColors.danger, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('RECHAZAR Y ELIMINAR'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      context.read<AppProvider>().rejectUser(user.id);
+    }
   }
 
   Widget _buildRoleBadge(BuildContext context, String rol) {
