@@ -249,7 +249,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
       builder: (ctx) => AlertDialog(
         backgroundColor: appColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Rechazar solicitud', style: TextStyle(fontWeight: FontWeight.bold, color: appColors.danger)),
+        title: Text('Rechazar solicitud', style: TextStyle(fontWeight: FontWeight.bold, color: appColors.danger)),
         content: Text('¿Estás seguro de que deseas rechazar y eliminar definitivamente la solicitud de ${user.nombre}?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCELAR', style: TextStyle(color: appColors.textLow))),
