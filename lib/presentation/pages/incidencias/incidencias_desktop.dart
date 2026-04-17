@@ -45,7 +45,14 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
   }
 
   Future<void> _submitIncident() async {
-    if (_tituloController.text.isEmpty) return;
+    if (_tituloController.text.trim().isEmpty || _descController.text.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Debes indicar un título descriptivo y detalles para la incidencia.', style: TextStyle(color: Colors.white))),
+        );
+      }
+      return;
+    }
     setState(() => _isCreating = true);
     
     String? uploadedUrl;
@@ -83,7 +90,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Incidencias reportada con éxito.')),
+        const SnackBar(content: Text('Incidencia reportada con éxito.')),
       );
     }
   }
@@ -182,7 +189,9 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
                     OutlinedButton.icon(
                       onPressed: _pickImage,
                       icon: const Icon(Icons.attach_file),
-                      label: Text(_imageBytes == null ? 'ADJUNTAR IMAGEN' : 'CAMBIAR IMAGEN'),
+                      label: Text(_imageBytes == null 
+                          ? 'ADJUNTAR IMAGEN' 
+                          : 'IMAGEN (${(_imageBytes!.lengthInBytes / (1024 * 1024)).toStringAsFixed(2)} MB) - CAMBIAR'),
                       style: OutlinedButton.styleFrom(
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),

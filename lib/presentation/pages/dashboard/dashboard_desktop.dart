@@ -190,9 +190,30 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Evolución de Incidencias (7 días)',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Evolución de Incidencias',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: '7 días',
+                      style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
+                      dropdownColor: appColors.surface,
+                      items: ['7 días', '30 días', 'Este Año'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                      onChanged: (v) {}, // TODO: Connect to provider in future
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -201,7 +222,24 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
                   ? LineChart(
                       LineChartData(
                         gridData: const FlGridData(show: false),
-                        titlesData: const FlTitlesData(show: false),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (value, meta) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text('Día ${value.toInt()}', style: TextStyle(color: appColors.textLow, fontSize: 11)),
+                                );
+                              },
+                              reservedSize: 30,
+                            ),
+                          ),
+                        ),
                         borderData: FlBorderData(show: false),
                         lineBarsData: [
                           LineChartBarData(

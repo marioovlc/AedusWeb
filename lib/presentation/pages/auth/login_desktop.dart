@@ -14,6 +14,7 @@ class _LoginDesktopState extends State<LoginDesktop> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
@@ -184,20 +185,31 @@ class _LoginDesktopState extends State<LoginDesktop> {
                     ),
                     const SizedBox(height: 32),
                     Center(
-                      child: TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/register'),
-                        child: RichText(
-                          text: TextSpan(
-                            text: '¿No tienes una cuenta? ',
-                            style: TextStyle(color: appColors.textLow),
-                            children: [
-                              TextSpan(
-                                text: 'Solicita acceso',
-                                style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                      child: Column(
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Funcionalidad de recuperación próximamente.')));
+                            },
+                            child: const Text('¿Olvidaste tu contraseña?'),
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => Navigator.pushNamed(context, '/register'),
+                            child: RichText(
+                              text: TextSpan(
+                                text: '¿No tienes una cuenta? ',
+                                style: TextStyle(color: appColors.textLow),
+                                children: [
+                                  TextSpan(
+                                    text: 'Solicita acceso',
+                                    style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -220,7 +232,7 @@ class _LoginDesktopState extends State<LoginDesktop> {
         const SizedBox(height: 12),
         TextField(
           controller: controller,
-          obscureText: isPassword,
+          obscureText: isPassword ? _obscurePassword : false,
           style: TextStyle(color: theme.colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: hint,
@@ -236,6 +248,10 @@ class _LoginDesktopState extends State<LoginDesktop> {
               isPassword ? Icons.lock_outline : Icons.email_outlined,
               color: theme.colorScheme.primary,
             ),
+            suffixIcon: isPassword ? IconButton(
+              icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: theme.colorScheme.primary),
+              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            ) : null,
           ),
         ),
       ],

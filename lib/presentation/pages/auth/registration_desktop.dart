@@ -15,6 +15,7 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
   final _emailController = TextEditingController();
   final _passController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> _register() async {
     if (_nombreController.text.isEmpty || _emailController.text.isEmpty || _passController.text.isEmpty) {
@@ -231,7 +232,7 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
         const SizedBox(height: 12),
         TextField(
           controller: controller,
-          obscureText: isPassword,
+          obscureText: isPassword ? _obscurePassword : isPassword,
           style: TextStyle(color: theme.colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: hint,
@@ -247,6 +248,10 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
               isPassword ? Icons.lock_reset : (label.contains('Nombre') ? Icons.person_outline : Icons.alternate_email),
               color: theme.colorScheme.secondary,
             ),
+            suffixIcon: isPassword ? IconButton(
+              icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: theme.colorScheme.secondary),
+              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            ) : null,
           ),
         ),
       ],

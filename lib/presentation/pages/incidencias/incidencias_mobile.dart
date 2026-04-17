@@ -70,8 +70,8 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
 
   Future<void> _submitIncident() async {
     final title = _tituloController.text.trim();
-    if (title.isEmpty) {
-      setState(() => _submitError = 'El título es obligatorio.');
+    if (title.isEmpty || _descController.text.trim().isEmpty) {
+      setState(() => _submitError = 'El título y la descripción son obligatorios.');
       return;
     }
     setState(() { _isCreating = true; _submitError = null; });
@@ -107,7 +107,7 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reportado con éxito.')),
+        const SnackBar(content: Text('Incidencia reportada con éxito.')),
       );
     }
   }
@@ -198,7 +198,11 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
             ),
           Row(
             children: [
-              IconButton(onPressed: _pickImage, icon: const Icon(Icons.add_a_photo)),
+              OutlinedButton.icon(
+                onPressed: _pickImage, 
+                icon: const Icon(Icons.add_a_photo, size: 16),
+                label: Text(_imageBytes == null ? 'Foto' : '${(_imageBytes!.lengthInBytes / (1024 * 1024)).toStringAsFixed(1)}MB'),
+              ),
               const Spacer(),
               OutlinedButton.icon(
                 onPressed: _isLoadingAI ? null : _getAIHelp,

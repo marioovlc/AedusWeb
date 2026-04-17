@@ -133,6 +133,12 @@ class _LoginMobileState extends State<LoginMobile> {
                 ),
                 const SizedBox(height: 24),
                 TextButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Funcionalidad de recuperación de contraseña próximamente.')));
+                  },
+                  child: const Text('¿Olvidaste tu contraseña?'),
+                ),
+                TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/register'),
                   child: const Text('¿No tienes cuenta? Regístrate'),
                 ),

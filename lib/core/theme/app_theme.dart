@@ -140,6 +140,13 @@ class AppTheme {
         ),
       ),
       
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: prim,
+        contentTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        behavior: SnackBarBehavior.floating,
+      ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surf,

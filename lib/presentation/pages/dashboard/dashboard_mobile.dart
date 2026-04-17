@@ -165,7 +165,27 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Evolución (7d)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Evolución', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Container(
+                  height: 28,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: '7d',
+                      iconSize: 16,
+                      style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
+                      dropdownColor: appColors.surface,
+                      items: ['7d', '30d', '1a'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                      onChanged: (v) {},
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 24),
             SizedBox(
               height: 200,
@@ -173,7 +193,24 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
                   ? LineChart(
                       LineChartData(
                         gridData: const FlGridData(show: false),
-                        titlesData: const FlTitlesData(show: false),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (value, meta) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text('D${value.toInt()}', style: TextStyle(color: appColors.textLow, fontSize: 10)),
+                                );
+                              },
+                              reservedSize: 22,
+                            ),
+                          ),
+                        ),
                         borderData: FlBorderData(show: false),
                         lineBarsData: [
                           LineChartBarData(
