@@ -224,7 +224,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
       builder: (ctx) => AlertDialog(
         backgroundColor: appColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Aprobar usuario', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Aprobar usuario'),
         content: Text('¿Confirmas que deseas dar acceso al sistema a ${user.nombre}?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCELAR', style: TextStyle(color: appColors.textLow))),
@@ -249,7 +249,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
       builder: (ctx) => AlertDialog(
         backgroundColor: appColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Rechazar solicitud', style: TextStyle(fontWeight: FontWeight.bold, color: appColors.danger)),
+        title: const Text('Rechazar solicitud'), // Rely on global theme for white title
         content: Text('¿Estás seguro de que deseas rechazar y eliminar definitivamente la solicitud de ${user.nombre}?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCELAR', style: TextStyle(color: appColors.textLow))),
@@ -324,7 +324,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
             return AlertDialog(
               backgroundColor: appColors.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('Modificar Rol: ${user.nombre}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text('Modificar Rol: ${user.nombre}'),
               content: RadioGroup<String>(
                 groupValue: selectedRole,
                 onChanged: (val) {

@@ -105,7 +105,7 @@ class SettingsMobile extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (ctx, _) => AlertDialog(
-          title: const Text('Editar Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text('Editar Perfil'),
           content: Form(
             key: formKey,
             child: Column(

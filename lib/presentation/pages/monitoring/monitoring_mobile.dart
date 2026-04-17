@@ -161,7 +161,7 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
             builder: (context) => AlertDialog(
               backgroundColor: appColors.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Text(log.accion, style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(log.accion),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,

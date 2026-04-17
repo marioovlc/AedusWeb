@@ -227,7 +227,7 @@ class _MainLayoutState extends State<MainLayout> {
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: const Text('Cerrar Sesión', style: TextStyle(fontWeight: FontWeight.bold)),
+                        title: const Text('Cerrar Sesión'),
                         content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
                         actions: [
                           TextButton(

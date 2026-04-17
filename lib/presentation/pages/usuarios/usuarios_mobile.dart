@@ -177,7 +177,7 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
       builder: (ctx) => AlertDialog(
         backgroundColor: appColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Aprobar usuario', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Aprobar usuario'),
         content: Text('¿Dar acceso al sistema a ${user.nombre}?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
@@ -201,7 +201,7 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
       builder: (ctx) => AlertDialog(
         backgroundColor: appColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Rechazar solicitud', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Rechazar solicitud'),
         content: Text('¿Rechazar y eliminar la solicitud de ${user.nombre}? Esta acción no se puede deshacer.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
@@ -230,7 +230,7 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
             return AlertDialog(
               backgroundColor: appColors.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('Modificar Rol: ${user.nombre}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              title: Text('Modificar Rol: ${user.nombre}'),
               content: RadioGroup<String>(
                 groupValue: selectedRole,
                 onChanged: (val) {
@@ -281,7 +281,7 @@ class _UsuariosMobileState extends State<UsuariosMobile> {
             return AlertDialog(
               backgroundColor: appColors.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('Modificar Estado: ${user.nombre}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              title: Text('Modificar Estado: ${user.nombre}'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

@@ -164,6 +164,19 @@ class AppTheme {
         ),
         labelStyle: TextStyle(color: txtLow),
       ),
+      
+      dialogTheme: DialogThemeData(
+        backgroundColor: surf,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 20 * scale,
+          fontWeight: FontWeight.bold,
+          color: txtHigh,
+        ),
+        contentTextStyle: GoogleFonts.inter(
+          fontSize: 16 * scale,
+          color: txtLow,
+        ),
+      ),
     );
   }
 }
