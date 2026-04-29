@@ -704,7 +704,7 @@ class AppProvider with ChangeNotifier {
     sb.writeln("Usuarios registrados: ${_contactos.length}");
     sb.writeln("Incidencias totales: ${_incidencias.length}");
     
-    final pendientes = _incidencias.where((i) => i.estadoNombre == 'PENDIENTE' || i.estadoNombre == 'NO LEIDO').length;
+    final pendientes = _incidencias.where((i) => i.estadoNombre == 'PENDIENTE' || i.estadoNombre == 'NO LEIDO' || i.estadoNombre == 'ABIERTA').length;
     sb.writeln("Incidencias pendientes: $pendientes");
     
     sb.writeln("\nLISTA DE USUARIOS (Resumen):");
@@ -717,7 +717,7 @@ class AppProvider with ChangeNotifier {
     if (_contactos.length > 16) sb.writeln("- ... y otros más.");
 
     sb.writeln("\nÚLTIMAS INCIDENCIAS ACTIVAS:");
-    final activas = _incidencias.where((i) => i.estadoNombre != 'ACABADO' && i.estadoNombre != 'RESUELTO' && i.estadoNombre != 'ACABADO').take(10);
+    final activas = _incidencias.where((i) => i.estadoNombre != 'ACABADO' && i.estadoNombre != 'RESUELTO' && i.estadoNombre != 'CERRADA').take(15);
     for (final i in activas) {
       sb.writeln("- #${i.id}: ${i.titulo} [${i.estadoNombre}]");
     }
