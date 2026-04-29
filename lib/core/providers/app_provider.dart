@@ -397,7 +397,8 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> _triggerAIResponse(String userText) async {
-    final aiResponse = await _ai.getSummary(userText);
+    final context = _getAIContext();
+    final aiResponse = await _ai.getSummary(userText, context: context);
     
     final responseMsg = Mensaje(
       id: 0,
@@ -694,5 +695,33 @@ class AppProvider with ChangeNotifier {
     _mensajes = [];
     _stopAutoRefresh();
     notifyListeners();
+  }
+
+  String _getAIContext() {
+    final sb = StringBuffer();
+    sb.writeln("ESTADO ACTUAL DEL SISTEMA:");
+    sb.writeln("Métricas principales: $_kpis");
+    sb.writeln("Usuarios registrados: ${_contactos.length}");
+    sb.writeln("Incidencias totales: ${_incidencias.length}");
+    
+    final pendientes = _incidencias.where((i) => i.estadoNombre == 'PENDIENTE' || i.estadoNombre == 'NO LEIDO').length;
+    sb.writeln("Incidencias pendientes: $pendientes");
+    
+    sb.writeln("\nLISTA DE USUARIOS (Resumen):");
+    // Skip index 0 (AI itself)
+    final userLimit = _contactos.length > 16 ? 16 : _contactos.length;
+    for (int i = 1; i < userLimit; i++) {
+      final u = _contactos[i];
+      sb.writeln("- ${u.nombre} (Rol: ${u.rol})");
+    }
+    if (_contactos.length > 16) sb.writeln("- ... y otros más.");
+
+    sb.writeln("\nÚLTIMAS INCIDENCIAS ACTIVAS:");
+    final activas = _incidencias.where((i) => i.estadoNombre != 'ACABADO' && i.estadoNombre != 'RESUELTO' && i.estadoNombre != 'ACABADO').take(10);
+    for (final i in activas) {
+      sb.writeln("- #${i.id}: ${i.titulo} [${i.estadoNombre}]");
+    }
+    
+    return sb.toString();
   }
 }
