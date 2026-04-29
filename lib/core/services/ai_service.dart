@@ -17,12 +17,11 @@ class AIService {
   static const String _systemPrompt = """
 Actúa como una extensión de inteligencia artificial integrada en un software de gestión (Dashboard). Tu nombre es 'Aedus AI'.
 Tus reglas de comportamiento son:
-- Brevedad extrema: Se educado y saluda al inicio unicamente. Ve directo a la respuesta.
-- Contexto técnico: Responde únicamente dudas sobre métricas, datos, tendencias o funciones del software.
-- Idioma: Responde siempre en español profesional y conciso.
-- Limitación: Si el usuario te pide tareas creativas, chistes o temas personales, responde: 'Solo estoy autorizado para realizar análisis de datos'.
-- Formato: Usa viñetas (puntos) si tienes que enumerar más de dos elementos.
-""";
+Brevedad extrema: Se educado y saluda al inicio unicamente. Ve directo a la respuesta.
+Contexto técnico: Responde únicamente dudas sobre métricas, datos, tendencias o funciones del software.
+Idioma: Responde siempre en español profesional y conciso.
+Limitación: Si el usuario te pide tareas creativas, chistes o temas personales, responde: 'Solo estoy autorizado para realizar análisis de datos'.
+Formato: Usa viñetas (puntos) si tienes que enumerar más de dos elementos.""";
 
   /// URL del proxy en el servidor. En web usa ruta relativa;
   /// en móvil apunta al dominio de producción.
@@ -31,11 +30,12 @@ Tus reglas de comportamiento son:
     return kIsWeb ? '/api/ai' : '$base/api/ai';
   }
 
-  Future<String> getSummary(String prompt, {String? context}) async {
+  Future<String> getSummary(String prompt, {String? context, String? systemPromptOverride}) async {
     try {
-      final systemContent = (context != null && context.isNotEmpty)
-          ? '$_systemPrompt\n\nINFORMACIÓN DE CONTEXTO ACTUAL:\n$context'
-          : _systemPrompt;
+      final systemContent = systemPromptOverride ?? 
+          ((context != null && context.isNotEmpty)
+              ? '$_systemPrompt\n\nINFORMACIÓN DE CONTEXTO ACTUAL:\n$context'
+              : _systemPrompt);
 
       final response = await http
           .post(
@@ -69,8 +69,15 @@ Tus reglas de comportamiento son:
   }
 
   Future<String> getTicketSuggestion(String title, String description) async {
-    final prompt =
-        'Analiza esta incidencia y sugiere una solución rápida: Título: $title, Descripción: $description';
-    return getSummary(prompt);
+    const technicalPrompt = "Eres un asistente técnico de soporte IT para un centro educativo. "
+        "El usuario va a describir un problema técnico. "
+        "Tu misión es dar pasos concretos y prácticos para que el profesor RESUELVA EL PROBLEMA POR SÍ MISMO sin necesidad de abrir un ticket de soporte. "
+        "Responde SIEMPRE en español. Sé breve y usa viñetas (•) para los pasos. "
+        "No menciones incidencias anteriores ni bases de datos. Solo responde al problema descrito.";
+    
+    final consulta = title.isEmpty ? description : "$title: $description";
+    final userMsg = 'Tengo este problema técnico en el aula:\n"$consulta"\n\n¿Cómo puedo solucionarlo?';
+    
+    return getSummary(userMsg, systemPromptOverride: technicalPrompt);
   }
 }
