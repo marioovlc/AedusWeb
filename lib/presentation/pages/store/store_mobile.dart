@@ -5,6 +5,10 @@ import '../../../core/providers/app_provider.dart';
 import '../../../data/models/store_item_model.dart';
 import '../../widgets/loading_shimmer.dart';
 
+// =============================================
+// ==== CLASE StoreMobile =====
+// Descripción: Widget estructurado que representa la interfaz móvil de la tienda de beneficios, permitiendo a los usuarios ver su saldo actual, canjear premios por AeduCoins y a los administradores crear nuevos artículos interactivos mediante diálogo flotante.
+// =============================================
 class StoreMobile extends StatelessWidget {
   const StoreMobile({super.key});
 

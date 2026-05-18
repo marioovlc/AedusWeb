@@ -12,6 +12,10 @@ import '../../../core/services/storage_service.dart';
 import '../../widgets/incident_detail_dialog.dart';
 import '../../widgets/loading_shimmer.dart';
 
+// =============================================
+// ==== CLASE IncidenciasDesktop =====
+// Descripción: Widget estructurado que representa la pantalla detallada adaptada a escritorio para el reporte y listado de incidencias, incorporando formulario completo con soporte de carga de fotos, sugerencias inteligentes por IA, búsquedas y filtros dinámicos.
+// =============================================
 class IncidenciasDesktop extends StatefulWidget {
   const IncidenciasDesktop({super.key});
 
@@ -121,10 +125,10 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Left Panel: Form
+                // Panel izquierdo: Formulario de reporte
                 Expanded(flex: 2, child: _buildCreationForm(context)),
                 const SizedBox(width: 32),
-                // Right Panel: My Tickets
+                // Panel derecho: Mis tickets registrados
                 Expanded(flex: 3, child: _buildTicketList(context, incidencias)),
               ],
             ),
@@ -374,7 +378,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
     final appColors = theme.extension<AppColors>()!;
     final isLoading = context.watch<AppProvider>().isLoading;
 
-    // Apply filters
+    // Aplicar filtros de estado y búsqueda
     var incidencias = allIncidencias;
     if (_statusFilter != 'TODOS') {
       incidencias = incidencias.where((i) {
@@ -409,7 +413,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
           ],
         ),
         const SizedBox(height: 12),
-        // Search field
+        // Campo de búsqueda
         TextField(
           onChanged: (v) => setState(() => _searchQuery = v),
           decoration: InputDecoration(
@@ -425,7 +429,7 @@ class _IncidenciasDesktopState extends State<IncidenciasDesktop> {
           ),
         ),
         const SizedBox(height: 12),
-        // Status filter chips
+        // Chips de filtros de estado
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(

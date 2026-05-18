@@ -3,6 +3,10 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/app_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
+// =============================================
+// ==== CLASE LoginMobile =====
+// Descripción: Widget estructurado que representa la vista adaptada a dispositivos móviles para el inicio de sesión, optimizando el espacio y los campos de entrada táctil.
+// =============================================
 class LoginMobile extends StatefulWidget {
   const LoginMobile({super.key});
 
@@ -32,7 +36,7 @@ class _LoginMobileState extends State<LoginMobile> {
   }
 
   Future<void> _login() async {
-    // Basic client-side validation
+    // Validación básica del lado del cliente
     final email = _emailController.text.trim();
     final pass = _passwordController.text;
     if (email.isEmpty || pass.isEmpty) {

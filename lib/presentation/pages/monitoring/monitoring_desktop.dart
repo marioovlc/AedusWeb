@@ -7,6 +7,10 @@ import '../../../data/models/log_model.dart';
 import '../../../data/models/incident_model.dart';
 import '../../widgets/incident_detail_dialog.dart';
 
+// =============================================
+// ==== CLASE MonitoringDesktop =====
+// Descripción: Widget estructurado que representa la pantalla detallada adaptada a escritorio para la monitorización de sistemas, que incluye visualización avanzada de logs por días mediante sticky headers, panel administrativo global de tickets y monitoreo del estado y latencia de componentes críticos en tiempo real.
+// =============================================
 class MonitoringDesktop extends StatefulWidget {
   const MonitoringDesktop({super.key});
 
@@ -18,7 +22,7 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
   String _selectedLogCategory = 'TODOS';
   final List<String> _categories = ['TODOS', 'SISTEMA', 'ERROR', 'USUARIO'];
 
-  // Incidents tab filters
+  // Filtros de la pestaña de incidencias
   String _incidentStatusFilter = 'TODOS';
   String _incidentSearchQuery = '';
   final List<String> _incidentStatuses = ['TODOS', 'PENDIENTE', 'LEIDO', 'REVISIÓN', 'ACABADO'];
@@ -85,7 +89,7 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
     );
   }
 
-  // --- HISTORY TAB ---
+  // --- PESTAÑA HISTORIAL (LOGS) ---
 
   Widget _buildHistoryTab(BuildContext context) {
     final logs = context.watch<AppProvider>().logs;
@@ -213,12 +217,12 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
     );
   }
 
-  // --- INCIDENTS TAB ---
+  // --- PESTAÑA INCIDENCIAS (TICKETS) ---
 
   Widget _buildIncidentsTab(BuildContext context) {
     final allIncidencias = context.watch<AppProvider>().incidencias;
 
-    // Apply filters
+    // Aplicar filtros de estado y búsqueda
     var incidencias = allIncidencias;
     if (_incidentStatusFilter != 'TODOS') {
       incidencias = incidencias.where((i) {
@@ -277,7 +281,7 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search bar
+          // Barra de búsqueda
           TextField(
             onChanged: (v) => setState(() => _incidentSearchQuery = v),
             decoration: InputDecoration(
@@ -293,7 +297,7 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
             ),
           ),
           const SizedBox(height: 12),
-          // Status filter chips
+          // Chips de filtros de estado
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -413,7 +417,7 @@ class _MonitoringDesktopState extends State<MonitoringDesktop> {
     );
   }
 
-  // --- SYSTEM STATUS TAB ---
+  // --- PESTAÑA ESTADO DEL SISTEMA ---
 
   Widget _buildSystemStatusTab(BuildContext context) {
     final provider = context.watch<AppProvider>();

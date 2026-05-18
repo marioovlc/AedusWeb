@@ -14,11 +14,13 @@ import 'presentation/pages/login_page.dart';
 import 'presentation/pages/registration_page.dart';
 import 'presentation/pages/store_page.dart';
 import 'presentation/pages/settings_page.dart';
+import 'presentation/widgets/sustainability_wrapper.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Use clean URLs (/dashboard) instead of hash URLs (/#/dashboard)
+  // Usar URLs limpias (/dashboard) en lugar de URLs con hash (/#/dashboard)
   usePathUrlStrategy();
 
   try {
@@ -36,7 +38,7 @@ void main() async {
   );
 }
 
-// Routes that require the user to be authenticated
+// Rutas que requieren que el usuario esté autenticado
 const _protectedRoutes = {
   '/dashboard',
   '/incidencias',
@@ -47,12 +49,16 @@ const _protectedRoutes = {
   '/settings',
 };
 
-// Routes that require admin or mantenimiento role
+// Rutas que requieren el rol de administrador o mantenimiento
 const _adminRoutes = {
   '/users',
   '/monitoring',
 };
 
+// =============================================
+// ==== CLASE AedusApp =====
+// Descripción: Widget raíz de la aplicación que configura el tema global, la envoltura de sustentabilidad y la navegación protegida con guards de seguridad basados en autenticación y roles de usuario.
+// =============================================
 class AedusApp extends StatelessWidget {
   const AedusApp({super.key});
 
@@ -72,7 +78,9 @@ class AedusApp extends StatelessWidget {
       builder: (context, _, child) {
         final provider = Provider.of<AppProvider>(context, listen: false);
         return MaterialApp(
+          builder: (context, child) => SustainabilityWrapper(child: child!),
           title: 'Aedus App',
+
           debugShowCheckedModeBanner: false,
           themeMode: provider.currentTheme == 'Blanco' ? ThemeMode.light : ThemeMode.dark,
           theme: AppTheme.getTheme('Blanco', isAccessibilityMode: provider.isAccessibilityMode),
@@ -83,7 +91,7 @@ class AedusApp extends StatelessWidget {
             // Leer el estado actual al navegar (no depende del ciclo de build)
             final p = Provider.of<AppProvider>(context, listen: false);
 
-            // Auth guard: redirect to login if not authenticated
+            // Guard de autenticación: redirigir a login si no está autenticado
             if (_protectedRoutes.contains(routeName) && p.currentUser == null) {
               return MaterialPageRoute(
                 settings: const RouteSettings(name: '/login'),
@@ -91,7 +99,7 @@ class AedusApp extends StatelessWidget {
               );
             }
 
-            // Role guard: redirect non-admins away from admin routes
+            // Guard de rol: redirigir a los no administradores fuera de las rutas administrativas
             if (_adminRoutes.contains(routeName) && p.currentUser?.isAdmin != true) {
               return PageRouteBuilder(
                 settings: const RouteSettings(name: '/dashboard'),

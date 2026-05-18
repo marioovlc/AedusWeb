@@ -3,6 +3,10 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_provider.dart';
 
+// =============================================
+// ==== CLASE LoginDesktop =====
+// Descripción: Widget estructurado que representa la vista detallada de escritorio para el inicio de sesión, con un banner corporativo elegante y formulario estilizado.
+// =============================================
 class LoginDesktop extends StatefulWidget {
   const LoginDesktop({super.key});
 
@@ -58,12 +62,12 @@ class _LoginDesktopState extends State<LoginDesktop> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Row(
         children: [
-          // Left Side: Branding / Aedus Aesthetic
+          // Lado izquierdo: Marca / Estética Aedus
           Expanded(
             flex: 3,
             child: Stack(
               children: [
-                // Tech Grid Pattern
+                // Patrón de cuadrícula tecnológica
                 Positioned.fill(
                   child: Opacity(
                     opacity: 0.05,
@@ -123,7 +127,7 @@ class _LoginDesktopState extends State<LoginDesktop> {
             ),
           ),
           
-          // Right Side: Integrated Login Form
+          // Lado derecho: Formulario de inicio de sesión integrado
           Expanded(
             flex: 2,
             child: Center(
@@ -143,7 +147,7 @@ class _LoginDesktopState extends State<LoginDesktop> {
                       style: TextStyle(color: appColors.textLow, fontSize: 16),
                     ),
                     const SizedBox(height: 48),
-                    // Form Card
+                    // Tarjeta del formulario
                     Container(
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(

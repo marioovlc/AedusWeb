@@ -1,3 +1,7 @@
+// =============================================
+// ==== CLASE Usuario =====
+// Descripción: Modelo de datos que representa a un usuario de la plataforma Aedus, almacenando su rol, estado, monedas de gamificación, última conexión y perfil de usuario.
+// =============================================
 class Usuario {
   final String id;
   final String nombre;
@@ -53,7 +57,7 @@ class Usuario {
     };
   }
 
-  /// True for ADMIN, ADMINISTRADOR, and MANTENIMIENTO roles.
+  /// Retorna true para los roles de ADMIN, ADMINISTRADOR y MANTENIMIENTO.
   bool get isAdmin {
     final r = rol.trim().toUpperCase();
     return r == 'ADMIN' || r == 'ADMINISTRADOR' || r == 'MANTENIMIENTO';

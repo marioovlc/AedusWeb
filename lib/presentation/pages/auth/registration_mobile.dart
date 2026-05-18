@@ -3,6 +3,10 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/app_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
+// =============================================
+// ==== CLASE RegistrationMobile =====
+// Descripción: Widget estructurado que representa la vista adaptada a dispositivos móviles para el registro de usuarios de forma táctil y simplificada.
+// =============================================
 class RegistrationMobile extends StatefulWidget {
   const RegistrationMobile({super.key});
 

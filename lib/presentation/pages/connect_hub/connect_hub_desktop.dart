@@ -15,6 +15,10 @@ import '../../../data/models/incident_model.dart';
 import '../../../core/services/storage_service.dart';
 import '../../widgets/incident_detail_dialog.dart';
 
+// =============================================
+// ==== CLASE ConnectHubDesktop =====
+// Descripción: Widget estructurado que representa la interfaz de Connect Hub optimizada para escritorio, ofreciendo chat en tiempo real con soporte de imágenes, notas de voz, reproductor de audio integrado y un asistente inteligente de IA.
+// =============================================
 class ConnectHubDesktop extends StatefulWidget {
   const ConnectHubDesktop({super.key});
 
@@ -153,7 +157,7 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
 
     return Column(
       children: [
-        // Header
+        // Cabecera
         Container(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
           decoration: BoxDecoration(
@@ -209,7 +213,7 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
             ],
           ),
         ),
-        // Contacts list
+        // Lista de contactos
         Expanded(
           child: contactos.isEmpty
               ? Center(
@@ -238,7 +242,7 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
     final appColors = theme.extension<AppColors>()!;
     final bool isAI = contact.id == 'aedus-ai-system';
 
-    // Online status color
+    // Color de estado de conexión
     Color onlineColor = appColors.textLow.withValues(alpha: 0.4);
     if (contact.lastSeen != null) {
       final diff = DateTime.now().difference(contact.lastSeen!);
@@ -347,7 +351,7 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
 
     return Column(
       children: [
-        // Chat Header
+        // Cabecera del chat
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           decoration: BoxDecoration(
@@ -417,7 +421,7 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
             ],
           ),
         ),
-        // Messages
+        // Mensajes
         Expanded(
           child: Container(
             color: appColors.surface.withValues(alpha: 0.3),
@@ -861,6 +865,10 @@ class _ConnectHubDesktopState extends State<ConnectHubDesktop> {
 }
 
 // ─── USER DETAILS WIDGET ────────────────────────────────────────────────────
+// =============================================
+// ==== CLASE _UserDetailsWidget =====
+// Descripción: Widget auxiliar de detalles que visualiza el perfil del contacto seleccionado en la barra lateral del Connect Hub de escritorio.
+// =============================================
 class _UserDetailsWidget extends StatelessWidget {
   final Usuario contact;
   const _UserDetailsWidget({required this.contact});
@@ -875,7 +883,7 @@ class _UserDetailsWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Profile header gradient
+          // Degradado de la cabecera del perfil
           Container(
             padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
             decoration: BoxDecoration(
@@ -941,7 +949,7 @@ class _UserDetailsWidget extends StatelessWidget {
               ],
             ),
           ),
-          // Info fields
+          // Campos de información
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -994,6 +1002,10 @@ class _UserDetailsWidget extends StatelessWidget {
 }
 
 // ─── AUDIO PLAYER ───────────────────────────────────────────────────────────
+// =============================================
+// ==== CLASE AudioPlayerWidget =====
+// Descripción: Widget reproductor de audio interactivo integrado que gestiona y reproduce mensajes de voz del Connect Hub.
+// =============================================
 class AudioPlayerWidget extends StatefulWidget {
   final String url;
   const AudioPlayerWidget({super.key, required this.url});
@@ -1062,6 +1074,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 }
 
 // ─── ANIMATED DOTS ──────────────────────────────────────────────────────────
+// =============================================
+// ==== CLASE _AnimatedDots =====
+// Descripción: Widget de animación simple para simular el indicador de escritura de la IA ("Typing Indicator") mediante puntos rebotantes.
+// =============================================
 class _AnimatedDots extends StatefulWidget {
   final Color color;
   const _AnimatedDots({required this.color});

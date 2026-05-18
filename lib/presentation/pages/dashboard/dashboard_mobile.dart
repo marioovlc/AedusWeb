@@ -6,6 +6,10 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_provider.dart';
 import '../../widgets/loading_shimmer.dart';
 
+// =============================================
+// ==== CLASE DashboardMobile =====
+// Descripción: Widget estructurado que representa la vista detallada adaptada a dispositivos móviles para el Dashboard, renderizando métricas KPI en grid compacta, gráficos apilados y gamificación con logros animados.
+// =============================================
 class DashboardMobile extends StatefulWidget {
   const DashboardMobile({super.key});
 
@@ -48,7 +52,7 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
           _buildHeader(context),
           const SizedBox(height: 24),
           
-          // KPI Grid (2x2)
+          // Cuadrícula de KPIs (2x2)
           if (isLoading)
             const ShimmerKPIRow(isMobile: true)
           else GridView.count(
@@ -68,12 +72,12 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
           
           const SizedBox(height: 32),
           
-          // AI Assistant (Prominent on Mobile)
+          // Asistente IA (Prominente en móviles)
           _buildAIAssistantCard(context),
           
           const SizedBox(height: 32),
           
-          // Charts (Stacked)
+          // Gráficos (Apilados)
           if (isLoading)
             Column(
               children: [
@@ -92,7 +96,7 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
           
           const SizedBox(height: 32),
           
-          // Gamification
+          // Gamificación
           _buildGamificationSection(context),
         ],
       ),
@@ -319,7 +323,7 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
     final achievements = provider.achievements;
     final appColors = theme.extension<AppColors>()!;
 
-    // Trigger animation once when achievements load
+    // Disparar animación una vez cuando carguen los logros
     if (achievements.isNotEmpty && !_achievementsAnimated) {
       _achievementsAnimated = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -459,6 +463,10 @@ class _DashboardMobileState extends State<DashboardMobile> with TickerProviderSt
 // ---------------------------------------------------------------------------
 // AI Assistant Card — comparte lógica con dashboard_desktop
 // ---------------------------------------------------------------------------
+// =============================================
+// ==== CLASE _AIAssistantCard =====
+// Descripción: Widget auxiliar que muestra un panel inteligente interactivo impulsado por Aedus AI para resumir el estado del sistema directamente en el Dashboard.
+// =============================================
 class _AIAssistantCard extends StatefulWidget {
   final Map<String, String> kpis;
   const _AIAssistantCard({required this.kpis});

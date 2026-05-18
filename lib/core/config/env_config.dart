@@ -12,6 +12,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 ///
 ///     Credenciales de BD, IA y Cloudinary se leen ÚNICAMENTE en el servidor
 ///     (`api/query.js`, `api/ai.js`, `api/upload.js`).
+// =============================================
+// ==== CLASE EnvConfig =====
+// Descripción: Clase de configuración global encargada de gestionar el acceso a las variables de entorno, claves de API internas y URLs base de los servicios según el entorno de ejecución (web o móvil).
+// =============================================
 class EnvConfig {
   /// Clave de autenticación cliente → proxies del servidor.
   static String get internalApiKey => _get('INTERNAL_API_KEY');

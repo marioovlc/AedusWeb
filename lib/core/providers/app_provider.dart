@@ -17,6 +17,10 @@ import '../services/database_service.dart';
 import '../services/ai_service.dart';
 import '../utils/file_helper.dart';
 
+// =============================================
+// ==== CLASE AppProvider =====
+// Descripción: Controlador de estado global de la aplicación que gestiona la autenticación de usuarios, la carga y sincronización de incidencias, KPIs, contactos de chat, tienda gamificada, logs del sistema e integración directa con Aedus AI.
+// =============================================
 class AppProvider with ChangeNotifier {
   Usuario? _currentUser;
   List<Incidencia> _incidencias = [];
@@ -110,7 +114,7 @@ class AppProvider with ChangeNotifier {
 
   Future<bool> login(String email, String password) async {
     final results = await _db.query(
-      "", // SQL is ignored when action is 'login'
+      "", // El SQL se ignora cuando la acción es 'login'
       substitutionValues: {'email': email, 'password': password},
       action: 'login',
     );
@@ -152,7 +156,7 @@ class AppProvider with ChangeNotifier {
     final results = await _db.query("", action: "get_incidencias");
     final allIncidencias = results.map((m) => Incidencia.fromMap(m)).toList();
     
-    // Filtering: Only owners see their incidents, unless staff/admin
+    // Filtrado: Solo los propietarios ven sus incidencias, a menos que sean personal o administrador
     final role = _currentUser?.rol.toUpperCase();
     if (role == 'ADMIN' || role == 'MANTENIMIENTO' || role == 'ADMINISTRADOR') {
       _incidencias = allIncidencias;
@@ -180,7 +184,7 @@ class AppProvider with ChangeNotifier {
       'Total Incidencias': total.toString(),
       'Pendientes': pendientes.toString(),
       'Resueltas': resueltas.toString(),
-      'Usuarios Activos': (_contactos.length + 1).toString(), // Including self
+      'Usuarios Activos': (_contactos.length + 1).toString(), // Incluyéndose a sí mismo
     };
   }
 
@@ -189,7 +193,7 @@ class AppProvider with ChangeNotifier {
       substitutionValues: {'id': _currentUser!.id});
     _contactos = results.map((m) => Usuario.fromMap(m)).toList();
     
-    // Virtual AI Contact
+    // Contacto virtual de IA
     _contactos.insert(0, Usuario(
       id: 'aedus-ai-system',
       nombre: 'Aedus AI (Sugerencias)',
@@ -214,12 +218,12 @@ class AppProvider with ChangeNotifier {
     if (_currentUser == null) return;
     
     if (receiverId == 'aedus-ai-system') {
-      // AI messages are transient and held in memory during the session.
-      // We don't clear them if they already exist to maintain session history.
+      // Los mensajes de IA son transitorios y se guardan en memoria durante la sesión.
+      // No los borramos si ya existen para mantener el historial de la sesión.
       if (_mensajes.isNotEmpty && (_mensajes.first.senderId == 'aedus-ai-system' || _mensajes.first.receiverId == 'aedus-ai-system')) {
         return; 
       }
-      _mensajes = []; // Clear if we were looking at another contact
+      _mensajes = []; // Limpiar si estábamos viendo a otro contacto
       notifyListeners();
       return;
     }
@@ -262,13 +266,13 @@ class AppProvider with ChangeNotifier {
       },
     );
 
-    // Gamification: Award 50 AeduCoins if finished (Estado 4 = ACABADO usually)
+    // Gamificación: Otorgar 50 AeduCoins si finaliza (usualmente Estado 4 = ACABADO)
     if (estadoId == 4) {
       await _db.query("", action: "update_user_coins", substitutionValues: {'uId': uId, 'coins': 50, 'motivo': 'Recompensa por completar incidencia #$id'});
       await createLog('RECOMPENSA', 'Usuario $uId recibió 50 AeduCoins por completar incidencia $id', categoria: 'SISTEMA');
-      // Check for Solucionador achievement (5+ finished incidents)
+      // Comprobar logro 'Solucionador' (5 o más incidencias completadas)
       final finished = _incidencias.where((i) => i.usuarioId == uId && (i.estadoNombre == 'ACABADO' || i.estadoNombre == 'RESUELTO')).length;
-      if (finished >= 4) { // 4 + current one = 5
+      if (finished >= 4) { // 4 + la actual = 5
         await grantAchievement('Solucionador', userId: uId);
       }
     }
@@ -364,7 +368,7 @@ class AppProvider with ChangeNotifier {
     );
 
     if (receiverId == 'aedus-ai-system') {
-      // AI messages: Session-only update (No DB)
+      // Mensajes de IA: Actualización solo de sesión (sin Base de Datos)
       _mensajes.add(mensaje);
       notifyListeners();
       _triggerAIResponse(text);
@@ -372,7 +376,7 @@ class AppProvider with ChangeNotifier {
     }
 
     try {
-      // Standard messages: Persist in DB
+      // Mensajes estándar: Persistir en la Base de Datos
       await _db.query(
         "",
         action: "send_message",
@@ -386,10 +390,10 @@ class AppProvider with ChangeNotifier {
         },
       );
       
-      // Grant Colaborador achievement on first message
+      // Conceder logro 'Colaborador' en el primer mensaje
       await grantAchievement('Colaborador');
       
-      // Update local list from DB to get the correct ID/state
+      // Actualizar la lista local desde la Base de Datos para obtener el ID y estado correctos
       await fetchMessages(receiverId);
     } catch (e) {
       debugPrint('Error sending message: $e');
@@ -418,7 +422,7 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<bool> requestUser(String nombre, String email, String password) async {
-    // Vercel backend will handle the bcrypt hashing securely.
+    // El backend en Vercel gestionará el hash de bcrypt de forma segura.
     await _db.query(
       "",
       action: "request_user",
@@ -669,14 +673,14 @@ class AppProvider with ChangeNotifier {
   Future<void> checkSystemHealth() async {
     try {
       final startTime = DateTime.now();
-      await _db.query("SELECT 1", action: "raw"); // Simple ping to DB
+      await _db.query("SELECT 1", action: "raw"); // Ping simple a la base de datos
       final dbPing = DateTime.now().difference(startTime).inMilliseconds;
 
       _dbLatencyMs = dbPing;
       _systemHealth['DB'] = dbPing < 500;
       _systemHealth['API'] = true;
 
-      // AI Ping
+      // Ping a la IA
       final aiRes = await _ai.getSummary("ping");
       _systemHealth['AI'] = !aiRes.contains("Error");
 
@@ -708,7 +712,7 @@ class AppProvider with ChangeNotifier {
     sb.writeln("Incidencias pendientes: $pendientes");
     
     sb.writeln("\nLISTA DE USUARIOS (Resumen):");
-    // Skip index 0 (AI itself)
+    // Omitir el índice 0 (la propia IA)
     final userLimit = _contactos.length > 16 ? 16 : _contactos.length;
     for (int i = 1; i < userLimit; i++) {
       final u = _contactos[i];

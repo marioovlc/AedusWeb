@@ -5,6 +5,10 @@ import '../../../core/providers/app_provider.dart';
 import '../../../data/models/store_item_model.dart';
 import '../../widgets/loading_shimmer.dart';
 
+// =============================================
+// ==== CLASE StoreDesktop =====
+// Descripción: Widget estructurado que representa la vista detallada adaptada a pantallas de escritorio de la tienda de recompensas, renderizando una cuadrícula interactiva de artículos, saldo de AeduCoins destacado y controles administrativos para crear artículos.
+// =============================================
 class StoreDesktop extends StatelessWidget {
   const StoreDesktop({super.key});
 
@@ -17,7 +21,7 @@ class StoreDesktop extends StatelessWidget {
     final isLoading = provider.isLoading;
     final theme = Theme.of(context);
 
-    // Desktop: crossAxisCount = 3
+    // Vista de escritorio: crossAxisCount = 3
     const crossAxisCount = 3;
 
     return Scaffold(

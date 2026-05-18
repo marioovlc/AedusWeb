@@ -4,6 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:postgres/postgres.dart';
 import '../config/env_config.dart';
 
+// =============================================
+// ==== CLASE DatabaseService =====
+// Descripción: Servicio de base de datos unificado que realiza consultas y mutaciones a PostgreSQL delegándolas de forma segura a través del proxy API de Vercel.
+// =============================================
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
   factory DatabaseService() => _instance;
@@ -17,7 +21,7 @@ class DatabaseService {
   }
 
   Future<List<Map<String, dynamic>>> query(String sql, {Map<String, dynamic>? substitutionValues, String? action}) async {
-    // Unify all platforms to use the API
+    // Unificar todas las plataformas para usar la API
     return _queryAPI(sql, substitutionValues, action: action);
   }
 

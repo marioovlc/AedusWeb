@@ -6,6 +6,10 @@ import '../../core/providers/app_provider.dart';
 import '../../data/models/incident_model.dart';
 import '../../data/models/comentario_incidencia_model.dart';
 
+// =============================================
+// ==== CLASE IncidentDetailDialog =====
+// Descripción: Diálogo interactivo que muestra los detalles de una incidencia, permitiendo a los administradores y técnicos actualizar su estado, añadir notas internas y asignar la tarea a otros técnicos con sugerencias de Aedus AI.
+// =============================================
 class IncidentDetailDialog extends StatefulWidget {
   final Incidencia incidencia;
   final bool showAdminActions;
@@ -534,7 +538,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
     return OutlinedButton(
       onPressed: () async {
         final provider = context.read<AppProvider>();
-        // Check if users are loaded
+        // Comprobar si los usuarios están cargados
         if (provider.usuariosAdmin.isEmpty) {
           showDialog(
             context: context, 
@@ -542,7 +546,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
             builder: (_) => const Center(child: CircularProgressIndicator())
           );
           await provider.fetchAllUsers();
-          if (context.mounted) Navigator.pop(context); // hide loading
+          if (context.mounted) Navigator.pop(context); // ocultar el indicador de carga
         }
         
         final techUsers = provider.usuariosAdmin.where((u) => 
@@ -580,7 +584,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                           final titulo = widget.incidencia.titulo;
                           
                           try {
-                            // 1. Add internal comment
+                            // 1. Añadir comentario interno
                             await provider.addComentarioIncidencia(
                               incidenciaId, 
                               'Ticket asignado a: ${u.nombre}', 
@@ -591,7 +595,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                           }
 
                           try {
-                            // 2. Send message to notify the technician
+                            // 2. Enviar mensaje para notificar al técnico
                             await provider.sendMessage(
                               u.id, 
                               'Has sido asignado a la incidencia: #$incidenciaId - $titulo', 
@@ -605,7 +609,7 @@ class _IncidentDetailDialogState extends State<IncidentDetailDialog> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Ticket asignado a ${u.nombre} correctamente')),
                             );
-                            _fetchComentarios(); // Refresh comments so assignment shows up
+                            _fetchComentarios(); // Refrescar comentarios para que aparezca la asignación
                           }
                         },
                       );

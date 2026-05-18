@@ -6,6 +6,10 @@ import '../../core/theme/app_theme.dart';
 import '../../core/providers/app_provider.dart';
 import '../../core/utils/responsive_utils.dart';
 
+// =============================================
+// ==== CLASE MainLayout =====
+// Descripción: Widget estructurado de tipo layout principal que envuelve las páginas de la aplicación, proporcionando un menú lateral (sidebar) animado para pantallas de escritorio y una barra de navegación inferior (BottomNavigationBar) para dispositivos móviles.
+// =============================================
 class MainLayout extends StatefulWidget {
   final Widget child;
   final String currentRoute;

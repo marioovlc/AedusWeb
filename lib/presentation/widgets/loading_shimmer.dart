@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/theme/app_theme.dart';
 
+// =============================================
+// ==== CLASE ShimmerBox =====
+// Descripción: Widget básico que renderiza una caja contenedora animada de tipo Shimmer para simular la carga de elementos de UI rectangulares o redondeados.
+// =============================================
 class ShimmerBox extends StatelessWidget {
   final double width;
   final double height;
@@ -35,6 +39,10 @@ class ShimmerBox extends StatelessWidget {
 }
 
 /// Shimmer para las tarjetas KPI del Dashboard (4 seguidas)
+// =============================================
+// ==== CLASE ShimmerKPIRow =====
+// Descripción: Widget de carga animado adaptado para simular las filas de tarjetas de métricas o KPIs principales del Dashboard.
+// =============================================
 class ShimmerKPIRow extends StatelessWidget {
   final bool isMobile;
   const ShimmerKPIRow({super.key, this.isMobile = false});
@@ -89,6 +97,10 @@ class ShimmerKPIRow extends StatelessWidget {
 }
 
 /// Shimmer para la grid de artículos de la Tienda
+// =============================================
+// ==== CLASE ShimmerStoreGrid =====
+// Descripción: Widget de carga animado estructurado en cuadrícula (grid) para simular la carga de artículos y productos en la tienda virtual.
+// =============================================
 class ShimmerStoreGrid extends StatelessWidget {
   final int crossAxisCount;
   const ShimmerStoreGrid({super.key, this.crossAxisCount = 3});
@@ -147,6 +159,10 @@ class ShimmerStoreGrid extends StatelessWidget {
 }
 
 /// Shimmer para un bloque de gráfico/card genérico
+// =============================================
+// ==== CLASE ShimmerChartCard =====
+// Descripción: Widget de carga animado diseñado para representar un contenedor de gráficos analíticos o cuadros analíticos de monitoreo en progreso.
+// =============================================
 class ShimmerChartCard extends StatelessWidget {
   final double height;
   const ShimmerChartCard({super.key, this.height = 380});
@@ -185,6 +201,10 @@ class ShimmerChartCard extends StatelessWidget {
 }
 
 /// Shimmer para la lista de tickets en IncidenciasPage
+// =============================================
+// ==== CLASE ShimmerTicketList =====
+// Descripción: Widget de carga animado diseñado para simular de forma realista una lista de reportes o tickets de incidencias técnicas en espera.
+// =============================================
 class ShimmerTicketList extends StatelessWidget {
   const ShimmerTicketList({super.key});
 
@@ -250,6 +270,10 @@ class ShimmerTicketList extends StatelessWidget {
 }
 
 /// Shimmer para la tabla de usuarios en UsuariosPage
+// =============================================
+// ==== CLASE ShimmerUserTable =====
+// Descripción: Widget de carga animado diseñado para representar visualmente la estructura de una tabla de administración de usuarios mientras se realiza la consulta.
+// =============================================
 class ShimmerUserTable extends StatelessWidget {
   const ShimmerUserTable({super.key});
 

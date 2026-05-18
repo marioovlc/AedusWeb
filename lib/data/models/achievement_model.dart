@@ -1,3 +1,7 @@
+// =============================================
+// ==== CLASE Achievement =====
+// Descripción: Modelo de datos que representa un logro o medalla del sistema gamificado, almacenando su recompensa en monedas y su estado de desbloqueo.
+// =============================================
 class Achievement {
   final String id;
   final String title;

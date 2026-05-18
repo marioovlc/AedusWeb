@@ -1,3 +1,7 @@
+// =============================================
+// ==== CLASE ComentarioIncidencia =====
+// Descripción: Modelo de datos que representa un comentario o nota asociada a una incidencia técnica, dando soporte a marcas de comentarios internos para el equipo técnico.
+// =============================================
 class ComentarioIncidencia {
   final int id;
   final int incidenciaId;

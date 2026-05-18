@@ -1,3 +1,7 @@
+// =============================================
+// ==== CLASE StoreItem =====
+// Descripción: Modelo de datos que representa un artículo disponible para compra virtual en la tienda de la plataforma Aedus, registrando su identificador, nombre, descripción, costo en AeduCoins, icono y color.
+// =============================================
 class StoreItem {
   final int id;
   final String name;

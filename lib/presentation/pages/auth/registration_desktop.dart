@@ -3,6 +3,10 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_provider.dart';
 
+// =============================================
+// ==== CLASE RegistrationDesktop =====
+// Descripción: Widget estructurado que representa la vista adaptada a escritorio para el registro de nuevos usuarios, incluyendo campos corporativos y un panel lateral elegante.
+// =============================================
 class RegistrationDesktop extends StatefulWidget {
   const RegistrationDesktop({super.key});
 
@@ -78,12 +82,12 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Row(
         children: [
-          // Left Side: Branding / Aedus Aesthetic
+          // Lado izquierdo: Marca / Estética Aedus
           Expanded(
             flex: 3,
             child: Stack(
               children: [
-                 // Tech Grid Pattern
+                 // Patrón de cuadrícula tecnológica
                  Positioned.fill(
                     child: Opacity(
                       opacity: 0.05,
@@ -139,7 +143,7 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
             ),
           ),
           
-          // Right Side: Integrated Registration Form
+          // Lado derecho: Formulario de registro integrado
           Expanded(
             flex: 2,
             child: Center(
@@ -159,7 +163,7 @@ class _RegistrationDesktopState extends State<RegistrationDesktop> {
                         style: TextStyle(color: appColors.textLow, fontSize: 16),
                       ),
                       const SizedBox(height: 48),
-                      // Form Card
+                      // Tarjeta del formulario
                       Container(
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(

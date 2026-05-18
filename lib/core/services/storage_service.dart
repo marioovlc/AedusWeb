@@ -8,6 +8,10 @@ import '../config/env_config.dart';
 ///
 /// El CLOUDINARY_API_SECRET **nunca se envía al cliente**; solo existe
 /// en las variables de entorno del servidor (Vercel).
+// =============================================
+// ==== CLASE StorageService =====
+// Descripción: Servicio de almacenamiento que gestiona de manera segura la subida de archivos multimedia (imágenes, audios) a Cloudinary a través del proxy serverless de Vercel.
+// =============================================
 class StorageService {
   static final StorageService _instance = StorageService._internal();
   factory StorageService() => _instance;

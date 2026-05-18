@@ -8,6 +8,10 @@ import '../config/env_config.dart';
 ///
 /// La API key de Groq **nunca se envía al cliente**; solo existe
 /// en las variables de entorno del servidor (Vercel).
+// =============================================
+// ==== CLASE AIService =====
+// Descripción: Servicio de Inteligencia Artificial que se comunica con el proxy de Groq en Vercel para proporcionar sugerencias de incidencias y resúmenes contextuados a la aplicación.
+// =============================================
 class AIService {
   static final AIService _instance = AIService._internal();
   factory AIService() => _instance;

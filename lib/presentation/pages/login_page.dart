@@ -3,6 +3,10 @@ import '../../core/utils/responsive_utils.dart';
 import 'auth/login_desktop.dart';
 import 'auth/login_mobile.dart';
 
+// =============================================
+// ==== CLASE LoginPage =====
+// Descripción: Widget delegador para la pantalla de inicio de sesión que redirige a los diseños específicos para móvil o escritorio según la resolución del dispositivo.
+// =============================================
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 

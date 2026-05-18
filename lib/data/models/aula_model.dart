@@ -1,3 +1,7 @@
+// =============================================
+// ==== CLASE Aula =====
+// Descripción: Modelo de datos que representa una aula o dependencia del centro educativo, registrando su identificador, nombre, capacidad y tipo.
+// =============================================
 class Aula {
   final int id;
   final String nombre;

@@ -1,3 +1,7 @@
+// =============================================
+// ==== CLASE Mensaje =====
+// Descripción: Modelo de datos que representa un mensaje de chat entre usuarios o con Aedus AI, con soporte para adjuntar imágenes, grabaciones de audio y referencias a tickets de incidencias.
+// =============================================
 class Mensaje {
   final int id;
   final String senderId;

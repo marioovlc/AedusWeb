@@ -10,6 +10,10 @@ import '../../../core/services/storage_service.dart';
 import '../../widgets/incident_detail_dialog.dart';
 import '../../widgets/loading_shimmer.dart';
 
+// =============================================
+// ==== CLASE IncidenciasMobile =====
+// Descripción: Widget estructurado que representa la pantalla adaptada a dispositivos móviles para la gestión y creación de incidencias, ofreciendo dos pestañas principales (Reportar y Mis Tickets) con soporte de filtros rápidos.
+// =============================================
 class IncidenciasMobile extends StatefulWidget {
   const IncidenciasMobile({super.key});
 
@@ -244,7 +248,7 @@ class _IncidenciasMobileState extends State<IncidenciasMobile> with SingleTicker
 
     return Column(
       children: [
-        // Filter chips
+        // Chips de filtro
         SizedBox(
           height: 44,
           child: ListView.separated(

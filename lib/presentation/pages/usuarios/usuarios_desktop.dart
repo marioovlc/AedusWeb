@@ -6,6 +6,10 @@ import '../../../core/providers/app_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../widgets/loading_shimmer.dart';
 
+// =============================================
+// ==== CLASE UsuariosDesktop =====
+// Descripción: Widget estructurado que representa la interfaz de administración de usuarios adaptada a pantallas de escritorio, renderizando una tabla DataTable responsiva para listar, aprobar solicitudes, rechazar, cambiar roles y suspender cuentas de usuario en tiempo real.
+// =============================================
 class UsuariosDesktop extends StatefulWidget {
   const UsuariosDesktop({super.key});
 
@@ -249,7 +253,7 @@ class _UsuariosDesktopState extends State<UsuariosDesktop> {
       builder: (ctx) => AlertDialog(
         backgroundColor: appColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Rechazar solicitud'), // Rely on global theme for white title
+        title: const Text('Rechazar solicitud'), // Depender del tema global para el título blanco
         content: Text('¿Estás seguro de que deseas rechazar y eliminar definitivamente la solicitud de ${user.nombre}?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCELAR', style: TextStyle(color: appColors.textLow))),

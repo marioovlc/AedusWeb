@@ -6,6 +6,10 @@ import '../../../data/models/log_model.dart';
 import '../../widgets/incident_detail_dialog.dart';
 import '../../widgets/loading_shimmer.dart';
 
+// =============================================
+// ==== CLASE MonitoringMobile =====
+// Descripción: Widget estructurado que representa la interfaz de monitorización de sistemas adaptada a dispositivos móviles, que contiene pestañas para visualización de logs históricos, listado interactivo de incidencias con filtros y estado de infraestructura de red en tiempo real.
+// =============================================
 class MonitoringMobile extends StatefulWidget {
   const MonitoringMobile({super.key});
 
@@ -15,7 +19,7 @@ class MonitoringMobile extends StatefulWidget {
 
 class _MonitoringMobileState extends State<MonitoringMobile> {
   String _selectedLogCategory = 'TODOS';
-  // Incident filters
+  // Filtros de incidencias
   String _incidentStatusFilter = 'TODOS';
   String _incidentSearchQuery = '';
   final List<String> _incidentStatuses = ['TODOS', 'PENDIENTE', 'LEIDO', 'REVISIÓN', 'ACABADO'];
@@ -230,7 +234,7 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
     final provider = context.watch<AppProvider>();
     final allIncidencias = provider.incidencias;
 
-    // Apply filters
+    // Aplicar filtros
     var incidencias = allIncidencias;
     if (_incidentStatusFilter != 'TODOS') {
       incidencias = incidencias.where((i) {
@@ -264,9 +268,9 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
       onRefresh: () => provider.refreshData(),
       child: Column(
         children: [
-          // Search & Filters
+          // Búsqueda y Filtros
           _buildIncidentFilters(context),
-          // List
+          // Listado
           Expanded(
             child: incidencias.isEmpty
                 ? Center(
@@ -362,7 +366,7 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search bar
+          // Barra de búsqueda
           TextField(
             onChanged: (v) => setState(() => _incidentSearchQuery = v),
             style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
@@ -381,7 +385,7 @@ class _MonitoringMobileState extends State<MonitoringMobile> {
             ),
           ),
           const SizedBox(height: 10),
-          // Status filter chips
+          // Chips de filtros de estado
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(

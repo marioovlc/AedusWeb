@@ -6,6 +6,10 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_provider.dart';
 import '../../widgets/loading_shimmer.dart';
 
+// =============================================
+// ==== CLASE DashboardDesktop =====
+// Descripción: Widget estructurado que representa la vista detallada adaptada a pantallas de escritorio para el Dashboard, incorporando tarjetas KPI animadas, gráficos dinámicos interactivos y gamificación.
+// =============================================
 class DashboardDesktop extends StatefulWidget {
   const DashboardDesktop({super.key});
 
@@ -31,7 +35,7 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
   void didChangeDependencies() {
     super.didChangeDependencies();
     final isLoading = context.read<AppProvider>().isLoading;
-    // If loading just finished, reset animation so it plays again
+    // Si la carga acaba de terminar, reiniciar la animación para que se ejecute de nuevo
     if (_wasLoading && !isLoading) {
       _kpisAnimated = false;
       _kpiController.reset();
@@ -77,7 +81,7 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
 
           const SizedBox(height: 32),
 
-          // Charts Section
+          // Sección de gráficos
           if (isLoading)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +103,7 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
 
           const SizedBox(height: 32),
 
-          // Bottom Grid
+          // Cuadrícula inferior
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -209,7 +213,7 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
                       style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
                       dropdownColor: appColors.surface,
                       items: ['7 días', '30 días', 'Este Año'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                      onChanged: (v) {}, // TODO: Connect to provider in future
+                      onChanged: (v) {},
                     ),
                   ),
                 ),
@@ -437,6 +441,10 @@ class _DashboardDesktopState extends State<DashboardDesktop> with TickerProvider
 // ---------------------------------------------------------------------------
 // KPI Card con efecto hover — se eleva y el fondo del icono se intensifica
 // ---------------------------------------------------------------------------
+// =============================================
+// ==== CLASE _HoverKPICard =====
+// Descripción: Widget auxiliar de tarjeta KPI interactiva con efectos táctiles/visuales dinámicos de elevación al pasar el mouse ("Hovering").
+// =============================================
 class _HoverKPICard extends StatefulWidget {
   final String title;
   final String value;
@@ -520,6 +528,10 @@ class _HoverKPICardState extends State<_HoverKPICard> {
 // ---------------------------------------------------------------------------
 // AI Assistant Card — llama a la IA real con contexto de KPIs
 // ---------------------------------------------------------------------------
+// =============================================
+// ==== CLASE _AIAssistantCard =====
+// Descripción: Widget de panel inteligente adaptado para escritorio impulsado por Aedus AI para dar sugerencias ejecutivas automáticas.
+// =============================================
 class _AIAssistantCard extends StatefulWidget {
   final Map<String, String> kpis;
   const _AIAssistantCard({required this.kpis});
@@ -541,7 +553,7 @@ class _AIAssistantCardState extends State<_AIAssistantCard> {
   @override
   void didUpdateWidget(_AIAssistantCard old) {
     super.didUpdateWidget(old);
-    // Refresh when KPIs change meaningfully (e.g. after data reload)
+    // Refrescar cuando los KPIs cambien de forma significativa (ej. tras recargar datos)
     if (old.kpis['Total Incidencias'] != widget.kpis['Total Incidencias']) {
       _fetchSummary();
     }

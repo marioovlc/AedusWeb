@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// =============================================
+// ==== CLASE AppTheme =====
+// Descripción: Clase contenedora de la configuración estética global de la app, definiendo los diferentes esquemas de colores (Original, Claro, Daltónico) y fuentes adaptadas para el soporte de accesibilidad.
+// =============================================
 class AppTheme {
-  // Theme Helper
+    // Ayudante de Temas
   static ThemeData getTheme(String themeName, {bool isAccessibilityMode = false}) {
     bool isLight = themeName == 'Blanco';
     bool isDaltonic = themeName == 'Daltónico';
 
-    // Default: Original (Dark)
+    // Por defecto: Original (Oscuro)
     Color bg = const Color(0xFF060D1C);
     Color surf = const Color(0xFF0D1629);
     Color crd = const Color(0xFF111F36);
@@ -22,7 +26,7 @@ class AppTheme {
     Brightness brightness = Brightness.dark;
 
     if (isLight) {
-      bg = const Color(0xFFF1F5F9); // Light Gray BG
+      bg = const Color(0xFFF1F5F9); // Fondo Gris Claro
       surf = Colors.white;
       crd = Colors.white;
       brd = const Color(0xFFE2E8F0);
@@ -39,10 +43,10 @@ class AppTheme {
       surf = const Color(0xFF171717);
       crd = const Color(0xFF262626);
       brd = const Color(0xFF404040);
-      prim = const Color(0xFF2D6AAF); // Cobalt Blue
+      prim = const Color(0xFF2D6AAF); // Azul Cobalto
       sec = const Color(0xFF1D4E89);
       txtHigh = Colors.white;
-      txtLow = const Color(0xFFE5E5E5); // Near-white for maximum contrast
+      txtLow = const Color(0xFFE5E5E5); // Blanco cercano para máximo contraste
       succ = const Color(0xFF2ECC71);
       dang = const Color(0xFFE74C3C);
       gld = const Color(0xFFF1C40F);
@@ -50,7 +54,7 @@ class AppTheme {
 
     double scale = isAccessibilityMode ? 1.25 : 1.0;
     
-    // High contrast overrides for accessibility mode
+    // Sobreescrituras de alto contraste para el modo accesibilidad
     if (isAccessibilityMode) {
       txtLow = txtHigh.withValues(alpha: 0.9);
       brd = txtHigh.withValues(alpha: 0.3);
@@ -181,6 +185,10 @@ class AppTheme {
   }
 }
 
+// =============================================
+// ==== CLASE AppColors =====
+// Descripción: Extensión personalizada del tema (ThemeExtension) para encapsular las paletas de colores adicionales del ecosistema Aedus, facilitando transiciones fluidas de UI.
+// =============================================
 class AppColors extends ThemeExtension<AppColors> {
   final Color success;
   final Color danger;

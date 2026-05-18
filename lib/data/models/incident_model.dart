@@ -1,3 +1,7 @@
+// =============================================
+// ==== CLASE Incidencia =====
+// Descripción: Modelo de datos que representa un reporte o ticket de incidencia técnica, registrando su título, descripción, ubicación (aula), categoría, estado y recursos adjuntos.
+// =============================================
 class Incidencia {
   final int id;
   final String titulo;

@@ -6,6 +6,10 @@ import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_provider.dart';
 
+// =============================================
+// ==== CLASE SettingsDesktop =====
+// Descripción: Widget estructurado que representa la interfaz de configuración del usuario adaptada a pantallas de escritorio, permitiendo la edición completa del perfil, selección de temas visuales mediante tarjetas interactivas y cambio de preferencias globales de la aplicación.
+// =============================================
 class SettingsDesktop extends StatelessWidget {
   const SettingsDesktop({super.key});
 
@@ -227,6 +231,10 @@ class SettingsDesktop extends StatelessWidget {
   }
 }
 
+// =============================================
+// ==== CLASE _ThemeCard =====
+// Descripción: Widget de tarjeta interactiva que representa una opción de tema visual seleccionable con estados activo/inactivo visuales.
+// =============================================
 class _ThemeCard extends StatelessWidget {
   final String name;
   final Color color;

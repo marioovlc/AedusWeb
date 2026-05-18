@@ -1,3 +1,7 @@
+// =============================================
+// ==== CLASE LogEntry =====
+// Descripción: Modelo de datos que representa una entrada de log o auditoría en el sistema, registrando la acción realizada, detalles, fecha, categoría y datos del usuario responsable.
+// =============================================
 class LogEntry {
   final int id;
   final String usuarioId;

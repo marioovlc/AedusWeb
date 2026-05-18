@@ -6,6 +6,10 @@ import '../../../core/providers/app_provider.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_theme.dart';
 
+// =============================================
+// ==== CLASE SettingsMobile =====
+// Descripción: Widget estructurado que representa la interfaz móvil de configuración del usuario, permitiendo editar la foto de perfil, modificar el correo/nombre, y ajustar la personalización de temas y accesibilidad.
+// =============================================
 class SettingsMobile extends StatelessWidget {
   const SettingsMobile({super.key});
 
@@ -167,6 +171,10 @@ class SettingsMobile extends StatelessWidget {
   }
 }
 
+// =============================================
+// ==== CLASE _ThemeSettingsList =====
+// Descripción: Widget interno que muestra y actualiza la lista de opciones del tema visual en el panel de configuración móvil.
+// =============================================
 class _ThemeSettingsList extends StatelessWidget {
   final String currentTheme;
   const _ThemeSettingsList({required this.currentTheme});

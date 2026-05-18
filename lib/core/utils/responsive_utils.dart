@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+// =============================================
+// ==== CLASE ResponsiveLayout =====
+// Descripción: Widget utilitario que facilita el diseño adaptable (responsive) renderizando diferentes layouts (móvil, tablet o escritorio) en función del ancho de la pantalla actual.
+// =============================================
 class ResponsiveLayout extends StatelessWidget {
   final Widget mobile;
   final Widget? tablet;

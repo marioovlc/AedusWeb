@@ -9,6 +9,10 @@ import '../../../data/models/message_model.dart';
 import '../../../data/models/incident_model.dart';
 import '../../widgets/incident_detail_dialog.dart';
 
+// =============================================
+// ==== CLASE ConnectHubMobile =====
+// Descripción: Widget estructurado que representa la interfaz adaptada a dispositivos móviles para el Connect Hub, administrando contactos y el envío dinámico de mensajes y tickets.
+// =============================================
 class ConnectHubMobile extends StatefulWidget {
   const ConnectHubMobile({super.key});
 
@@ -66,7 +70,7 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
     );
     _messageController.clear();
 
-    // Scroll to bottom after sending
+    // Desplazarse al final después de enviar
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -315,7 +319,7 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
                 final msg = provider.mensajes[i];
                 final isMe = msg.senderId == provider.currentUser?.id;
 
-                // Detect ticket messages
+                // Detectar mensajes con referencias a tickets
                 if ((msg.ticketLinkId != null && msg.ticketLinkId! > 0) ||
                     msg.contenido.startsWith('[TICKET_LINK]:')) {
                   return _buildSharedTicket(msg, isMe);
@@ -335,7 +339,7 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
 
-    // Parse ticket ID
+    // Parsear ID del ticket
     int ticketId = 0;
     if (msg.ticketLinkId != null && msg.ticketLinkId! > 0) {
       ticketId = msg.ticketLinkId!;
@@ -471,7 +475,7 @@ class _ConnectHubMobileState extends State<ConnectHubMobile> {
       ),
       child: Row(
         children: [
-          // Attach / Share ticket button
+          // Botón para adjuntar / compartir ticket
           IconButton(
             icon: Icon(Icons.add_circle_outline, color: appColors.textLow, size: 26),
             tooltip: 'Compartir ticket',

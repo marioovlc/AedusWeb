@@ -6,6 +6,10 @@ import '../../../core/providers/app_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../widgets/loading_shimmer.dart';
 
+// =============================================
+// ==== CLASE UsuariosMobile =====
+// Descripción: Widget estructurado que representa la interfaz móvil de la administración de usuarios, renderizando tarjetas detalladas para cada usuario con estado de conexión, saldo de AeduCoins, y opciones de cambio de rol o estado en tiempo real.
+// =============================================
 class UsuariosMobile extends StatefulWidget {
   const UsuariosMobile({super.key});
 
