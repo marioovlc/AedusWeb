@@ -23,16 +23,19 @@ class SustainabilityWrapper extends StatefulWidget {
 class _SustainabilityWrapperState extends State<SustainabilityWrapper> {
   Timer? _timer;
   bool _isSuspended = false;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
+    _focusNode = FocusNode();
     _startTimer();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -61,7 +64,7 @@ class _SustainabilityWrapperState extends State<SustainabilityWrapper> {
       onPointerMove: _handleInteraction,
       onPointerHover: _handleInteraction,
       child: KeyboardListener(
-        focusNode: FocusNode(),
+        focusNode: _focusNode,
         autofocus: true,
         onKeyEvent: (event) => _handleInteraction(),
         child: Stack(
