@@ -145,9 +145,9 @@ const ACTION_MAP = {
                   WHERE (m.usuario_id = @me AND m.receptor_id = @other) 
                      OR (m.usuario_id = @other AND m.receptor_id = @me) 
                   ORDER BY m.fecha ASC`,
-  create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url, imagen_ruta) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img, @img) RETURNING *`,
+  create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url, imagen_ruta) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img::varchar, @img::varchar) RETURNING *`,
   send_message: `INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, ticket_link_id, fecha, leido) 
-                  VALUES (@me, @other, @txt, @img, @aud, @ticket_link_id, NOW(), false) RETURNING *`,
+                  VALUES (@me, @other, @txt, @img::varchar, @aud::varchar, @ticket_link_id, NOW(), false) RETURNING *`,
   request_user: `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", banned, aeducoins) VALUES (@nom, @em, @pass, 'USER', false, false, 0) RETURNING *`,
   approve_user: `UPDATE neon_auth.user SET "emailVerified" = true, banned = false WHERE id = @id RETURNING *`,
   reject_user: `DELETE FROM neon_auth.user WHERE id = @id RETURNING *`,
@@ -161,7 +161,7 @@ const ACTION_MAP = {
   add_comentario_incidencia: `INSERT INTO gestion_incidencias.comentarios_incidencia (incidencia_id, usuario_id, texto, fecha, is_internal) VALUES (@iId, @uId, @txt, NOW(), @internal) RETURNING *`,
   get_store_items: `SELECT * FROM gestion_incidencias.store_items ORDER BY price ASC`,
   create_store_item: `INSERT INTO gestion_incidencias.store_items (name, description, price, icon, color) VALUES (@nom, @des, @pri, @ico, @col) RETURNING *`,
-  update_user_profile: `UPDATE neon_auth.user SET name = @nom, email = @em, avatar_url = @img, foto_perfil = @img, telefono = @tel, bio = @bio WHERE id = @id RETURNING *`,
+  update_user_profile: `UPDATE neon_auth.user SET name = @nom, email = @em, avatar_url = @img::text, foto_perfil = @img::text, telefono = @tel, bio = @bio WHERE id = @id RETURNING *`,
   update_last_seen: `UPDATE neon_auth.user SET last_seen = NOW() WHERE id = @id RETURNING *`,
   grant_achievement: `
     WITH ach AS (
