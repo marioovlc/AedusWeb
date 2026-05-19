@@ -321,9 +321,8 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('SERVERLESS_API_ERROR:', error);
     res.status(500).json({ 
-      error: 'Hubo un error al ejecutar la acción.',
-      // hint: solo en dev
-      ...(process.env.NODE_ENV !== 'production' && { details: error.message })
+      error: `Hubo un error al ejecutar la acción: ${error.message || 'Error desconocido'}`,
+      details: error.stack
     });
   } finally {
     try { await client.end(); } catch (e) {}

@@ -7,7 +7,6 @@
  */
 
 import crypto from 'crypto';
-import FormData from 'form-data';
 
 /**
  * Genera la firma SHA1 requerida por Cloudinary.
@@ -76,20 +75,22 @@ export default async function handler(req, res) {
   // ── Construir multipart y subir a Cloudinary ──────────────────────────────
   try {
     const fileBuffer = Buffer.from(fileBase64, 'base64');
+    const blob = new Blob([fileBuffer]);
 
     const form = new FormData();
     form.append('api_key', apiKey);
     form.append('timestamp', timestamp);
     form.append('signature', signature);
     if (isAudio) form.append('resource_type', 'video');
-    form.append('file', fileBuffer, { filename: fileName });
+    form.append('file', blob, fileName);
 
     const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
 
     const cloudRes = await fetch(cloudinaryUrl, {
       method: 'POST',
       body: form,
-      headers: form.getHeaders(),
+      // Al usar el FormData nativo, NO enviamos headers manuales.
+      // fetch generará automáticamente el Content-Type con el boundary correcto.
     });
 
     const data = await cloudRes.json();

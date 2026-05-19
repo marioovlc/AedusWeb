@@ -113,21 +113,26 @@ class AppProvider with ChangeNotifier {
   final AIService _ai = AIService();
 
   Future<bool> login(String email, String password) async {
-    final results = await _db.query(
-      "", // El SQL se ignora cuando la acción es 'login'
-      substitutionValues: {'email': email, 'password': password},
-      action: 'login',
-    );
+    try {
+      final results = await _db.query(
+        "", // El SQL se ignora cuando la acción es 'login'
+        substitutionValues: {'email': email, 'password': password},
+        action: 'login',
+      );
 
-    if (results.isNotEmpty) {
-      _currentUser = Usuario.fromMap(results.first);
-      await updateLastSeen();
-      _startAutoRefresh();
-      await refreshData();
-      notifyListeners();
-      return true;
+      if (results.isNotEmpty) {
+        _currentUser = Usuario.fromMap(results.first);
+        await updateLastSeen();
+        _startAutoRefresh();
+        await refreshData();
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error en login: $e');
+      return false;
     }
-    return false;
   }
 
   Future<void> refreshData() async {
@@ -138,16 +143,20 @@ class AppProvider with ChangeNotifier {
       _isLoading = true;
       notifyListeners();
     }
-    await Future.wait([
-      updateLastSeen(),
-      _fetchIncidencias(),
-      _fetchKPIs(),
-      _fetchContactos(),
-      _fetchAulas(),
-      _fetchStoreItems(),
-      fetchLogs(),
-      fetchAchievements(),
-    ]);
+    try {
+      await Future.wait([
+        updateLastSeen(),
+        _fetchIncidencias(),
+        _fetchKPIs(),
+        _fetchContactos(),
+        _fetchAulas(),
+        _fetchStoreItems(),
+        fetchLogs(),
+        fetchAchievements(),
+      ]);
+    } catch (e) {
+      debugPrint('Error en refreshData: $e');
+    }
     _isLoading = false;
     notifyListeners();
   }
