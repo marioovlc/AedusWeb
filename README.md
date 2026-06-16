@@ -1,4 +1,8 @@
 <div align="center">
+  <img src="banner.png" alt="Aedus Banner" width="100%" />
+</div>
+
+<div align="center">
   <h1>🌐 AedusWeb</h1>
   <p>Incident management platform with real-time chat and AI classification</p>
 
