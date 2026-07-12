@@ -133,6 +133,8 @@ AedusWeb/
 ## 🔗 Live Demo
 
 Check out the deployed version at **[aedus-web.vercel.app](https://aedus-web.vercel.app)**
+User: admin@aedus.es
+Password: 1234
 
 ---
 
