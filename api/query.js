@@ -1,5 +1,6 @@
 const { Client } = require('pg');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 // ACTION MAP - Sentencias SQL seguras predefinidas
 const ACTION_MAP = {
@@ -137,7 +138,7 @@ const ACTION_MAP = {
   get_users: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins, COALESCE(avatar_url, foto_perfil) as avatar_url, telefono, bio, last_seen FROM neon_auth.user ORDER BY name ASC`,
   get_incidencias: `SELECT i.*, e.nombre as estado_nombre FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id ORDER BY i.fecha DESC`,
   get_kpis: `SELECT e.nombre as estado, count(*) as count FROM gestion_incidencias.incidencias i JOIN gestion_incidencias.estados e ON i.estado_id = e.id GROUP BY e.nombre`,
-  get_contactos: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins, COALESCE(avatar_url, foto_perfil) as avatar_url, telefono, bio, last_seen FROM neon_auth.user WHERE id != @id`,
+  get_contactos: `SELECT id, name, email, role as rol, "emailVerified", banned, aeducoins, COALESCE(avatar_url, foto_perfil) as avatar_url, telefono, bio, last_seen FROM neon_auth.user WHERE id != @id ORDER BY name ASC`,
   get_aulas: `SELECT * FROM gestion_incidencias.aulas ORDER BY nombre ASC`,
   get_mensajes: `SELECT m.*, u.name as sender_name, u.avatar_url as sender_avatar 
                   FROM gestion_incidencias.mensajes m 
@@ -145,7 +146,7 @@ const ACTION_MAP = {
                   WHERE (m.usuario_id = @me AND m.receptor_id = @other) 
                      OR (m.usuario_id = @other AND m.receptor_id = @me) 
                   ORDER BY m.fecha ASC`,
-  create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url, imagen_ruta) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 5, NOW(), @img::varchar, @img::varchar) RETURNING *`,
+  create_incidencia: `INSERT INTO gestion_incidencias.incidencias (titulo, descripcion, usuario_id, aula_id, categoria_id, estado_id, fecha, imagen_url, imagen_ruta) VALUES (@titulo, @descripcion, @uId, @aId, @cId, 1, NOW(), @img::varchar, @img::varchar) RETURNING *`,
   send_message: `INSERT INTO gestion_incidencias.mensajes (usuario_id, receptor_id, texto, imagen_url, audio_url, ticket_link_id, fecha, leido) 
                   VALUES (@me, @other, @txt, @img::varchar, @aud::varchar, @ticket_link_id, NOW(), false) RETURNING *`,
   request_user: `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", banned, aeducoins) VALUES (@nom, @em, @pass, 'USER', false, false, 0) RETURNING *`,
@@ -153,11 +154,11 @@ const ACTION_MAP = {
   reject_user: `DELETE FROM neon_auth.user WHERE id = @id RETURNING *`,
   update_user_role: `UPDATE neon_auth.user SET role = @rol WHERE id = @id RETURNING *`,
   update_user_status: `UPDATE neon_auth.user SET banned = @ban, "emailVerified" = @ev WHERE id = @id RETURNING *`,
-  get_logs: `SELECT l.*, u.name as usuario_nombre, u.email as usuario_email FROM gestion_incidencias.logs l LEFT JOIN neon_auth.user u ON l.usuario_id::text = u.id::text ORDER BY l.fecha DESC LIMIT 50`,
+  get_logs: `SELECT l.*, u.name as usuario_nombre, u.email as usuario_email FROM gestion_incidencias.logs l LEFT JOIN neon_auth.user u ON l.usuario_id::text = u.id::text ORDER BY l.fecha DESC LIMIT 500`,
   create_log: `INSERT INTO gestion_incidencias.logs (usuario_id, accion, detalles, fecha, categoria) VALUES (@uId, @acc, @det, NOW(), @cat) RETURNING *`,
   update_incidencia_estado: `UPDATE gestion_incidencias.incidencias SET estado_id = @eId WHERE id = @id RETURNING *`,
-  update_user_coins: `INSERT INTO transacciones_aeducoins (usuario_id, cantidad, motivo, fecha) VALUES (@uId::uuid, @coins, @motivo, NOW()); UPDATE neon_auth.user SET aeducoins = aeducoins + @coins WHERE id = @uId RETURNING *`,
-  get_comentarios_incidencia: `SELECT c.*, u.name as usuario_nombre, u.role as usuario_rol FROM gestion_incidencias.comentarios_incidencia c JOIN neon_auth.user u ON c.usuario_id::text = u.id::text WHERE c.incidencia_id = @iId AND (c.is_internal = false OR UPPER(@rol) IN ('ADMIN', 'MANTENIMIENTO', 'ADMINISTRADOR')) ORDER BY c.fecha ASC`,
+  update_user_coins: `INSERT INTO transacciones_aeducoins (usuario_id, cantidad, motivo, fecha) VALUES (@uId::uuid, @coins, @motivo, NOW()); UPDATE neon_auth.user SET aeducoins = aeducoins + @coins WHERE id = @uId::uuid RETURNING *`,
+  get_comentarios_incidencia: `SELECT c.*, u.name as usuario_nombre, u.role as usuario_rol FROM gestion_incidencias.comentarios_incidencia c JOIN neon_auth.user u ON c.usuario_id::text = u.id::text WHERE c.incidencia_id = @iId AND (c.is_internal = false OR @rol IN ('ADMIN', 'MANTENIMIENTO', 'ADMINISTRADOR')) ORDER BY c.fecha ASC`,
   add_comentario_incidencia: `INSERT INTO gestion_incidencias.comentarios_incidencia (incidencia_id, usuario_id, texto, fecha, is_internal) VALUES (@iId, @uId, @txt, NOW(), @internal) RETURNING *`,
   get_store_items: `SELECT * FROM gestion_incidencias.store_items ORDER BY price ASC`,
   create_store_item: `INSERT INTO gestion_incidencias.store_items (name, description, price, icon, color) VALUES (@nom, @des, @pri, @ico, @col) RETURNING *`,
@@ -186,8 +187,15 @@ const ACTION_MAP = {
     )
     SELECT * FROM coins`,
   get_user_achievements: `SELECT a.id, a.title, a.description, a.reward, a.icon_path, ua.unlocked_at FROM neon_auth.achievement a JOIN neon_auth.user_achievement ua ON a.id = ua.achievement_id WHERE ua.user_id = @uId::uuid ORDER BY ua.unlocked_at DESC`,
-  get_all_achievements: `SELECT a.*, (SELECT COUNT(*) FROM neon_auth.user_achievement ua WHERE ua.achievement_id = a.id AND ua.user_id = @uId::uuid) > 0 as unlocked, (SELECT ua2.unlocked_at FROM neon_auth.user_achievement ua2 WHERE ua2.achievement_id = a.id AND ua2.user_id = @uId::uuid) as unlocked_at FROM neon_auth.achievement a ORDER BY a.title`
+  get_all_achievements: `SELECT a.*, (SELECT COUNT(*) FROM neon_auth.user_achievement ua WHERE ua.achievement_id = a.id AND ua.user_id = @uId::uuid) > 0 as unlocked, (SELECT ua2.unlocked_at FROM neon_auth.user_achievement ua2 WHERE ua2.achievement_id = a.id AND ua2.user_id = @uId::uuid LIMIT 1) as unlocked_at FROM neon_auth.achievement a ORDER BY a.reward ASC, a.title ASC`
 };
+
+function safeEq(a = '', b = '') {
+  const aa = Buffer.from(String(a));
+  const bb = Buffer.from(String(b));
+  if (aa.length !== bb.length) return false;
+  return crypto.timingSafeEqual(aa, bb);
+}
 
 export default async function handler(req, res) {
   // Configuración de Seguridad y CORS Restringido
@@ -197,7 +205,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-API-KEY'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-API-KEY, X-DEMO-KEY'
   );
   // Security Headers
   res.setHeader('Content-Security-Policy', "default-src 'self'");
@@ -295,8 +303,26 @@ export default async function handler(req, res) {
 
     // MODO LOGIN INVITADO (DEMO)
     if (action === 'login_guest') {
-      const guestEmail = (process.env.DEMO_GUEST_EMAIL || 'guest@aedus.demo').trim().toLowerCase();
+      const demoEnabled = process.env.DEMO_MODE_ENABLED === 'true';
+      if (!demoEnabled) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+
+      const guestEmailRaw = process.env.DEMO_GUEST_EMAIL;
+      if (!guestEmailRaw) {
+        return res.status(500).json({ error: 'Demo is not configured' });
+      }
+
+      const guestEmail = guestEmailRaw.trim().toLowerCase();
       const guestName = (process.env.DEMO_GUEST_NAME || 'Invitado DEMO').trim();
+
+      const requiredDemoKey = process.env.DEMO_ACCESS_KEY;
+      if (requiredDemoKey) {
+        const providedDemoKey = req.headers['x-demo-key'];
+        if (!safeEq(providedDemoKey, requiredDemoKey)) {
+          return res.status(403).json({ error: 'Forbidden' });
+        }
+      }
 
       let guestRes = await client.query(
         `SELECT id, name, email, role, "emailVerified", banned, aeducoins, avatar_url, telefono, bio, last_seen
@@ -308,21 +334,13 @@ export default async function handler(req, res) {
 
       if (guestRes.rows.length === 0) {
         const randomPassword = `demo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const hashedPassword = await bcrypt.hash(randomPassword, 10);
+        const hashedPassword = await bcrypt.hash(randomPassword, 12);
 
         guestRes = await client.query(
           `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", banned, aeducoins)
            VALUES ($1, $2, $3, 'USER', true, false, 0)
            RETURNING id, name, email, role, "emailVerified", banned, aeducoins, avatar_url, telefono, bio, last_seen`,
           [guestName, guestEmail, hashedPassword]
-        );
-      } else {
-        guestRes = await client.query(
-          `UPDATE neon_auth.user
-           SET "emailVerified" = true, banned = false
-           WHERE id = $1
-           RETURNING id, name, email, role, "emailVerified", banned, aeducoins, avatar_url, telefono, bio, last_seen`,
-          [guestRes.rows[0].id]
         );
       }
 
@@ -357,8 +375,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('SERVERLESS_API_ERROR:', error);
     res.status(500).json({ 
-      error: `Hubo un error al ejecutar la acción: ${error.message || 'Error desconocido'}`,
-      details: error.stack
+      error: 'Hubo un error al ejecutar la acción',
     });
   } finally {
     try { await client.end(); } catch (e) {}
