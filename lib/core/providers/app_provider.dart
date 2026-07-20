@@ -112,6 +112,14 @@ class AppProvider with ChangeNotifier {
   final DatabaseService _db = DatabaseService();
   final AIService _ai = AIService();
 
+  Future<void> _completeLogin(Map<String, dynamic> userMap) async {
+    _currentUser = Usuario.fromMap(userMap);
+    await updateLastSeen();
+    _startAutoRefresh();
+    await refreshData();
+    notifyListeners();
+  }
+
   Future<bool> login(String email, String password) async {
     try {
       final results = await _db.query(
@@ -121,16 +129,29 @@ class AppProvider with ChangeNotifier {
       );
 
       if (results.isNotEmpty) {
-        _currentUser = Usuario.fromMap(results.first);
-        await updateLastSeen();
-        _startAutoRefresh();
-        await refreshData();
-        notifyListeners();
+        await _completeLogin(results.first);
         return true;
       }
       return false;
     } catch (e) {
       debugPrint('Error en login: $e');
+      return false;
+    }
+  }
+
+  Future<bool> loginGuest() async {
+    try {
+      final results = await _db.query(
+        "",
+        action: 'login_guest',
+      );
+      if (results.isNotEmpty) {
+        await _completeLogin(results.first);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error en login invitado: $e');
       return false;
     }
   }

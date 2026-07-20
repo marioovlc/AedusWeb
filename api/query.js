@@ -293,6 +293,42 @@ export default async function handler(req, res) {
       return res.status(200).json([user]); // Devolvemos array para compatibilidad
     }
 
+    // MODO LOGIN INVITADO (DEMO)
+    if (action === 'login_guest') {
+      const guestEmail = (process.env.DEMO_GUEST_EMAIL || 'guest@aedus.demo').trim().toLowerCase();
+      const guestName = (process.env.DEMO_GUEST_NAME || 'Invitado DEMO').trim();
+
+      let guestRes = await client.query(
+        `SELECT id, name, email, role, "emailVerified", banned, aeducoins, avatar_url, telefono, bio, last_seen
+         FROM neon_auth.user
+         WHERE email = $1
+         LIMIT 1`,
+        [guestEmail]
+      );
+
+      if (guestRes.rows.length === 0) {
+        const randomPassword = `demo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+        guestRes = await client.query(
+          `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", banned, aeducoins)
+           VALUES ($1, $2, $3, 'USER', true, false, 0)
+           RETURNING id, name, email, role, "emailVerified", banned, aeducoins, avatar_url, telefono, bio, last_seen`,
+          [guestName, guestEmail, hashedPassword]
+        );
+      } else {
+        guestRes = await client.query(
+          `UPDATE neon_auth.user
+           SET "emailVerified" = true, banned = false
+           WHERE id = $1
+           RETURNING id, name, email, role, "emailVerified", banned, aeducoins, avatar_url, telefono, bio, last_seen`,
+          [guestRes.rows[0].id]
+        );
+      }
+
+      return res.status(200).json(guestRes.rows);
+    }
+
     // ACCIONES PREDEFINIDAS DEL MAPA
     if (!ACTION_MAP[action]) {
       return res.status(400).json({ error: 'Invalid action' });
@@ -328,4 +364,3 @@ export default async function handler(req, res) {
     try { await client.end(); } catch (e) {}
   }
 }
-

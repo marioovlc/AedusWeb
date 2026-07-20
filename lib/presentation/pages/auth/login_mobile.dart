@@ -61,6 +61,21 @@ class _LoginMobileState extends State<LoginMobile> {
     }
   }
 
+  Future<void> _loginDemo() async {
+    setState(() { _isLoading = true; _errorMessage = null; });
+    try {
+      final success = await context.read<AppProvider>().loginGuest();
+      if (success && mounted) Navigator.pushReplacementNamed(context, '/dashboard');
+      if (!success && mounted) {
+        setState(() => _errorMessage = 'No se pudo iniciar sesión en modo demo.');
+      }
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = _friendlyError(e));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appColors = Theme.of(context).extension<AppColors>()!;
@@ -133,6 +148,18 @@ class _LoginMobileState extends State<LoginMobile> {
                     child: _isLoading 
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
                       : const Text('INICIAR SESIÓN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: _isLoading ? null : _loginDemo,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('DEMO', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(height: 24),
