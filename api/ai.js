@@ -29,10 +29,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // ── Autenticación: INTERNAL_API_KEY ───────────────────────────────────────
   const internalKey = process.env.INTERNAL_API_KEY;
-  if (!internalKey) {
-    console.error('SERVER MISCONFIGURATION: INTERNAL_API_KEY not set');
+  if (!internalKey || internalKey.trim() === '') {
+    console.error('SERVER MISCONFIGURATION: INTERNAL_API_KEY no configurado en entorno.');
     return res.status(500).json({ error: 'Server misconfiguration' });
   }
   if (req.headers['x-api-key'] !== internalKey) {
@@ -79,7 +78,7 @@ export default async function handler(req, res) {
     if (!groqResponse.ok) {
       console.error('Groq API error:', groqResponse.status, data);
       return res.status(groqResponse.status).json({
-        error: data?.error?.message || 'AI service error',
+        error: 'AI service error',
       });
     }
 

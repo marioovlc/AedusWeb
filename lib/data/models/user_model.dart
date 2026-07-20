@@ -13,6 +13,7 @@ class Usuario {
   final String? telefono;
   final String? bio;
   final DateTime? lastSeen;
+  final String? token;
 
   Usuario({
     required this.id,
@@ -25,6 +26,7 @@ class Usuario {
     this.telefono,
     this.bio,
     this.lastSeen,
+    this.token,
   });
 
   factory Usuario.fromMap(Map<String, dynamic> map) {
@@ -39,6 +41,7 @@ class Usuario {
       telefono: map['telefono'] as String?,
       bio: map['bio'] as String?,
       lastSeen: map['last_seen'] != null ? DateTime.parse(map['last_seen'].toString()) : null,
+      token: map['token'] as String?,
     );
   }
 
@@ -54,6 +57,7 @@ class Usuario {
       'telefono': telefono,
       'bio': bio,
       'last_seen': lastSeen?.toIso8601String(),
+      'token': token,
     };
   }
 

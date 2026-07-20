@@ -63,10 +63,13 @@ class _SustainabilityWrapperState extends State<SustainabilityWrapper> {
       onPointerDown: _handleInteraction,
       onPointerMove: _handleInteraction,
       onPointerHover: _handleInteraction,
-      child: KeyboardListener(
+      child: Focus(
         focusNode: _focusNode,
         autofocus: true,
-        onKeyEvent: (event) => _handleInteraction(),
+        onKeyEvent: (node, event) {
+          _handleInteraction();
+          return KeyEventResult.ignored;
+        },
         child: Stack(
           children: [
             widget.child,

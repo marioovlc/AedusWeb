@@ -14,6 +14,11 @@ class DatabaseService {
   DatabaseService._internal();
 
   Connection? _connection;
+  String? _token;
+
+  void setToken(String? token) {
+    _token = token;
+  }
 
   Future<void> connect() async {
     // La conexión a PostgreSQL directa ha sido deprecada (unificada con API web).
@@ -30,12 +35,18 @@ class DatabaseService {
       final baseUrl = EnvConfig.apiUrl;
       final uri = kIsWeb ? Uri.parse('/api/query') : Uri.parse('$baseUrl/api/query');
 
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'X-API-KEY': EnvConfig.internalApiKey,
+      };
+
+      if (_token != null) {
+        headers['Authorization'] = 'Bearer $_token';
+      }
+
       final response = await http.post(
         uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': EnvConfig.internalApiKey,
-        },
+        headers: headers,
         body: jsonEncode({
           'parameters': parameters,
           'action': action,

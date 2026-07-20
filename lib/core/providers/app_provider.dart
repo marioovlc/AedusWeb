@@ -114,6 +114,9 @@ class AppProvider with ChangeNotifier {
 
   Future<void> _completeLogin(Map<String, dynamic> userMap) async {
     _currentUser = Usuario.fromMap(userMap);
+    if (_currentUser?.token != null) {
+      _db.setToken(_currentUser!.token);
+    }
     await updateLastSeen();
     _startAutoRefresh();
     await refreshData();
@@ -727,6 +730,7 @@ class AppProvider with ChangeNotifier {
     _incidencias = [];
     _contactos = [];
     _mensajes = [];
+    _db.setToken(null);
     _stopAutoRefresh();
     notifyListeners();
   }

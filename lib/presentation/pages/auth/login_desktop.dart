@@ -34,22 +34,32 @@ class _LoginDesktopState extends State<LoginDesktop> {
       if (success) {
         Navigator.pushReplacementNamed(context, '/dashboard');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error de autenticación. Verifica tus credenciales.')),
-        );
+        setState(() => _isLoading = false);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Error de autenticación. Verifica tus credenciales.')),
+            );
+          }
+        });
       }
     } catch (e) {
       if (!mounted) return;
+      setState(() => _isLoading = false);
       final msg = e.toString().replaceFirst('Exception: ', '');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: Colors.orange[800],
-          duration: const Duration(seconds: 5),
-        ),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: Colors.orange[800],
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      });
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted && _isLoading) setState(() => _isLoading = false);
     }
   }
 
@@ -61,22 +71,32 @@ class _LoginDesktopState extends State<LoginDesktop> {
       if (success) {
         Navigator.pushReplacementNamed(context, '/dashboard');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo iniciar sesión en modo demo.')),
-        );
+        setState(() => _isLoading = false);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No se pudo iniciar sesión en modo demo.')),
+            );
+          }
+        });
       }
     } catch (e) {
       if (!mounted) return;
+      setState(() => _isLoading = false);
       final msg = e.toString().replaceFirst('Exception: ', '');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: Colors.orange[800],
-          duration: const Duration(seconds: 5),
-        ),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: Colors.orange[800],
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      });
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted && _isLoading) setState(() => _isLoading = false);
     }
   }
 

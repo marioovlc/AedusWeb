@@ -65,12 +65,17 @@ class ShimmerKPIRow extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(width: 44, height: 44, decoration: BoxDecoration(color: appColors.surface, borderRadius: BorderRadius.circular(12))),
-            const Spacer(),
-            Container(width: 60, height: 22, color: appColors.surface),
-            const SizedBox(height: 6),
-            Container(width: 100, height: 12, color: appColors.surface),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(width: 60, height: 22, color: appColors.surface),
+                const SizedBox(height: 6),
+                Container(width: 100, height: 12, color: appColors.surface),
+              ],
+            ),
           ],
         ),
       ),
@@ -122,15 +127,20 @@ class ShimmerStoreGrid extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(width: 52, height: 52, decoration: BoxDecoration(color: appColors.surface, borderRadius: BorderRadius.circular(12))),
-            const SizedBox(height: 20),
-            Container(width: 120, height: 16, color: appColors.surface),
-            const SizedBox(height: 8),
-            Container(width: double.infinity, height: 12, color: appColors.surface),
-            const SizedBox(height: 6),
-            Container(width: 160, height: 12, color: appColors.surface),
-            const Spacer(),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(width: 52, height: 52, decoration: BoxDecoration(color: appColors.surface, borderRadius: BorderRadius.circular(12))),
+                const SizedBox(height: 20),
+                Container(width: 120, height: 16, color: appColors.surface),
+                const SizedBox(height: 8),
+                Container(width: double.infinity, height: 12, color: appColors.surface),
+                const SizedBox(height: 6),
+                Container(width: 160, height: 12, color: appColors.surface),
+              ],
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -190,6 +200,7 @@ class ShimmerChartCard extends StatelessWidget {
             const SizedBox(height: 24),
             Expanded(
               child: Container(
+                width: double.infinity,
                 decoration: BoxDecoration(color: appColors.surface, borderRadius: BorderRadius.circular(8)),
               ),
             ),
@@ -287,17 +298,18 @@ class ShimmerUserTable extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(width: 28, height: 28, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-            const SizedBox(width: 12),
-            Container(width: 100, height: 16, color: Colors.white),
-            const Spacer(),
+            Row(
+              children: [
+                Container(width: 28, height: 28, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                const SizedBox(width: 12),
+                Container(width: 100, height: 16, color: Colors.white),
+              ],
+            ),
             Container(width: 150, height: 16, color: Colors.white),
-            const Spacer(),
             Container(width: 80, height: 24, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
-            const Spacer(),
             Container(width: 60, height: 16, color: Colors.white),
-            const Spacer(),
             Container(width: 80, height: 32, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
           ],
         ),

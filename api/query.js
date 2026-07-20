@@ -1,6 +1,7 @@
 const { Client } = require('pg');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 // ACTION MAP - Sentencias SQL seguras predefinidas
 const ACTION_MAP = {
@@ -199,13 +200,13 @@ function safeEq(a = '', b = '') {
 
 export default async function handler(req, res) {
   // Configuración de Seguridad y CORS Restringido
-  const allowedOrigin = process.env.ALLOWED_ORIGIN || '*'; // En prod debería ser aedus-web.vercel.app
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-API-KEY, X-DEMO-KEY'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-API-KEY, X-DEMO-KEY, Authorization'
   );
   // Security Headers
   res.setHeader('Content-Security-Policy', "default-src 'self'");
@@ -216,12 +217,12 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // VALIDACIÓN DE API KEY (PROTECCIÓN CONTRA ACCESO PÚBLICO)
+  // VALIDACIÓN DE API KEY (FAIL-CLOSED)
   const apiKey = req.headers['x-api-key'];
   const expectedApiKey = process.env.INTERNAL_API_KEY;
   
-  if (!expectedApiKey) {
-    console.error('SERVER MISCONFIGURATION: INTERNAL_API_KEY is not set');
+  if (!expectedApiKey || expectedApiKey.trim() === '') {
+    console.error('SERVER MISCONFIGURATION: INTERNAL_API_KEY no configurado en entorno.');
     return res.status(500).json({ error: 'Server misconfiguration' });
   }
   
@@ -232,14 +233,56 @@ export default async function handler(req, res) {
   const { parameters, action } = req.body;
   if (!action) return res.status(400).json({ error: 'Missing action' });
 
+  const JWT_SECRET = process.env.JWT_SECRET || 'aedus_default_secret_for_dev_only';
+  const PUBLIC_ACTIONS = ['login', 'login_guest', 'request_user', 'init_db'];
+  let decodedToken = null;
+
+  // JWT AUTHENTICATION MIDDLEWARE
+  if (!PUBLIC_ACTIONS.includes(action)) {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+    }
+    const token = authHeader.split(' ')[1];
+    
+    try {
+      decodedToken = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ error: 'Unauthorized: Token expiro o es invalido' });
+    }
+
+    // RBAC: Solo administradores pueden gestionar usuarios o roles
+    const adminActions = ['update_user_role', 'update_user_status', 'approve_user', 'reject_user'];
+    const role = (decodedToken.role || '').toUpperCase();
+    
+    if (adminActions.includes(action)) {
+      if (role !== 'ADMIN' && role !== 'ADMINISTRADOR') {
+        return res.status(403).json({ error: 'Forbidden: Requiere permisos de administrador' });
+      }
+    }
+
+    // IDOR PROTECTION: Validar que el usuario actue sobre sí mismo (o sea admin)
+    const targetId = parameters?.uId || parameters?.id || parameters?.me;
+    if (targetId && targetId !== decodedToken.id) {
+      if (role !== 'ADMIN' && role !== 'ADMINISTRADOR' && role !== 'MANTENIMIENTO') {
+        // Excepciones donde un admin también podría operar.
+        return res.status(403).json({ error: 'Forbidden: Operacion denegada por IDOR (No puedes modificar datos de otros usuarios)' });
+      }
+    }
+  }
+
+  // VALIDACION BÁSICA DE TAMAÑO (Para prevenir DoS)
+  if (JSON.stringify(req.body).length > 2000000) { // Max ~2MB
+    return res.status(413).json({ error: 'Payload too large' });
+  }
+
   // RECUPERACIÓN DE VARIABLES CON LIMPIEZA
-  const rawUrl = (process.env.DB_URL || '').trim();
+  const rawUrl = (process.env.DB_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL || '').trim();
   const dbUser = (process.env.DB_USER || '').trim();
   const dbPass = (process.env.DB_PASS || '').trim();
 
   let finalConnectionString = '';
 
-  // CASO A: Tenemos una URL de JDBC (frecuente en Neon/Java)
   if (rawUrl.startsWith('jdbc:postgresql://')) {
     const hostPart = rawUrl.split('//')[1].split('/')[0].split('?')[0];
     const dbPart = rawUrl.split('//')[1].split('/')[1]?.split('?')[0] || 'neondb';
@@ -260,6 +303,79 @@ export default async function handler(req, res) {
   } 
   else if (dbUser && dbPass) {
     finalConnectionString = `postgres://${dbUser}:${dbPass}@ep-mute-frog-agiqzzew-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require`;
+  }
+
+  // MODO LOGIN INVITADO (DEMO)
+  if (action === 'login_guest') {
+    const demoEnabled = process.env.DEMO_MODE_ENABLED !== 'false';
+    if (!demoEnabled) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const guestEmailRaw = process.env.DEMO_GUEST_EMAIL || 'demo@aedus.com';
+    const guestEmail = guestEmailRaw.trim().toLowerCase();
+    const guestName = (process.env.DEMO_GUEST_NAME || 'Invitado DEMO').trim();
+
+    const requiredDemoKey = process.env.DEMO_ACCESS_KEY;
+    if (requiredDemoKey) {
+      const providedDemoKey = req.headers['x-demo-key'];
+      if (!safeEq(providedDemoKey, requiredDemoKey)) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    }
+
+    let guestUser = null;
+    let client = null;
+
+    if (finalConnectionString) {
+      client = new Client({ connectionString: finalConnectionString, ssl: { rejectUnauthorized: false } });
+      try {
+        await client.connect();
+        let guestRes = await client.query(
+          `SELECT id, name, email, role, "emailVerified", banned, aeducoins, avatar_url, telefono, bio, last_seen
+           FROM neon_auth.user WHERE email = $1 LIMIT 1`,
+          [guestEmail]
+        );
+
+        if (guestRes.rows.length === 0) {
+          const randomPassword = `demo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          const hashedPassword = await bcrypt.hash(randomPassword, 12);
+
+          guestRes = await client.query(
+            `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", banned, aeducoins)
+             VALUES ($1, $2, $3, 'USER', true, false, 100)
+             RETURNING id, name, email, role, "emailVerified", banned, aeducoins, avatar_url, telefono, bio, last_seen`,
+            [guestName, guestEmail, hashedPassword]
+          );
+        }
+        guestUser = guestRes.rows[0];
+      } catch (dbErr) {
+        console.warn('DB connection error during guest login, returning fallback demo user:', dbErr.message);
+      } finally {
+        if (client) try { await client.end(); } catch (e) {}
+      }
+    }
+
+    if (!guestUser) {
+      // Fallback si la BD no está configurada o falla la conexión
+      guestUser = {
+        id: 'demo-guest-id',
+        name: guestName,
+        email: guestEmail,
+        role: 'USER',
+        emailVerified: true,
+        banned: false,
+        aeducoins: 100,
+        avatar_url: null,
+        telefono: null,
+        bio: 'Usuario Invitado en Modo DEMO',
+        last_seen: new Date().toISOString()
+      };
+    }
+
+    // Generar JWT para el usuario invitado
+    guestUser.token = jwt.sign({ id: guestUser.id, role: guestUser.role }, JWT_SECRET, { expiresIn: '7d' });
+    return res.status(200).json([guestUser]);
   }
 
   if (!finalConnectionString) {
@@ -291,60 +407,15 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Contraseña incorrecta' });
       }
 
-      // BLOQUEO: Usuarios pendientes de aprobación (emailVerified = false)
       if (user.emailVerified === false) {
         return res.status(403).json({ error: 'Tu cuenta está pendiente de aprobación por un administrador.' });
       }
 
-      // No devolvemos el hash del password por seguridad
+      // Generar JWT
+      user.token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+
       delete user.password;
-      return res.status(200).json([user]); // Devolvemos array para compatibilidad
-    }
-
-    // MODO LOGIN INVITADO (DEMO)
-    if (action === 'login_guest') {
-      const demoEnabled = process.env.DEMO_MODE_ENABLED === 'true';
-      if (!demoEnabled) {
-        return res.status(404).json({ error: 'Not found' });
-      }
-
-      const guestEmailRaw = process.env.DEMO_GUEST_EMAIL;
-      if (!guestEmailRaw) {
-        return res.status(500).json({ error: 'Demo is not configured' });
-      }
-
-      const guestEmail = guestEmailRaw.trim().toLowerCase();
-      const guestName = (process.env.DEMO_GUEST_NAME || 'Invitado DEMO').trim();
-
-      const requiredDemoKey = process.env.DEMO_ACCESS_KEY;
-      if (requiredDemoKey) {
-        const providedDemoKey = req.headers['x-demo-key'];
-        if (!safeEq(providedDemoKey, requiredDemoKey)) {
-          return res.status(403).json({ error: 'Forbidden' });
-        }
-      }
-
-      let guestRes = await client.query(
-        `SELECT id, name, email, role, "emailVerified", banned, aeducoins, avatar_url, telefono, bio, last_seen
-         FROM neon_auth.user
-         WHERE email = $1
-         LIMIT 1`,
-        [guestEmail]
-      );
-
-      if (guestRes.rows.length === 0) {
-        const randomPassword = `demo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const hashedPassword = await bcrypt.hash(randomPassword, 12);
-
-        guestRes = await client.query(
-          `INSERT INTO neon_auth.user (name, email, password, role, "emailVerified", banned, aeducoins)
-           VALUES ($1, $2, $3, 'USER', true, false, 0)
-           RETURNING id, name, email, role, "emailVerified", banned, aeducoins, avatar_url, telefono, bio, last_seen`,
-          [guestName, guestEmail, hashedPassword]
-        );
-      }
-
-      return res.status(200).json(guestRes.rows);
+      return res.status(200).json([user]);
     }
 
     // ACCIONES PREDEFINIDAS DEL MAPA
@@ -352,7 +423,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid action' });
     }
 
-    // INTERCEPT: Encriptar automática y de forma segura peticiones de usuario.
     if (action === 'request_user' && parameters && parameters.pass) {
       parameters.pass = await bcrypt.hash(parameters.pass, 10);
     }
