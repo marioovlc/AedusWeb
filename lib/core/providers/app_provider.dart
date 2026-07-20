@@ -19,7 +19,7 @@ import '../utils/file_helper.dart';
 
 // =============================================
 // ==== CLASE AppProvider =====
-// Descripción: Controlador de estado global de la aplicación que gestiona la autenticación de usuarios, la carga y sincronización de incidencias, KPIs, contactos de chat, tienda gamificada, logs del sistema e integración directa con Aedus AI.
+// Descripción: Controlador de estado global de la aplicación que gestiona la autenticación de usuarios, la carga y sincronización de incidencias, KPIs, contactos de chat, tienda gamificada, l[...]
 // =============================================
 class AppProvider with ChangeNotifier {
   Usuario? _currentUser;
@@ -150,8 +150,8 @@ class AppProvider with ChangeNotifier {
         return true;
       }
       return false;
-    } catch (e) {
-      debugPrint('Error en login invitado: $e');
+    } catch (_) {
+      debugPrint('Error en login invitado');
       return false;
     }
   }
