@@ -53,6 +53,33 @@ class _LoginDesktopState extends State<LoginDesktop> {
     }
   }
 
+  Future<void> _loginDemo() async {
+    setState(() => _isLoading = true);
+    try {
+      final success = await context.read<AppProvider>().loginGuest();
+      if (!mounted) return;
+      if (success) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo iniciar sesión en modo demo.')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: Colors.orange[800],
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -182,6 +209,19 @@ class _LoginDesktopState extends State<LoginDesktop> {
                               child: _isLoading 
                                   ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
                                   : const Text('ACCEDER AL PORTAL', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: OutlinedButton(
+                              onPressed: _isLoading ? null : _loginDemo,
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: theme.colorScheme.primary),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text('DEMO', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                             ),
                           ),
                         ],
